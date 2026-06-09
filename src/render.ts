@@ -43,12 +43,12 @@ export function getClassesHtml(weaponClasses: readonly string[], checkedClasses:
 }
 
 const headerImagePaths: Partial<Record<HeaderKey, string>> = {
-    BLE: './img/bleed.png',
-    BRN: './img/burn.png',
-    PSN: './img/poison.png',
-    SMI: './img/smite.png',
-    IGN: './img/ignite.png',
-    FRO: './img/frostbite.png',
+    BLE: './img/Bleed.png',
+    BRN: './img/Burn.png',
+    PSN: './img/Poison.png',
+    SMI: './img/Smite.png',
+    IGN: './img/Ignite.png',
+    FRO: './img/Frostbite.png',
 };
 
 /**
