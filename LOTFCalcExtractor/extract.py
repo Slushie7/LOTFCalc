@@ -37,11 +37,20 @@ class LOTFExtractor:
         lotf2_dir = Path(lotf2_dir)
         content_dir = lotf2_dir / 'Content'
         blueprints_dir = content_dir / 'Blueprints'
+        atk_defs_dir = blueprints_dir / 'Combat/AttackDefinitions'
+        stats_dir = blueprints_dir / 'Data/Stats'
+        localization_dir = content_dir / 'Localization/Game/en'
 
+        # required paths
+        self.STAT_SC_DEFS_PATH = atk_defs_dir / 'DT_UI_StatScalarDefinition.json'
         self.PLAYER_WEAPONS_DIR = blueprints_dir / 'Data/Equipment/Weapons/Player'
-        self.STATS_DIR = blueprints_dir / 'Data/Stats'
-        self.LOCALIZATION_DIR = content_dir / 'Localization/Game/en'
-        self.ATTACK_DEFS_DIR = blueprints_dir / 'Combat/AttackDefinitions'
+        self.CURVE_LIB_PATH = stats_dir / 'DT_CurveLibrary.json'
+        self.RANGED_STATS_PATH = stats_dir / 'DT_RangedWeaponStats.json'
+        self.SC_CURVE_LIB_PATH = stats_dir / 'DT_ScalingCurveLibrary.json'
+        self.WEAPON_STATS_PATH = stats_dir / 'DT_WeaponStats.json'
+        self.GAME_LOC_PATH = localization_dir / 'Game.json'
+
+        self._verify_paths()
 
         self.item_loc_names = self._extract_item_strings()
         self.item_metas = self._extract_weapon_item_metas()
@@ -50,16 +59,40 @@ class LOTFExtractor:
         self.ranged_ammo = self._extract_ranged_ammo()
         self.weapons, self.base_damages = self._extract_weapons()
 
+    def _verify_paths(self) -> None:
+        """Verifies that all of the required exported game files are present."""
+
+        error: bool = False
+
+        for path in (
+            self.STAT_SC_DEFS_PATH,
+            self.PLAYER_WEAPONS_DIR,
+            self.CURVE_LIB_PATH,
+            self.RANGED_STATS_PATH,
+            self.SC_CURVE_LIB_PATH,
+            self.WEAPON_STATS_PATH,
+            self.GAME_LOC_PATH,
+        ):
+            if not path.exists():
+                error = True
+                ptype = 'file' if path.suffix else 'folder'
+                print(f'Failed to find {ptype} "{path.name}" at {path.resolve()}')
+
+        if error:
+            raise FileNotFoundError(
+                'One or more necessary files/folders could not be located. Ensure LOTFCalcExtractor is pointed at the main "LOTF2" folder exported from FModel.'
+            )
+        else:
+            print('All necessary files appear to be present.')
+
     def _extract_item_strings(self) -> dict[str, str]:
         """Reads the game's localization file, extracting item names.
 
         Returns a dict mapping loc_key -> item_name"""
 
-        game_loc_path = self.LOCALIZATION_DIR / 'Game.json'
+        print(f'Extracting localized item strings from {self.GAME_LOC_PATH}')
 
-        print(f'Extracting localized item strings from {game_loc_path}')
-
-        with open(game_loc_path, encoding='utf-8') as f:
+        with open(self.GAME_LOC_PATH, encoding='utf-8') as f:
             game_d = json.load(f)
 
         item_strings: dict[str, str] = {}
@@ -113,9 +146,7 @@ class LOTFExtractor:
 
         scaling_curves: dict[str, Curve] = {}
 
-        file_paths = (self.STATS_DIR / 'DT_ScalingCurveLibrary.json', self.STATS_DIR / 'DT_CurveLibrary.json')
-
-        for file_path in file_paths:
+        for file_path in (self.SC_CURVE_LIB_PATH, self.CURVE_LIB_PATH):
             print(f'Extracting scalar curves from {file_path}')
             with open(file_path, encoding='utf-8') as f:
                 scaling_d = json.load(f)[0]['Rows']  # skip FModel's metadata
@@ -137,7 +168,7 @@ class LOTFExtractor:
         return scaling_curves
 
     def _extract_stat_scalar_grades(self) -> tuple[StatScalarGradeRange, ...]:
-        with open(self.ATTACK_DEFS_DIR / 'DT_UI_StatScalarDefinition.json', encoding='utf-8') as f:
+        with open(self.STAT_SC_DEFS_PATH, encoding='utf-8') as f:
             defs_d = json.load(f)[0]['Rows']
 
         grades: list[StatScalarGradeRange] = []
@@ -150,7 +181,7 @@ class LOTFExtractor:
         return tuple(grades)
 
     def _extract_ranged_ammo(self) -> dict[str, int]:
-        with open(self.STATS_DIR / 'DT_RangedWeaponStats.json', encoding='utf-8') as f:
+        with open(self.RANGED_STATS_PATH, encoding='utf-8') as f:
             rweapons_d = json.load(f)[0]['Rows']
 
         ammo_d: dict[str, int] = {}
@@ -204,10 +235,9 @@ class LOTFExtractor:
         weapons: list[Weapon] = []
         base_damages: list[BaseDamage] = []
 
-        stats_file = self.STATS_DIR / 'DT_WeaponStats.json'
-        print(f'Extracting weapon stats from {stats_file}')
+        print(f'Extracting weapon stats from {self.WEAPON_STATS_PATH}')
 
-        with open(stats_file, encoding='utf-8') as f:
+        with open(self.WEAPON_STATS_PATH, encoding='utf-8') as f:
             weapons_d: dict[str, Any] = json.load(f)[0]['Rows']
 
         for weapon_key, stats_d in weapons_d.items():
