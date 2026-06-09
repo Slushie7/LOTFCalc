@@ -1,6 +1,6 @@
 # LOTFCalc
 
-LOTFCalc allows all weapons from Lords of the Fallen (2023 version) to be compared by calculating each weapon's individual stats for any combination of player attributes and upgrade level. You can use it at [https://slushie7.github.io/LOTFCalc/](https://slushie7.github.io/LOTFCalc/)
+LOTFCalc allows all weapons from Lords of the Fallen (2023 version) to be compared by calculating each weapon's individual stats for any combination of player attributes and upgrade level. All weapon data is current as of game version 2.5. You can use it at [https://slushie7.github.io/LOTFCalc/](https://slushie7.github.io/LOTFCalc/)
 
 <img width="1920" height="991" alt="image" src="https://github.com/user-attachments/assets/00f94706-c920-4685-8a83-f1e531b9fe1f" />
 
@@ -21,3 +21,39 @@ LOTFCalc comes with a significant number of options that can be used to control 
 - **Defenses** - Show each weapon's defense values and stability rating.
 - **Scaling** - Show each weapon's scaling grade in each of the four damage attributes.
 - **Reqs** - Show the attribute requirements for each weapon.
+
+## Running Locally
+LOTFCalc is easy to get running locally using Python as a server. Simply clone the repository, use a terminal to navigate the directory's root (where index.html is located), and run:
+```
+python -m http.server
+```
+You can then use a web browser to navigate to the localhost address provided by Python and use LOTFCalc.
+
+## Updating Weapons Data
+The calculator's weapon data all resides in a file, **weapons.json**, located in the **data** folder.
+
+LOTFCalc's weapon data is current as of game version 2.5. As this was supposedly the final major update, it is unlikely that LOTFCalc's data will need to be updated. Regardless, the Python script used to prepare the data for LOTFCalc has been provided in the **LOTFCalcExtractor** directory.
+
+### LOTFCalcExtractor
+Before using the Python script, you must export all of the required JSON files from LOTF's game files by using FModel. How to do the extraction is beyond the scope of this readme. I highly recommend following the **excellent** [https://www.nexusmods.com/lordsofthefallen2023/mods/90?tab=description](guide made by Trevoorhees on Nexus Mods).
+
+The following files must be exported using FModel's "Save Properties (.json)" feature:
+- LOTF2/Content/Blueprints/Combat/AttackDefinitions/DT_UI_StatScalarDefinition.json
+- LOTF2/Content/Blueprints/Data/Equipment/Weapons/Player/** (everything inside it)
+- LOTF2/Content/Blueprints/Data/Stats/DT_CurveLibrary.json
+- LOTF2/Content/Blueprints/Data/Stats/DT_RangedWeaponStats.json
+- LOTF2/Content/Blueprints/Data/Stats/DT_ScalingCurveLibrary.json
+- LOTF2/Content/Blueprints/Data/Stats/DT_WeaponStats.json
+- LOTF2/Content/Localization/Game/en/Game.json
+Once everything has been exported, you can run the LOTFCalcExtractor script by opening a terminal in its folder and running it:
+```
+python -m LOTFCalcExtractor "C:\\Users\\slushie7\\Downloads\\FModel\\Output\\Exports\\LOTF2"
+```
+*Replace the path with the path to the main "LOTF2" directory exported with FModel.*
+
+## Special Thanks
+I would like to give a special thanks to (https://github.com/ThomasJClark)[ThomasJClark] for creating his (https://github.com/ThomasJClark/elden-ring-weapon-calculator)[Elden Ring Weapon Calculator]. LOTFCalc's UI was largely inspired by this calculator's beautiful design.
+
+A special thank you to 4sval for creating (https://github.com/4sval/FModel)[FModel], without which this project would not have been possible.
+
+And lastly, the biggest of thank yous to Hexworks and CI Games for creating Lords of the Fallen, a masterpiece of a game.
