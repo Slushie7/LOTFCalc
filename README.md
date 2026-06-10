@@ -2,7 +2,7 @@
 
 LOTFCalc allows all weapons from Lords of the Fallen (2023 version) to be compared by calculating each weapon's individual stats for any combination of player attributes and upgrade level. All weapon data is current as of game version 2.5. You can use it at [https://slushie7.github.io/LOTFCalc/](https://slushie7.github.io/LOTFCalc/)
 
-<img width="1920" height="991" alt="image" src="https://github.com/user-attachments/assets/00f94706-c920-4685-8a83-f1e531b9fe1f" />
+![Preview](img/preview.png)
 
 ## Usage
 Select the weapon classes you would like to see, enter your attributes, and set the desired weapon upgrade level. The calculator will show the calculated stats for all weapons in those classes. You can use the toggles above the weapons table to show and hide different types of information. Depending on your weapon class selection, LOTFCalc will automatically show and hide some columns to make it easier for you to see what you want to see (for example, if you only select melee weapons, the 'Magic' column group will be hidden; if you add 'Catalysts' to your select, the 'Magic' column group will be added).
