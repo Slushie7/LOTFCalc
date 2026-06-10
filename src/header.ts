@@ -64,8 +64,8 @@ export const HEADER_GROUPS: readonly HeaderGroup[] = [
             },
             {
                 key: 'STAG',
-                text: 'Stagger',
-                hover: 'Stagger Damage (For Grevious Strikes/Critical Hits)',
+                text: 'PstrD',
+                hover: 'Posture Damage (For Grevious Strikes/Critical Hits)',
             },
             { key: 'STAD', text: 'StamD', hover: 'Stamina Damage Multiplier' },
             { key: 'PVP', text: 'PVP', hover: 'Multiplier For PVP' },
