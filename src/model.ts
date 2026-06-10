@@ -106,6 +106,8 @@ export interface StatScaledDamage {
 export interface PlayerStats {
     readonly strength: number;
     readonly agility: number;
+    readonly endurance: number;
+    readonly vitality: number;
     readonly radiance: number;
     readonly inferno: number;
 }
@@ -253,4 +255,12 @@ export interface CalculatedWeaponStats {
     readonly upgLevel: number;
     readonly playerStats: PlayerStats;
     readonly wieldability: CalculatedCanWield;
+}
+
+export interface CalculatedPlayerStats {
+    readonly total: number;
+    readonly hp: number;
+    readonly mana: number;
+    readonly stamina: number;
+    readonly weight: number;
 }

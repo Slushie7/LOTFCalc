@@ -4,7 +4,7 @@ from pathlib import Path
 from .classes import BaseDamage, Curve, StatScalarGradeRange, Weapon
 
 
-def load_weapons() -> tuple[Weapon, ...]:
+def load_weapons() -> tuple[tuple[Weapon, ...], dict[str, Curve]]:
     """Read the weapons data from JSON into a tuple of Weapons usable by LOTFCalc."""
 
     json_path = (Path(__file__).parent / '../data/weapons.json').resolve()
@@ -32,4 +32,4 @@ def load_weapons() -> tuple[Weapon, ...]:
         weapon = Weapon.from_dict(weapon_d, curves_d, base_damages, tuple(grade_ranges))
         weapons.append(weapon)
 
-    return tuple(weapons)
+    return tuple(weapons), curves_d

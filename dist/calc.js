@@ -279,4 +279,27 @@ export function calculateStats(weapon, upgLevel, playerStats, gradeRanges) {
     const runes = getRunes(weapon.runes, upgLevel);
     return { weapon, offense, defense, runes, upgLevel, playerStats, wieldability };
 }
+export function calculatePlayerStats(playerStats, curves) {
+    function getCurve(key) {
+        const curve = curves.get(key);
+        if (curve === undefined)
+            throw new Error(`Failed to retrieve Curve with key: ${key}`);
+        return curve;
+    }
+    const total = playerStats.strength +
+        playerStats.agility +
+        playerStats.endurance +
+        playerStats.vitality +
+        playerStats.radiance +
+        playerStats.inferno;
+    const hpCurve = getCurve('MaxHealth_Vitality');
+    const hp = interpolate(hpCurve, playerStats.vitality);
+    const manaCurve = getCurve('MaxMana_FaithChaos');
+    const mana = interpolate(manaCurve, playerStats.radiance + playerStats.inferno);
+    const stamCurve = getCurve('MaxStamina_Endurance');
+    const stamina = interpolate(stamCurve, playerStats.endurance) + 10; // base max weight, minus all stats, is 10
+    const wgtCurve = getCurve('MaxEquipLoad_VitalityEndurance');
+    const weight = interpolate(wgtCurve, playerStats.vitality + playerStats.endurance);
+    return { total, hp, mana, stamina, weight };
+}
 //# sourceMappingURL=calc.js.map

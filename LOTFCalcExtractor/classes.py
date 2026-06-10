@@ -219,6 +219,8 @@ class StatScaledDamage:
 class PlayerStats:
     strength: int
     agility: int
+    endurance: int
+    vitality: int
     radiance: int
     inferno: int
 
@@ -226,6 +228,8 @@ class PlayerStats:
         return (
             self.strength >= weapon_reqs.strength
             and self.agility >= weapon_reqs.agility
+            and self.endurance >= weapon_reqs.endurance
+            and self.vitality >= weapon_reqs.vitality
             and self.radiance >= weapon_reqs.radiance
             and self.inferno >= weapon_reqs.inferno
         )
@@ -234,13 +238,15 @@ class PlayerStats:
         return {
             'strength': self.strength,
             'agility': self.agility,
+            'endurance': self.endurance,
+            'vitality': self.vitality,
             'radiance': self.radiance,
             'inferno': self.inferno,
         }
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Self:
-        return cls(d['strength'], d['agility'], d['radiance'], d['inferno'])
+        return cls(d['strength'], d['agility'], d['endurance'], d['vitality'], d['radiance'], d['inferno'])
 
 
 # ================================

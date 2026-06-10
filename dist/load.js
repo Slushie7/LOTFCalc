@@ -1,16 +1,16 @@
 // helpers
-function getCurve(key, curves) {
+function getCurveOrNull(key, curves) {
     if (key === null)
         return null;
     const curve = curves.get(key);
     if (curve === undefined)
-        throw new Error(`Unknown curve key: ${key}`);
+        throw new Error(`Failed to retrieve Curve with key: ${key}`);
     return curve;
 }
 function getBaseDamage(key, baseDamages) {
     const bd = baseDamages.get(key);
     if (bd === undefined)
-        throw new Error(`Unknown baseDamage key: ${key}`);
+        throw new Error(`Failed to retrieve BaseDamage with key: ${key}`);
     return bd;
 }
 // transforms
@@ -20,7 +20,7 @@ function toCurve(r) {
     return { key: r.key, interpMode: r._interp_mode, points: r._points };
 }
 function toLeveledValue(r, curves) {
-    const curve = getCurve(r.curve_key, curves);
+    const curve = getCurveOrNull(r.curve_key, curves);
     if (!(r.scaling_type === 'Additive' || r.scaling_type === 'Multiplicative'))
         throw new Error(`Unsupported leveled value scaling type: ${r.scaling_type}`);
     return { base: r.base, curve, scalingType: r.scaling_type };
@@ -43,13 +43,15 @@ function toStatScaledDamage(r, curves, baseDamages) {
         stat: r.stat,
         baseDamage: getBaseDamage(r.bd_key, baseDamages),
         statScaling: toLeveledValue(r.stat_scaling, curves),
-        statCurve: getCurve(r.stat_curve_key, curves),
+        statCurve: getCurveOrNull(r.stat_curve_key, curves),
     };
 }
 function toPlayerStats(r) {
     return {
         strength: r.strength,
         agility: r.agility,
+        endurance: r.endurance,
+        vitality: r.vitality,
         radiance: r.radiance,
         inferno: r.inferno,
     };
@@ -57,7 +59,7 @@ function toPlayerStats(r) {
 function toWeaponRunes(r, curves) {
     return {
         runeSockets: r.rune_sockets,
-        numByLevel: getCurve(r.curve_key, curves),
+        numByLevel: getCurveOrNull(r.curve_key, curves),
     };
 }
 function toWeaponDamageAR(r, curves, baseDamages) {
@@ -121,7 +123,7 @@ function toWeapon(r, curves, baseDamages) {
  * weapons.json data loader
  * @returns
  */
-export async function loadWeapons() {
+export async function loadJSONData() {
     const res = await fetch('data/weapons.json');
     if (!res.ok)
         throw new Error(`Failed to load weapons.json: ${res.status}`);
@@ -138,6 +140,6 @@ export async function loadWeapons() {
     }
     const gradeRanges = data.stat_grade_ranges.map(toStatScalarGradeRange);
     const weapons = data.weapons.map((w) => toWeapon(w, curves, baseDamages));
-    return { weapons, gradeRanges };
+    return { weapons, gradeRanges, curves };
 }
 //# sourceMappingURL=load.js.map

@@ -1,213 +1,230 @@
 <!doctype html>
 <html lang="en" data-theme="dark">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>LOTF Weapons Calculator</title>
-    <link rel="stylesheet" href="pico.min.css" />
-    <link rel="stylesheet" href="style.css" />
-  </head>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>LOTF Weapons Calculator</title>
+        <link rel="stylesheet" href="pico.min.css" />
+        <link rel="stylesheet" href="style.css" />
+    </head>
 
-  <body>
-    <!-- ================= TOP BAR ================= -->
-    <header class="appbar">
-      <button
-        id="hamburger"
-        class="iconbtn hamburger"
-        aria-label="Toggle sidebar"
-        title="Show/hide the 'Weapon Classes' pane"
-      >
-        &#9776;
-      </button>
-      <strong class="appname">LOTF Weapons Calculator</strong>
-      <label
-        class="appbar-setting"
-        title="LOTFCalc will automatically reload your last-used settings when opened. Uncheck this to disable this feature"
-        ><input
-          type="checkbox"
-          class="setting-toggle"
-          data-setting="REMEMBER"
-        />
-        Remember Settings</label
-      >
-      <button
-        id="github-btn"
-        class="iconbtn github"
-        aria-label="Open GitHub page"
-        title="Open LOTFCalc's GitHub page"
-      >
-        <a
-          href="https://github.com/Slushie7/LOTFCalc"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open GitHub page"
-        >
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"
-            ></path>
-          </svg>
-        </a>
-      </button>
-    </header>
-    <header class="topbar">
-      <!-- Stats -->
-      <div class="stats">
-        <label class="field">
-          <span class="cap">Str</span>
-          <input
-            id="input-str"
-            type="number"
-            class="stat-input"
-            data-stat="strength"
-            value="30"
-            min="0"
-            max="99"
-        /></label>
-        <label class="field">
-          <span class="cap">Agi</span>
-          <input
-            id="input-agi"
-            type="number"
-            class="stat-input"
-            data-stat="agility"
-            value="30"
-            min="0"
-            max="99"
-        /></label>
-        <label class="field">
-          <span class="cap">Rad</span>
-          <input
-            id="input-rad"
-            type="number"
-            class="stat-input"
-            data-stat="radiance"
-            value="30"
-            min="0"
-            max="99"
-        /></label>
-        <label class="field">
-          <span class="cap">Inf</span>
-          <input
-            id="input-inf"
-            type="number"
-            class="stat-input"
-            data-stat="inferno"
-            value="30"
-            min="0"
-            max="99"
-        /></label>
-      </div>
+    <body>
+        <!-- ================= TOP BAR ================= -->
+        <header class="appbar">
+            <button
+                id="hamburger"
+                class="iconbtn hamburger"
+                aria-label="Toggle sidebar"
+                title="Show/hide the 'Weapon Classes' pane">
+                &#9776;
+            </button>
+            <strong class="appname">LOTF Weapons Calculator</strong>
+            <label
+                class="appbar-setting"
+                title="LOTFCalc will automatically reload your last-used settings when opened. Uncheck this to disable this feature"
+                ><input type="checkbox" class="setting-toggle" data-setting="REMEMBER" /> Remember Settings</label
+            >
+            <button
+                id="github-btn"
+                class="iconbtn github"
+                aria-label="Open GitHub page"
+                title="Open LOTFCalc's GitHub page">
+                <a
+                    href="https://github.com/Slushie7/LOTFCalc"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Open GitHub page">
+                    <svg viewBox="0 0 24 24">
+                        <path
+                            d="M12 1.27a11 11 0 00-3.48 21.46c.55.09.73-.28.73-.55v-1.84c-3.03.64-3.67-1.46-3.67-1.46-.55-1.29-1.28-1.65-1.28-1.65-.92-.65.1-.65.1-.65 1.1 0 1.73 1.1 1.73 1.1.92 1.65 2.57 1.2 3.21.92a2 2 0 01.64-1.47c-2.47-.27-5.04-1.19-5.04-5.5 0-1.1.46-2.1 1.2-2.84a3.76 3.76 0 010-2.93s.91-.28 3.11 1.1c1.8-.49 3.7-.49 5.5 0 2.1-1.38 3.02-1.1 3.02-1.1a3.76 3.76 0 010 2.93c.83.74 1.2 1.74 1.2 2.94 0 4.21-2.57 5.13-5.04 5.4.45.37.82.92.82 2.02v3.03c0 .27.1.64.73.55A11 11 0 0012 1.27"></path>
+                    </svg>
+                </a>
+            </button>
+        </header>
+        <header class="topbar">
+            <!-- Stats -->
+            <div class="player-row">
+                <div class="stats-inputs">
+                    <label class="field">
+                        <span class="cap">Str</span>
+                        <input
+                            id="input-str"
+                            type="number"
+                            class="stat-input"
+                            data-stat="strength"
+                            value="30"
+                            min="0"
+                            max="99"
+                    /></label>
+                    <label class="field">
+                        <span class="cap">Agi</span>
+                        <input
+                            id="input-agi"
+                            type="number"
+                            class="stat-input"
+                            data-stat="agility"
+                            value="30"
+                            min="0"
+                            max="99"
+                    /></label>
+                    <label class="field">
+                        <span class="cap">End</span>
+                        <input
+                            id="input-end"
+                            type="number"
+                            class="stat-input"
+                            data-stat="endurance"
+                            value="30"
+                            min="0"
+                            max="99"
+                    /></label>
+                    <label class="field">
+                        <span class="cap">Vit</span>
+                        <input
+                            id="input-vit"
+                            type="number"
+                            class="stat-input"
+                            data-stat="vitality"
+                            value="30"
+                            min="0"
+                            max="99"
+                    /></label>
+                    <label class="field">
+                        <span class="cap">Rad</span>
+                        <input
+                            id="input-rad"
+                            type="number"
+                            class="stat-input"
+                            data-stat="radiance"
+                            value="30"
+                            min="0"
+                            max="99"
+                    /></label>
+                    <label class="field">
+                        <span class="cap">Inf</span>
+                        <input
+                            id="input-inf"
+                            type="number"
+                            class="stat-input"
+                            data-stat="inferno"
+                            value="30"
+                            min="0"
+                            max="99"
+                    /></label>
+                    <!-- Weapon upgrade level -->
+                    <div class="weapon-level">
+                        <label class="field">
+                            <span class="cap">Weapon Level</span>
+                            <select id="weapon-level">
+                                <option>+0</option>
+                                <option>+1</option>
+                                <option>+2</option>
+                                <option>+3</option>
+                                <option>+4</option>
+                                <option>+5</option>
+                                <option>+6</option>
+                                <option>+7</option>
+                                <option>+8</option>
+                                <option>+9</option>
+                                <option>+10</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+                <div class="derived-stats">
+                    <div class="derived-row">
+                        <span class="derived-item"
+                            ><span class="derived-key">Character Level</span
+                            ><span class="derived-val" data-stat="total">-</span></span
+                        >
+                    </div>
+                    <div class="derived-row">
+                        <span class="derived-item"
+                            ><span id="hp-key" class="derived-key">HP</span
+                            ><span class="derived-val" data-stat="hp">-</span></span
+                        >
+                        <span class="derived-item"
+                            ><span id="mana-key" class="derived-key">Mana</span
+                            ><span class="derived-val" data-stat="mana">-</span></span
+                        >
+                        <span class="derived-item"
+                            ><span id="stamina-key" class="derived-key">Stamina</span
+                            ><span class="derived-val" data-stat="stamina">-</span></span
+                        >
+                        <span class="derived-item"
+                            ><span id="weight-key" class="derived-key">Weight</span
+                            ><span class="derived-val" data-stat="weight">-</span></span
+                        >
+                    </div>
+                </div>
+            </div>
 
-      <!-- Weapon upgrade level -->
-      <div class="weapon-level">
-        <label class="field">
-          <span class="cap">Weapon Level</span>
-          <select id="weapon-level">
-            <option>+0</option>
-            <option>+1</option>
-            <option>+2</option>
-            <option>+3</option>
-            <option>+4</option>
-            <option>+5</option>
-            <option>+6</option>
-            <option>+7</option>
-            <option>+8</option>
-            <option>+9</option>
-            <option>+10</option>
-          </select>
-        </label>
-      </div>
+            <!-- Column / display toggles -->
+            <div id="option-toggles" class="toggles">
+                <label title="Show weapons you lack the stats to wield"
+                    ><input type="checkbox" class="setting-toggle" data-setting="UNWIELDABLE" /> Unwieldable</label
+                >
+                <label title="Show damage values as (weapon's base damage)+(damage from scaling/stats)"
+                    ><input type="checkbox" class="setting-toggle" data-setting="SPLIT" /> Split Damage</label
+                >
+                <label title="Show attack rating for physical, holy, fire, and wither; show spell power for catalysts"
+                    ><input type="checkbox" class="group-toggle" data-group="AR" /> Attack</label
+                >
+                <label title="Show spell power and number of spell slots for catalysts"
+                    ><input type="checkbox" class="group-toggle" data-group="MAGIC" /> Magic</label
+                >
+                <label title="Show status effects applied by weapons"
+                    ><input type="checkbox" class="group-toggle" data-group="STATUS" /> Status</label
+                >
+                <label title="Show poise damage, stagger damage, stamina damage multiplier, and pvp damage multiplier"
+                    ><input type="checkbox" class="group-toggle" data-group="MISC" /> Misc</label
+                >
+                <label
+                    title="Show rune sockets available at weapon's upgrade level. S=Str, A=Agi, R=Rad, I=Inf; *=Meta (any rune)"
+                    ><input type="checkbox" class="group-toggle" data-group="RUNES" /> Runes</label
+                >
+                <label title="Show defensive stats for weapons"
+                    ><input type="checkbox" class="group-toggle" data-group="DEF" /> Defenses</label
+                >
+                <label title="Show stat scaling strength"
+                    ><input type="checkbox" class="group-toggle" data-group="SCALING" /> Scaling</label
+                >
+                <label title="Show the stats required to effectively wield weapons"
+                    ><input type="checkbox" class="group-toggle" data-group="REQS" /> Wield Reqs</label
+                >
+            </div>
+        </header>
 
-      <!-- Column / display toggles -->
-      <div id="option-toggles" class="toggles">
-        <label title="Show weapons you lack the stats to wield"
-          ><input
-            type="checkbox"
-            class="setting-toggle"
-            data-setting="UNWIELDABLE"
-          />
-          Unwieldable</label
-        >
-        <label
-          title="Show damage values as (weapon's base damage)+(damage from scaling/stats)"
-          ><input type="checkbox" class="setting-toggle" data-setting="SPLIT" />
-          Split Damage</label
-        >
-        <label
-          title="Show attack rating for physical, holy, fire, and wither; show spell power for catalysts"
-          ><input type="checkbox" class="group-toggle" data-group="AR" />
-          Attack</label
-        >
-        <label title="Show spell power and number of spell slots for catalysts"
-          ><input type="checkbox" class="group-toggle" data-group="MAGIC" />
-          Magic</label
-        >
-        <label title="Show status effects applied by weapons"
-          ><input type="checkbox" class="group-toggle" data-group="STATUS" />
-          Status</label
-        >
-        <label
-          title="Show poise damage, stagger damage, stamina damage multiplier, and pvp damage multiplier"
-          ><input type="checkbox" class="group-toggle" data-group="MISC" />
-          Misc</label
-        >
-        <label
-          title="Show rune sockets available at weapon's upgrade level. S=Str, A=Agi, R=Rad, I=Inf; *=Meta (any rune)"
-          ><input type="checkbox" class="group-toggle" data-group="RUNES" />
-          Runes</label
-        >
-        <label title="Show defensive stats for weapons"
-          ><input type="checkbox" class="group-toggle" data-group="DEF" />
-          Defenses</label
-        >
-        <label title="Show stat scaling strength"
-          ><input type="checkbox" class="group-toggle" data-group="SCALING" />
-          Scaling</label
-        >
-        <label title="Show the stats required to effectively wield weapons"
-          ><input type="checkbox" class="group-toggle" data-group="REQS" />
-          Wield Reqs</label
-        >
-      </div>
-    </header>
+        <!-- ================= SIDEBAR ================= -->
+        <aside class="sidebar">
+            <h2>Weapon Classes</h2>
+            <nav id="weapon-classes"></nav>
+        </aside>
 
-    <!-- ================= SIDEBAR ================= -->
-    <aside class="sidebar">
-      <h2>Weapon Classes</h2>
-      <nav id="weapon-classes"></nav>
-    </aside>
+        <!-- ================= MAIN CONTENT ================= -->
+        <main class="content">
+            <div id="app" class="table-wrap">
+                <table>
+                    <thead id="weapons-header"></thead>
+                    <tbody id="weapons-body"></tbody>
+                </table>
+            </div>
 
-    <!-- ================= MAIN CONTENT ================= -->
-    <main class="content">
-      <div id="app" class="table-wrap">
-        <table>
-          <thead id="weapons-header"></thead>
-          <tbody id="weapons-body"></tbody>
-        </table>
-      </div>
+            <footer class="attribution">
+                <p>
+                    Created by Bryan North -
+                    <a href="https://ko-fi.com/bnorth" class="kofi-link" target="_blank" rel="noopener">
+                        ☕ Support me on Ko-fi
+                    </a>
+                </p>
+                <p class="trademark">
+                    Lords of the Fallen is a trademark of CI Games S.A. This is an unofficial, fan-made tool, not
+                    affiliated with or endorsed by CI Games. All game data and trademarks are the property of their
+                    respective owners.
+                </p>
+            </footer>
+        </main>
 
-      <footer class="attribution">
-        <p>
-          Created by Bryan North -
-          <a
-            href="https://ko-fi.com/bnorth"
-            class="kofi-link"
-            target="_blank"
-            rel="noopener"
-          >
-            ☕ Support me on Ko-fi
-          </a>
-        </p>
-        <p class="trademark">
-          Lords of the Fallen is a trademark of CI Games S.A. This is an
-          unofficial, fan-made tool, not affiliated with or endorsed by CI
-          Games. All game data and trademarks are the property of their
-          respective owners.
-        </p>
-      </footer>
-    </main>
-
-    <script type="module" src="./dist/main.js"></script>
-  </body>
+        <script type="module" src="./dist/main.js"></script>
+    </body>
 </html>

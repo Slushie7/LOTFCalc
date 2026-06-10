@@ -161,7 +161,8 @@ class LOTFExtractor:
                         assert isinstance(x, float)
                         assert isinstance(y, float)
                         points.append((x, y))
-                    scaling_curves[curve_key] = Curve(curve_key, interp_mode, tuple(points))
+                    if points:  # skip empty Curves
+                        scaling_curves[curve_key] = Curve(curve_key, interp_mode, tuple(points))
 
         print(f'Extracted {len(scaling_curves)} scalar curves')
 
@@ -275,9 +276,11 @@ class LOTFExtractor:
                 # stats needed to wield the weapon
                 req_str = read_int('RequirementStrength')
                 req_agi = read_int('RequirementAgility')
+                req_end = read_int('RequirementEndurance')
+                req_vit = read_int('RequirementVitality')
                 req_rad = read_int('RequirementFaith')
                 req_inf = read_int('RequirementChaos')
-                wield_reqs = PlayerStats(req_str, req_agi, req_rad, req_inf)
+                wield_reqs = PlayerStats(req_str, req_agi, req_end, req_vit, req_rad, req_inf)
 
                 # runes
                 rune_sockets: list[str] = []
@@ -406,8 +409,8 @@ class LOTFExtractor:
 
             from .load_weapons import load_weapons
 
-            loaded = load_weapons()
-            if loaded == extractor.weapons:
+            loaded, curves = load_weapons()
+            if loaded == extractor.weapons and curves == extractor.curves:
                 print('Weapons export passed validation!')
             else:
                 print('Weapons export failed validation!')

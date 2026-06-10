@@ -1,21 +1,21 @@
-import { loadWeapons } from './load.js';
+import { loadJSONData } from './load.js';
 import { HEADER_GROUPS } from './header.js';
 import { getClassesHtml, getHeaderHtml, getWeaponRow, getWeaponsHtml, sortCalculated } from './render.js';
-import { calculateStats } from './calc.js';
+import { calculateStats, calculatePlayerStats } from './calc.js';
 // for localStorage
 const STORAGE_KEY = 'lotfcalc.settings';
-const STORAGE_VER = 1;
+const STORAGE_VER = 2;
 const htmlTogglesMapping = {
     UNWIELDABLE: 'showUnwieldable',
     SPLIT: 'showSplit',
     REMEMBER: 'saveSettings',
 };
 // main app variables
-const { weapons, gradeRanges } = await loadWeapons();
+const { weapons, gradeRanges, curves } = await loadJSONData();
 const loadedWeaponClasses = [...new Set(weapons.map((w) => w.className))].sort();
 const state = {
     // defaults
-    playerStats: { strength: 30, agility: 30, radiance: 30, inferno: 30 },
+    playerStats: { strength: 30, agility: 30, endurance: 30, vitality: 30, radiance: 30, inferno: 30 },
     upgLevel: 10,
     selectedClasses: new Set(['Axes']),
     sortKey: 'WEAP',
@@ -38,16 +38,12 @@ function init() {
 }
 function initSettingsDisplay() {
     // initialize player stat entries
-    const inputs = [
-        { id: 'input-str', val: state.playerStats.strength },
-        { id: 'input-agi', val: state.playerStats.agility },
-        { id: 'input-rad', val: state.playerStats.radiance },
-        { id: 'input-inf', val: state.playerStats.inferno },
-    ];
-    for (const { id, val } of inputs) {
-        const el = document.getElementById(id);
-        if (el instanceof HTMLInputElement)
-            el.value = String(val);
+    for (const el of document.getElementsByClassName('stat-input')) {
+        if (el instanceof HTMLInputElement && typeof el.dataset.stat === 'string') {
+            const stat = el.dataset.stat;
+            if (state.playerStats[stat] !== undefined)
+                el.value = String(state.playerStats[stat]);
+        }
     }
     // initialize weapon upgrade level
     const el = document.getElementById('weapon-level');
@@ -58,12 +54,10 @@ function initSettingsDisplay() {
 }
 function updateSettingsToggles() {
     for (const el of document.getElementsByClassName('setting-toggle')) {
-        if (el instanceof HTMLInputElement) {
-            if (typeof el.dataset.setting === 'string') {
-                // map element's 'data-setting' value to relevant current AppState value
-                const setting = htmlTogglesMapping[el.dataset.setting];
-                el.checked = state[setting];
-            }
+        if (el instanceof HTMLInputElement && typeof el.dataset.setting === 'string') {
+            // map element's 'data-setting' value to relevant current AppState value
+            const setting = htmlTogglesMapping[el.dataset.setting];
+            el.checked = state[setting];
         }
     }
     for (const el of document.getElementsByClassName('group-toggle')) {
@@ -156,6 +150,8 @@ function loadState() {
     const playerStats = {
         strength: clampStat(ps.strength),
         agility: clampStat(ps.agility),
+        endurance: clampStat(ps.endurance),
+        vitality: clampStat(ps.vitality),
         radiance: clampStat(ps.radiance),
         inferno: clampStat(ps.inferno),
     };
@@ -239,6 +235,19 @@ function renderHeader() {
     }
 }
 function renderWeapons() {
+    // update the player's derived stats
+    const derivedStats = calculatePlayerStats(state.playerStats, curves);
+    for (const el of document.getElementsByClassName('derived-val')) {
+        if (el instanceof HTMLSpanElement && typeof el.dataset.stat === 'string') {
+            const stat = el.dataset.stat;
+            const val = derivedStats[stat];
+            if (typeof val === 'string')
+                el.textContent = val;
+            else if (typeof val === 'number')
+                el.textContent = String(val);
+        }
+    }
+    // update the weapons table
     const elBody = document.getElementById('weapons-body');
     if (elBody) {
         const showWeaps = weapons.filter((weap) => state.selectedClasses.has(weap.className));
@@ -283,7 +292,7 @@ function setPlayerStat(el) {
         return;
     const value = clampStat(input);
     if (input !== value) {
-        // correct the user's input
+        // update the user's input to reflect the clamped value
         el.value = String(value);
     }
     // update the stat

@@ -49,6 +49,8 @@ interface RawStatScaledDamage {
 interface RawPlayerStats {
     strength: number;
     agility: number;
+    endurance: number;
+    vitality: number;
     radiance: number;
     inferno: number;
 }
@@ -111,18 +113,18 @@ interface RawWeaponsJSONData {
 }
 
 // helpers
-function getCurve(key: string | null, curves: Map<string, Curve>): Curve | null {
+function getCurveOrNull(key: string | null, curves: Map<string, Curve>): Curve | null {
     if (key === null) return null;
 
     const curve = curves.get(key);
-    if (curve === undefined) throw new Error(`Unknown curve key: ${key}`);
+    if (curve === undefined) throw new Error(`Failed to retrieve Curve with key: ${key}`);
 
     return curve;
 }
 
 function getBaseDamage(key: string, baseDamages: Map<string, BaseDamage>): BaseDamage {
     const bd = baseDamages.get(key);
-    if (bd === undefined) throw new Error(`Unknown baseDamage key: ${key}`);
+    if (bd === undefined) throw new Error(`Failed to retrieve BaseDamage with key: ${key}`);
     return bd;
 }
 
@@ -134,7 +136,7 @@ function toCurve(r: RawCurve): Curve {
 }
 
 function toLeveledValue(r: RawLeveledValue, curves: Map<string, Curve>): LeveledValue {
-    const curve = getCurve(r.curve_key, curves);
+    const curve = getCurveOrNull(r.curve_key, curves);
     if (!(r.scaling_type === 'Additive' || r.scaling_type === 'Multiplicative'))
         throw new Error(`Unsupported leveled value scaling type: ${r.scaling_type}`);
     return { base: r.base, curve, scalingType: r.scaling_type };
@@ -164,7 +166,7 @@ function toStatScaledDamage(
         stat: r.stat,
         baseDamage: getBaseDamage(r.bd_key, baseDamages),
         statScaling: toLeveledValue(r.stat_scaling, curves),
-        statCurve: getCurve(r.stat_curve_key, curves),
+        statCurve: getCurveOrNull(r.stat_curve_key, curves),
     };
 }
 
@@ -172,6 +174,8 @@ function toPlayerStats(r: RawPlayerStats): PlayerStats {
     return {
         strength: r.strength,
         agility: r.agility,
+        endurance: r.endurance,
+        vitality: r.vitality,
         radiance: r.radiance,
         inferno: r.inferno,
     };
@@ -180,7 +184,7 @@ function toPlayerStats(r: RawPlayerStats): PlayerStats {
 function toWeaponRunes(r: RawWeaponRunes, curves: Map<string, Curve>): WeaponRunes {
     return {
         runeSockets: r.rune_sockets,
-        numByLevel: getCurve(r.curve_key, curves),
+        numByLevel: getCurveOrNull(r.curve_key, curves),
     };
 }
 
@@ -259,9 +263,10 @@ function toWeapon(r: RawWeapon, curves: Map<string, Curve>, baseDamages: Map<str
  * weapons.json data loader
  * @returns
  */
-export async function loadWeapons(): Promise<{
+export async function loadJSONData(): Promise<{
     weapons: Weapon[];
     gradeRanges: StatScalarGradeRange[];
+    curves: Map<string, Curve>
 }> {
     const res = await fetch('data/weapons.json');
     if (!res.ok) throw new Error(`Failed to load weapons.json: ${res.status}`);
@@ -282,5 +287,5 @@ export async function loadWeapons(): Promise<{
     const gradeRanges = data.stat_grade_ranges.map(toStatScalarGradeRange);
     const weapons = data.weapons.map((w) => toWeapon(w, curves, baseDamages));
 
-    return { weapons, gradeRanges };
+    return { weapons, gradeRanges, curves };
 }

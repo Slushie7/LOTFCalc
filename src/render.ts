@@ -101,10 +101,9 @@ export function getWeaponsHtml(weaponRows: readonly WeaponRow[]): string {
         row.cells.forEach((cell, idx) => {
             if (idx === 0) {
                 // first column - link weapon text to FextraLife Wiki
-                const cls = `${cell.cls} weap-link`.trim();
                 const url = `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(row.weaponName)}`;
                 rowParts.push(
-                    `<td class="${cell.cls}"><a class="${cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cell.text)}</a></td>`
+                    `<td class="${cell.cls}"><a class="${cell.cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cell.text)}</a></td>`
                 );
             } else {
                 rowParts.push(`<td class="${cell.cls}">${escapeHtml(cell.text)}</td>`);
@@ -136,6 +135,15 @@ export function getWeaponRow(
     showColGroups: Set<SuperheaderKey>,
     showSplit: boolean
 ): WeaponRow {
+    function pushCell(text: string, classes: string | string[]): void {
+        if (typeof classes === 'string') classes = [classes];
+        if (!text || text === '-') {
+            classes = [...classes, 'empty'];
+        }
+        const cls = classes.filter((s) => s !== '').join(' ');
+        cells.push({ text, cls });
+    }
+
     const cells: Cell[] = [];
 
     const wieldable = cws.wieldability.wieldable;
@@ -145,82 +153,79 @@ export function getWeaponRow(
 
     // INFO fields: 'WEAP', 'CLS'
     if (showColGroups.has('INFO')) {
-        cells.push({ text: `${cws.weapon.name} +${cws.upgLevel}`, cls: `col-first ${wieldCls}`.trim() });
-        cells.push({ text: cws.weapon.className, cls: colDivider });
+        pushCell(`${cws.weapon.name} +${cws.upgLevel}`, ['col-first', wieldCls]);
+        pushCell(cws.weapon.className, colDivider);
     }
 
     // AR fields: 'ARP', 'ARH', 'ARF', 'ARW', 'TOT', 'SP'
     if (showColGroups.has('AR')) {
         const ar = cws.offense.ar;
-        cells.push({ text: formatDmg(ar.physical, showSplit), cls: `${colStarter} ${wieldCls}`.trim() });
-        cells.push({ text: formatDmg(ar.fire, showSplit), cls: wieldCls });
-        cells.push({ text: formatDmg(ar.holy, showSplit), cls: wieldCls });
-        cells.push({ text: formatDmg(ar.wither, showSplit), cls: wieldCls });
-        cells.push({ text: formatIntOpt(ar.totalDamage), cls: `${wieldCls} ${colDivider}`.trim() });
+        pushCell(formatDmg(ar.physical, showSplit), [colStarter, wieldCls]);
+        pushCell(formatDmg(ar.fire, showSplit), wieldCls);
+        pushCell(formatDmg(ar.holy, showSplit), wieldCls);
+        pushCell(formatDmg(ar.wither, showSplit), wieldCls);
+        pushCell(formatIntOpt(ar.totalDamage), [wieldCls, colDivider]);
     }
 
     // MAGIC fields: 'SP', 'SLOTS'
     if (showColGroups.has('MAGIC')) {
-        cells.push({ text: formatDmg(cws.offense.ar.spellPower, showSplit), cls: `${colStarter} ${wieldCls}`.trim() });
-        cells.push({ text: formatIntOpt(cws.offense.extras.spellSlots), cls: colDivider });
+        pushCell(formatDmg(cws.offense.ar.spellPower, showSplit), [colStarter, wieldCls]);
+        pushCell(formatIntOpt(cws.offense.extras.spellSlots), colDivider);
     }
 
     // STATUS fields: 'BLE', 'BRN', 'PSN', 'SMI', 'IGN', 'FRO'
     if (showColGroups.has('STATUS')) {
         const status = cws.offense.status;
-        cells.push({ text: formatIntOpt(status.smite), cls: colStarter });
-        cells.push({ text: formatIntOpt(status.bleed), cls: '' });
-        cells.push({ text: formatIntOpt(status.burn), cls: '' });
-        cells.push({ text: formatIntOpt(status.frost), cls: '' });
-        cells.push({ text: formatIntOpt(status.ignite), cls: '' });
-        cells.push({ text: formatIntOpt(status.poison), cls: colDivider });
+        pushCell(formatIntOpt(status.smite), colStarter);
+        pushCell(formatIntOpt(status.bleed), '');
+        pushCell(formatIntOpt(status.burn), '');
+        pushCell(formatIntOpt(status.frost), '');
+        pushCell(formatIntOpt(status.ignite), '');
+        pushCell(formatIntOpt(status.poison), colDivider);
     }
 
     // MISC fields: 'WGT', 'PD', 'STAG', 'STAD', 'PVP'
     if (showColGroups.has('MISC')) {
         const ex = cws.offense.extras;
-        cells.push({ text: cws.weapon.weight.toFixed(1), cls: colStarter });
-        cells.push({ text: ex.poiseDamage.toFixed(0), cls: '' });
-        cells.push({ text: ex.staggerDamage.toFixed(1), cls: '' });
-        cells.push({ text: formatPercent(ex.staminaDamage), cls: '' });
-        cells.push({ text: formatPercent(ex.pvpMultiplier), cls: colDivider });
+        pushCell(cws.weapon.weight.toFixed(1), colStarter);
+        pushCell(ex.poiseDamage.toFixed(0), '');
+        pushCell(ex.staggerDamage.toFixed(1), '');
+        pushCell(formatPercent(ex.staminaDamage), '');
+        pushCell(formatPercent(ex.pvpMultiplier), colDivider);
     }
 
     // RUNES fields: 'RUN'
     if (showColGroups.has('RUNES')) {
-        cells.push({ text: cws.runes.join(',') || '-', cls: `${colStarter} ${colDivider}` });
+        pushCell(cws.runes.join(',') || '-', [colStarter, colDivider]);
     }
 
     // DEF fields: 'DP', 'DH', 'DF', 'DW', 'DS'
     if (showColGroups.has('DEF')) {
         const def = cws.defense;
-        cells.push({ text: formatPercent(def.physical), cls: `${colStarter} ${wieldCls}`.trim() });
-        cells.push({ text: formatPercent(def.fire), cls: wieldCls });
-        cells.push({ text: formatPercent(def.holy), cls: wieldCls });
-        cells.push({ text: formatPercent(def.wither), cls: wieldCls });
-        cells.push({ text: formatPercent(def.stability), cls: `${colDivider} ${wieldCls}`.trim() });
+        pushCell(formatPercent(def.physical), [colStarter, wieldCls]);
+        pushCell(formatPercent(def.fire), wieldCls);
+        pushCell(formatPercent(def.holy), wieldCls);
+        pushCell(formatPercent(def.wither), wieldCls);
+        pushCell(formatPercent(def.stability), [wieldCls, colDivider]);
     }
 
     // SCALE fields: 'SS', 'SA', 'SR', 'SI'
     if (showColGroups.has('SCALING')) {
         const sc = cws.offense.scaling;
-        cells.push({ text: sc.strGrade, cls: colStarter });
-        cells.push({ text: sc.agiGrade, cls: '' });
-        cells.push({ text: sc.radGrade, cls: '' });
-        cells.push({ text: sc.infGrade, cls: colDivider });
+        pushCell(sc.strGrade, colStarter);
+        pushCell(sc.agiGrade, '');
+        pushCell(sc.radGrade, '');
+        pushCell(sc.infGrade, colDivider);
     }
 
     // REQS fields: 'RS', 'RA', 'RR', 'RI'
     if (showColGroups.has('REQS')) {
         const reqs = cws.weapon.wieldReqs;
         const wield = cws.wieldability;
-        cells.push({
-            text: formatIntOpt(reqs.strength),
-            cls: wield.strength ? colStarter : `${colStarter} ${wieldCls}`.trim(),
-        });
-        cells.push({ text: formatIntOpt(reqs.agility), cls: wield.agility ? '' : wieldCls });
-        cells.push({ text: formatIntOpt(reqs.radiance), cls: wield.radiance ? '' : wieldCls });
-        cells.push({ text: formatIntOpt(reqs.inferno), cls: wield.inferno ? colDivider : `${wieldCls} ${colDivider}` });
+        pushCell(formatIntOpt(reqs.strength), wield.strength ? colStarter : [colStarter, wieldCls]);
+        pushCell(formatIntOpt(reqs.agility), wield.agility ? '' : wieldCls);
+        pushCell(formatIntOpt(reqs.radiance), wield.radiance ? '' : wieldCls);
+        pushCell(formatIntOpt(reqs.inferno), wield.inferno ? colDivider : [wieldCls, colDivider]);
     }
     return { cells, wieldable, weaponName: cws.weapon.name };
 }
