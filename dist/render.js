@@ -1,4 +1,6 @@
 import { epsilonFloor } from './calc.js';
+const LOCKED_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14.2" height="10" rx="2"/><path d="M 8 11 V 6 a 4 4 0 0 1 8 0 v 5"/><circle cx="12.1" cy="15.2" r="1.2" fill="currentColor" stroke="none"/><line x1="12.1" y1="16.1" x2="12.1" y2="17.6" stroke="currentColor" stroke-width="1.5"/></svg>`;
+const UNLOCKED_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14.2" height="10" rx="2"/><path d="M 8 11 V 5 a 4 4 0 0 1 7.9 -0.9"/><circle cx="12.1" cy="15.2" r="1.2" fill="currentColor" stroke="none"/><line x1="12.1" y1="16.1" x2="12.1" y2="17.6" stroke="currentColor" stroke-width="1.5"/></svg>`;
 /**
  * Replaces all special characters '&', '<', '>', '"', and "'" with HTML-safe sequences
  * @param s
@@ -74,21 +76,25 @@ export function getHeaderHtml(groups, sortKey, ascending) {
     });
     return `<tr>${superParts.join('')}</tr><tr>${headerParts.join('')}</tr>`;
 }
-export function getWeaponsHtml(weaponRows) {
+export function getWeaponsHtml(weaponRows, weaponFadeIn) {
     const tableParts = [];
     for (const row of weaponRows) {
         const rowParts = [];
         row.cells.forEach((cell, idx) => {
             if (idx === 0) {
-                // first column - link weapon text to FextraLife Wiki
+                // first column - show 'pin weapon' button and link weapon text to FextraLife Wiki
+                const action = row.pinned ? 'Unpin' : 'Pin';
+                const pinBtn = `<button class="lock${row.pinned ? ' pinned' : ''}" data-weapon="${escapeHtml(row.weaponKey)}" aria-label="${action} ${escapeHtml(row.weaponName)}" title="${action} weapon">${row.pinned ? LOCKED_SVG : UNLOCKED_SVG}</button>`;
                 const url = `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(row.weaponName)}`;
-                rowParts.push(`<td class="${cell.cls}"><a class="${cell.cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cell.text)}</a></td>`);
+                rowParts.push(`<td class="${cell.cls}">${pinBtn}<a class="${cell.cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cell.text)}</a></td>`);
             }
             else {
                 rowParts.push(`<td class="${cell.cls}">${escapeHtml(cell.text)}</td>`);
             }
         });
-        tableParts.push(`<tr>${rowParts.join('')}</tr>`);
+        const trClasses = `${row.pinned ? 'pinned' : ''} ${row.weaponKey === weaponFadeIn ? 'fade' : ''}`.trim();
+        const clsStr = trClasses ? ` class="${trClasses}"` : '';
+        tableParts.push(`<tr${clsStr}>${rowParts.join('')}</tr>`);
     }
     return tableParts.join('');
 }
@@ -191,7 +197,7 @@ export function getWeaponRow(cws, showColGroups, showSplit) {
         pushCell(formatIntOpt(reqs.radiance), wield.radiance ? '' : wieldCls);
         pushCell(formatIntOpt(reqs.inferno), wield.inferno ? colDivider : [wieldCls, colDivider]);
     }
-    return { cells, wieldable, weaponName: cws.weapon.name };
+    return { weaponName: cws.weapon.name, weaponKey: cws.weapon.key, wieldable, pinned: cws.pinned, cells };
 }
 const sortFunctions = {
     // INFO
@@ -238,13 +244,28 @@ const sortFunctions = {
     RR: (cws1, cws2) => cws1.weapon.wieldReqs.radiance - cws2.weapon.wieldReqs.radiance,
     RI: (cws1, cws2) => cws1.weapon.wieldReqs.inferno - cws2.weapon.wieldReqs.inferno,
 };
+/**
+ * Sort the CalculatedWeaponStats by the given sort key. Pinned weapons are separated from unpinned weapons.
+ * @param calculated
+ * @param sortKey
+ * @param ascending
+ * @returns
+ */
 export function sortCalculated(calculated, sortKey, ascending) {
+    const pinned = [];
+    const unpinned = [];
+    calculated.map((cws) => (cws.pinned ? pinned.push(cws) : unpinned.push(cws)));
     const fn = sortFunctions[sortKey];
     if (fn !== undefined) {
-        if (ascending)
-            calculated.sort(fn);
-        else
-            calculated.sort((a, b) => -fn(a, b));
+        if (ascending) {
+            pinned.sort(fn);
+            unpinned.sort(fn);
+        }
+        else {
+            pinned.sort((a, b) => -fn(a, b));
+            unpinned.sort((a, b) => -fn(a, b));
+        }
     }
+    return { pinned, unpinned };
 }
 //# sourceMappingURL=render.js.map

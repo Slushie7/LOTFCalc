@@ -352,15 +352,17 @@ export function calculateStats(
     weapon: Weapon,
     upgLevel: number,
     playerStats: PlayerStats,
-    gradeRanges: readonly StatScalarGradeRange[]
+    gradeRanges: readonly StatScalarGradeRange[],
+    pinnedWeapons: Set<string>
 ): CalculatedWeaponStats {
     upgLevel = Math.max(0, Math.min(weapon.maxUpgLevel, upgLevel));
     const wieldability = canWield(playerStats, weapon.wieldReqs);
     const offense = calculateOffense(weapon.offense, upgLevel, playerStats, wieldability, gradeRanges);
     const defense = calculateDefense(weapon.defense, upgLevel, wieldability.wieldable);
     const runeSockets = getRunes(weapon.runeSockets, upgLevel);
+    const pinned = pinnedWeapons.has(weapon.key);
 
-    return { weapon, offense, defense, runeSockets, upgLevel, playerStats, wieldability };
+    return { weapon, offense, defense, runeSockets, upgLevel, playerStats, wieldability, pinned };
 }
 
 export function calculatePlayerStats(playerStats: PlayerStats, curves: Map<string, Curve>): CalculatedPlayerStats {

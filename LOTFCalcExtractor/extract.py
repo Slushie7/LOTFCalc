@@ -564,9 +564,29 @@ class LOTFExtractor:
 
     def _runes_test(self, runes: tuple[Rune, ...]) -> None:
         print('Weapon Rune Buffs:')
+        wrb: list[tuple[str, str, str, str]] = []
         for rune in runes:
             for eff in rune.weapon_buff.effects:
-                eff.scaling_type
-                print(f'{eff.attribute}')
+                op = '+' if eff.scaling_type == 'Additive' else '*'
+                val = str(int(eff.value)) if float.is_integer(eff.value) else str(eff.value)
+                wrb.append((eff.attribute, op, val, rune.weapon_buff_target))
+
+        wrb.sort(key=lambda i: i[0])
+        for eff, op, val, wbt in wrb:
+            if op == '+' and val.startswith('-'):
+                op = ''
+            print(f'{eff}{op}{val} -> {wbt}')
 
         print('\nArmor Rune Buffs:')
+        arb: list[tuple[str, str, str, str]] = []
+        for rune in runes:
+            for eff in rune.armor_buff.effects:
+                op = '+' if eff.scaling_type == 'Additive' else '*'
+                val = str(int(eff.value)) if float.is_integer(eff.value) else str(eff.value)
+                arb.append((eff.attribute, op, val, rune.weapon_buff_target))
+
+        arb.sort(key=lambda i: i[0])
+        for eff, op, val, wbt in arb:
+            if op == '+' and val.startswith('-'):
+                op = ''
+            print(f'{eff}{op}{val} -> {wbt}')

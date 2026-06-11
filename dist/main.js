@@ -24,6 +24,7 @@ const state = {
     showUnwieldable: true,
     showSplit: false,
     saveSettings: true,
+    pinnedWeapons: new Set(),
 };
 // =========================================
 // UI INITIALIZATION
@@ -98,6 +99,7 @@ function wireInputs() {
     }
     // table header sorting
     mustGet('weapons-header').addEventListener('click', tableHeaderClick);
+    mustGet('weapons-body').addEventListener('click', tableBodyClick);
 }
 // =========================================
 // STORAGE - STORE AND RETRIEVE SETTINGS
@@ -178,6 +180,9 @@ function loadState() {
     if (!(typeof data.showSplit === 'boolean'))
         return;
     const showSplit = data.showSplit;
+    if (!Array.isArray(data.pinnedWeapons))
+        return;
+    const pinnedWeapons = new Set(data.pinnedWeapons.filter((v) => typeof v === 'string'));
     // all data read successfully - assign values
     state.playerStats = playerStats;
     state.upgLevel = upgLevel;
@@ -188,6 +193,7 @@ function loadState() {
     state.showUnwieldable = showUnwieldable;
     state.showSplit = showSplit;
     state.saveSettings = saveSettings;
+    state.pinnedWeapons = pinnedWeapons;
 }
 /**
  * Save the current AppState to localStorage
@@ -206,6 +212,7 @@ function saveState() {
             showUnwieldable: state.showUnwieldable,
             showSplit: state.showSplit,
             saveSettings: state.saveSettings,
+            pinnedWeapons: [...state.pinnedWeapons],
         };
     }
     else {
@@ -234,7 +241,7 @@ function renderHeader() {
         elHeader.innerHTML = getHeaderHtml(groups, state.sortKey, state.ascending);
     }
 }
-function renderWeapons() {
+function renderWeapons(weaponFadeIn = null) {
     // update the player's derived stats
     const derivedStats = calculatePlayerStats(state.playerStats, curves);
     for (const el of document.getElementsByClassName('derived-val')) {
@@ -251,15 +258,16 @@ function renderWeapons() {
     const elBody = document.getElementById('weapons-body');
     if (elBody) {
         const showWeaps = weapons.filter((weap) => state.selectedClasses.has(weap.className));
-        let calcStats = showWeaps.map((weap) => calculateStats(weap, state.upgLevel, state.playerStats, gradeRanges));
+        let calcStats = showWeaps.map((weap) => calculateStats(weap, state.upgLevel, state.playerStats, gradeRanges, state.pinnedWeapons));
         if (!state.showUnwieldable)
             // remove any unwieldable weapons
             calcStats = calcStats.filter((ws) => ws.wieldability.wieldable);
         // sort calculated weapon stats by current sortKey
-        sortCalculated(calcStats, state.sortKey, state.ascending);
+        const { pinned, unpinned } = sortCalculated(calcStats, state.sortKey, state.ascending);
+        calcStats = [...pinned, ...unpinned]; // pinned weapons go at front of list
         // display the weapon rows
         const rows = calcStats.map((cs) => getWeaponRow(cs, state.showColGroups, state.showSplit));
-        elBody.innerHTML = getWeaponsHtml(rows);
+        elBody.innerHTML = getWeaponsHtml(rows, weaponFadeIn);
     }
 }
 // =========================================
@@ -346,6 +354,14 @@ function setSorting(colKey) {
     renderHeader();
     renderWeapons();
 }
+function setPinned(weaponKey) {
+    if (state.pinnedWeapons.has(weaponKey))
+        state.pinnedWeapons.delete(weaponKey);
+    else
+        state.pinnedWeapons.add(weaponKey);
+    saveState();
+    renderWeapons(weaponKey); // render weapons with the pinned/unpinned weapon transitioning into view
+}
 function tableHeaderClick(e) {
     if (!(e.target instanceof Element))
         return;
@@ -353,9 +369,16 @@ function tableHeaderClick(e) {
     if (el !== null && el.dataset.colKey)
         setSorting(el.dataset.colKey);
 }
+function tableBodyClick(e) {
+    if (!(e.target instanceof Element))
+        return;
+    const el = e.target.closest('button.lock');
+    if (el !== null && el.dataset.weapon)
+        setPinned(el.dataset.weapon);
+}
 function createSmartToggles() {
     const melee = { add: ['AR'], remove: ['MAGIC'], indiff: ['STATUS', 'DEF'] };
-    const bows = { add: ['AR'], remove: ['MAGIC', 'DEF'], indiff: ['STATUS'] };
+    const ranged = { add: ['AR'], remove: ['MAGIC', 'DEF'], indiff: ['STATUS'] };
     return {
         Axes: melee,
         Daggers: melee,
@@ -371,8 +394,8 @@ function createSmartToggles() {
         Spears: melee,
         Catalysts: { add: ['MAGIC'], remove: ['AR', 'STATUS', 'DEF'], indiff: [] },
         Shields: { add: ['DEF'], remove: ['AR', 'MAGIC', 'STATUS'], indiff: [] },
-        Bows: bows,
-        Crossbows: bows,
+        Bows: ranged,
+        Crossbows: ranged,
     };
 }
 const SMART_TOGGLES = createSmartToggles();

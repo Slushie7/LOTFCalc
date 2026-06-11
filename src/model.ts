@@ -278,6 +278,7 @@ export interface CalculatedWeaponStats {
     readonly upgLevel: number;
     readonly playerStats: PlayerStats;
     readonly wieldability: CalculatedCanWield;
+    readonly pinned: boolean;
 }
 
 export interface CalculatedPlayerStats {

@@ -30,6 +30,23 @@ interface AppState {
     showUnwieldable: boolean;
     showSplit: boolean;
     saveSettings: boolean;
+    pinnedWeapons: Set<string>;
+}
+interface ExportedAppState {
+    v: number;
+    playerStats: PlayerStats;
+    upgLevel: number;
+    selectedClasses: WeaponClass[];
+    sortKey: HeaderKey;
+    ascending: boolean;
+    showColGroups: SuperheaderKey[];
+    showUnwieldable: boolean;
+    showSplit: boolean;
+    saveSettings: boolean;
+    pinnedWeapons: string[];
+}
+interface ExportedNoSave {
+    saveSettings: boolean;
 }
 const state: AppState = {
     // defaults
@@ -42,6 +59,7 @@ const state: AppState = {
     showUnwieldable: true,
     showSplit: false,
     saveSettings: true,
+    pinnedWeapons: new Set(),
 };
 
 // =========================================
@@ -122,6 +140,7 @@ function wireInputs(): void {
 
     // table header sorting
     mustGet('weapons-header').addEventListener('click', tableHeaderClick);
+    mustGet('weapons-body').addEventListener('click', tableBodyClick);
 }
 
 // =========================================
@@ -202,6 +221,9 @@ function loadState(): void {
     if (!(typeof data.showSplit === 'boolean')) return;
     const showSplit = data.showSplit;
 
+    if (!Array.isArray(data.pinnedWeapons)) return;
+    const pinnedWeapons = new Set(data.pinnedWeapons.filter((v) => typeof v === 'string'));
+
     // all data read successfully - assign values
     state.playerStats = playerStats;
     state.upgLevel = upgLevel;
@@ -212,13 +234,14 @@ function loadState(): void {
     state.showUnwieldable = showUnwieldable;
     state.showSplit = showSplit;
     state.saveSettings = saveSettings;
+    state.pinnedWeapons = pinnedWeapons;
 }
 
 /**
  * Save the current AppState to localStorage
  */
 function saveState(): void {
-    let data;
+    let data: ExportedAppState | ExportedNoSave;
     if (state.saveSettings) {
         data = {
             v: STORAGE_VER,
@@ -231,10 +254,11 @@ function saveState(): void {
             showUnwieldable: state.showUnwieldable,
             showSplit: state.showSplit,
             saveSettings: state.saveSettings,
-        };
+            pinnedWeapons: [...state.pinnedWeapons],
+        } as ExportedAppState;
     } else {
         // user doesn't want to cache their settings - just store a flag
-        data = { saveSettings: false };
+        data = { saveSettings: false } as ExportedNoSave;
     }
 
     try {
@@ -261,7 +285,7 @@ function renderHeader(): void {
     }
 }
 
-function renderWeapons(): void {
+function renderWeapons(weaponFadeIn: string | null = null): void {
     // update the player's derived stats
     const derivedStats = calculatePlayerStats(state.playerStats, curves);
     for (const el of document.getElementsByClassName('derived-val')) {
@@ -277,15 +301,18 @@ function renderWeapons(): void {
     const elBody = document.getElementById('weapons-body');
     if (elBody) {
         const showWeaps: Weapon[] = weapons.filter((weap) => state.selectedClasses.has(weap.className));
-        let calcStats = showWeaps.map((weap) => calculateStats(weap, state.upgLevel, state.playerStats, gradeRanges));
+        let calcStats = showWeaps.map((weap) =>
+            calculateStats(weap, state.upgLevel, state.playerStats, gradeRanges, state.pinnedWeapons)
+        );
         if (!state.showUnwieldable)
             // remove any unwieldable weapons
             calcStats = calcStats.filter((ws) => ws.wieldability.wieldable);
         // sort calculated weapon stats by current sortKey
-        sortCalculated(calcStats, state.sortKey, state.ascending);
+        const { pinned, unpinned } = sortCalculated(calcStats, state.sortKey, state.ascending);
+        calcStats = [...pinned, ...unpinned]; // pinned weapons go at front of list
         // display the weapon rows
         const rows = calcStats.map((cs) => getWeaponRow(cs, state.showColGroups, state.showSplit));
-        elBody.innerHTML = getWeaponsHtml(rows);
+        elBody.innerHTML = getWeaponsHtml(rows, weaponFadeIn);
     }
 }
 
@@ -381,10 +408,24 @@ function setSorting(colKey: HeaderKey): void {
     renderWeapons();
 }
 
+function setPinned(weaponKey: string): void {
+    if (state.pinnedWeapons.has(weaponKey)) state.pinnedWeapons.delete(weaponKey);
+    else state.pinnedWeapons.add(weaponKey);
+
+    saveState();
+    renderWeapons(weaponKey); // render weapons with the pinned/unpinned weapon transitioning into view
+}
+
 function tableHeaderClick(e: MouseEvent): void {
     if (!(e.target instanceof Element)) return;
     const el = e.target.closest<HTMLElement>('th.sortable');
     if (el !== null && el.dataset.colKey) setSorting(el.dataset.colKey as HeaderKey);
+}
+
+function tableBodyClick(e: MouseEvent): void {
+    if (!(e.target instanceof Element)) return;
+    const el = e.target.closest<HTMLButtonElement>('button.lock');
+    if (el !== null && el.dataset.weapon) setPinned(el.dataset.weapon);
 }
 
 // =========================================
@@ -398,7 +439,7 @@ interface SmartToggleColGroup {
 }
 function createSmartToggles(): Record<WeaponClass, SmartToggleColGroup> {
     const melee: SmartToggleColGroup = { add: ['AR'], remove: ['MAGIC'], indiff: ['STATUS', 'DEF'] };
-    const bows: SmartToggleColGroup = { add: ['AR'], remove: ['MAGIC', 'DEF'], indiff: ['STATUS'] };
+    const ranged: SmartToggleColGroup = { add: ['AR'], remove: ['MAGIC', 'DEF'], indiff: ['STATUS'] };
 
     return {
         Axes: melee,
@@ -415,8 +456,8 @@ function createSmartToggles(): Record<WeaponClass, SmartToggleColGroup> {
         Spears: melee,
         Catalysts: { add: ['MAGIC'], remove: ['AR', 'STATUS', 'DEF'], indiff: [] },
         Shields: { add: ['DEF'], remove: ['AR', 'MAGIC', 'STATUS'], indiff: [] },
-        Bows: bows,
-        Crossbows: bows,
+        Bows: ranged,
+        Crossbows: ranged,
     };
 }
 
