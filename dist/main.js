@@ -257,7 +257,7 @@ function renderWeapons(weaponFadeIn = null) {
     // update the weapons table
     const elBody = document.getElementById('weapons-body');
     if (elBody) {
-        const showWeaps = weapons.filter((weap) => state.selectedClasses.has(weap.className));
+        const showWeaps = weapons.filter((weap) => state.selectedClasses.has(weap.className) || state.pinnedWeapons.has(weap.key));
         let calcStats = showWeaps.map((weap) => calculateStats(weap, state.upgLevel, state.playerStats, gradeRanges, state.pinnedWeapons));
         if (!state.showUnwieldable)
             // remove any unwieldable weapons

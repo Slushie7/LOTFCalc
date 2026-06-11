@@ -139,6 +139,13 @@ function formatPercent(val: number): string {
     return `${epsilonFloor(val * 100)}%`;
 }
 
+/**
+ * 
+ * @param cws 
+ * @param showColGroups 
+ * @param showSplit 
+ * @returns 
+ */
 export function getWeaponRow(
     cws: CalculatedWeaponStats,
     showColGroups: Set<SuperheaderKey>,
@@ -287,7 +294,8 @@ const sortFunctions: Record<HeaderKey, SortFunction> = {
 };
 
 /**
- * Sort the CalculatedWeaponStats by the given sort key. Pinned weapons are separated from unpinned weapons.
+ * Sort the CalculatedWeaponStats by the given sort key. Pinned weapons are separated from unpinned weapons,
+ * and then both lists are sorted and returned.
  * @param calculated
  * @param sortKey
  * @param ascending

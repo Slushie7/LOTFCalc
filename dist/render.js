@@ -114,6 +114,13 @@ function formatIntOpt(val) {
 function formatPercent(val) {
     return `${epsilonFloor(val * 100)}%`;
 }
+/**
+ *
+ * @param cws
+ * @param showColGroups
+ * @param showSplit
+ * @returns
+ */
 export function getWeaponRow(cws, showColGroups, showSplit) {
     function pushCell(text, classes) {
         if (typeof classes === 'string')
@@ -245,7 +252,8 @@ const sortFunctions = {
     RI: (cws1, cws2) => cws1.weapon.wieldReqs.inferno - cws2.weapon.wieldReqs.inferno,
 };
 /**
- * Sort the CalculatedWeaponStats by the given sort key. Pinned weapons are separated from unpinned weapons.
+ * Sort the CalculatedWeaponStats by the given sort key. Pinned weapons are separated from unpinned weapons,
+ * and then both lists are sorted and returned.
  * @param calculated
  * @param sortKey
  * @param ascending

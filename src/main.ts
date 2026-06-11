@@ -300,7 +300,9 @@ function renderWeapons(weaponFadeIn: string | null = null): void {
     // update the weapons table
     const elBody = document.getElementById('weapons-body');
     if (elBody) {
-        const showWeaps: Weapon[] = weapons.filter((weap) => state.selectedClasses.has(weap.className));
+        const showWeaps: Weapon[] = weapons.filter(
+            (weap) => state.selectedClasses.has(weap.className) || state.pinnedWeapons.has(weap.key)
+        );
         let calcStats = showWeaps.map((weap) =>
             calculateStats(weap, state.upgLevel, state.playerStats, gradeRanges, state.pinnedWeapons)
         );
