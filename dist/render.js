@@ -163,7 +163,7 @@ export function getWeaponRow(cws, showColGroups, showSplit) {
     }
     // RUNES fields: 'RUN'
     if (showColGroups.has('RUNES')) {
-        pushCell(cws.runes.join(',') || '-', [colStarter, colDivider]);
+        pushCell(cws.runeSockets.join(',') || '-', [colStarter, colDivider]);
     }
     // DEF fields: 'DP', 'DH', 'DF', 'DW', 'DS'
     if (showColGroups.has('DEF')) {
@@ -220,7 +220,7 @@ const sortFunctions = {
     STAD: (cws1, cws2) => cws1.offense.extras.staminaDamage - cws2.offense.extras.staminaDamage,
     PVP: (cws1, cws2) => cws1.offense.extras.pvpMultiplier - cws2.offense.extras.pvpMultiplier,
     // RUNES
-    RUN: (cws1, cws2) => cws1.runes.join().localeCompare(cws2.runes.join()),
+    RUN: (cws1, cws2) => cws1.runeSockets.join().localeCompare(cws2.runeSockets.join()),
     // DEF
     DP: (cws1, cws2) => cws1.defense.physical - cws2.defense.physical,
     DH: (cws1, cws2) => cws1.defense.holy - cws2.defense.holy,

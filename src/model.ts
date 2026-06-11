@@ -1,4 +1,5 @@
 export type StatKey = 'S' | 'A' | 'R' | 'I';
+export type RuneType = 'S' | 'A' | 'R' | 'I' | '*';
 export type HeaderKey =
     // basic
     | 'WEAP'
@@ -68,6 +69,7 @@ export type WeaponClass =
 
 export type InterpMode = 'RCIM_Linear';
 export type ScalingType = 'Additive' | 'Multiplicative';
+export type BuffTarget = 'Character' | 'Equipment';
 
 export interface Curve {
     readonly key: string;
@@ -112,8 +114,8 @@ export interface PlayerStats {
     readonly inferno: number;
 }
 
-export interface WeaponRunes {
-    readonly runeSockets: string[];
+export interface WeaponRuneSockets {
+    readonly runeSockets: RuneType[];
     readonly numByLevel: Curve | null;
 }
 
@@ -163,9 +165,30 @@ export interface Weapon {
     readonly weight: number;
     readonly maxUpgLevel: number;
     readonly wieldReqs: PlayerStats;
-    readonly runes: WeaponRunes;
+    readonly runeSockets: WeaponRuneSockets;
     readonly offense: WeaponOffense;
     readonly defense: WeaponDefense;
+}
+
+export interface Effect {
+    readonly attribute: string;
+    readonly scalingType: ScalingType;
+    readonly value: number;
+}
+
+export interface Buff {
+    readonly key: string;
+    readonly effects: readonly Effect[];
+}
+
+export interface Rune {
+    readonly key: string;
+    readonly name: string;
+    readonly type: RuneType;
+    readonly weaponBuff: Buff;
+    readonly weaponBuffTarget: BuffTarget;
+    readonly armorBuff: Buff;
+    readonly armorBuffTarget: BuffTarget;
 }
 
 // calculated Weapon values
@@ -251,7 +274,7 @@ export interface CalculatedWeaponStats {
     readonly weapon: Weapon;
     readonly offense: CalculatedWeaponOffense;
     readonly defense: CalculatedWeaponDefense;
-    readonly runes: string[];
+    readonly runeSockets: string[];
     readonly upgLevel: number;
     readonly playerStats: PlayerStats;
     readonly wieldability: CalculatedCanWield;

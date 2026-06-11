@@ -11,7 +11,7 @@ const htmlTogglesMapping = {
     REMEMBER: 'saveSettings',
 };
 // main app variables
-const { weapons, gradeRanges, curves } = await loadJSONData();
+const { weapons, gradeRanges, curves, runes } = await loadJSONData();
 const loadedWeaponClasses = [...new Set(weapons.map((w) => w.className))].sort();
 const state = {
     // defaults

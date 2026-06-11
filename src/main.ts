@@ -18,7 +18,7 @@ const htmlTogglesMapping: Record<SettingKey, BooleanKeys<AppState>> = {
 };
 
 // main app variables
-const { weapons, gradeRanges, curves } = await loadJSONData();
+const { weapons, gradeRanges, curves, runes } = await loadJSONData();
 const loadedWeaponClasses: string[] = [...new Set(weapons.map((w) => w.className))].sort();
 interface AppState {
     playerStats: PlayerStats;

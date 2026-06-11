@@ -114,9 +114,32 @@ function toWeapon(r, curves, baseDamages) {
         weight: r.weight,
         maxUpgLevel: r.max_upg_level,
         wieldReqs: toPlayerStats(r.wield_reqs),
-        runes: toWeaponRunes(r.runes, curves),
+        runeSockets: toWeaponRunes(r.rune_sockets, curves),
         offense: toWeaponOffense(r.offense, curves, baseDamages),
         defense: toWeaponDefense(r.defense, curves),
+    };
+}
+function toEffect(r) {
+    return { attribute: r.attribute, scalingType: r.scaling_type, value: r.value };
+}
+function toBuff(r) {
+    return { key: r.key, effects: r.effects.map((rEff) => toEffect(rEff)) };
+}
+function toRune(r, buffs) {
+    const weaponBuff = buffs.get(r.weapon_buff_key);
+    if (weaponBuff === undefined)
+        throw new Error(`Failed to retrieve Buff with key: ${r.weapon_buff_key}`);
+    const armorBuff = buffs.get(r.armor_buff_key);
+    if (armorBuff === undefined)
+        throw new Error(`Failed to retrieve Buff with key: ${r.armor_buff_key}`);
+    return {
+        key: r.key,
+        name: r.name,
+        type: r.type,
+        weaponBuff,
+        weaponBuffTarget: r.weapon_buff_target,
+        armorBuff,
+        armorBuffTarget: r.armor_buff_target,
     };
 }
 /**
@@ -138,8 +161,14 @@ export async function loadJSONData() {
         const baseDamage = toBaseDamage(rawBaseDamage, curves);
         baseDamages.set(baseDamage.key, baseDamage);
     }
+    const buffs = new Map();
+    for (const rawBuff of data.buffs) {
+        const buff = toBuff(rawBuff);
+        buffs.set(buff.key, buff);
+    }
     const gradeRanges = data.stat_grade_ranges.map(toStatScalarGradeRange);
     const weapons = data.weapons.map((w) => toWeapon(w, curves, baseDamages));
-    return { weapons, gradeRanges, curves };
+    const runes = data.runes.map((r) => toRune(r, buffs));
+    return { weapons, gradeRanges, curves, runes };
 }
 //# sourceMappingURL=load.js.map

@@ -5,6 +5,7 @@ from functools import lru_cache
 from typing import Any, Literal, Self
 
 STAT = Literal['S', 'A', 'R', 'I']
+RUNE_TYPE = Literal['S', 'A', 'R', 'I', '*']
 
 
 def epsilon_floor(x: float) -> int:
@@ -249,9 +250,77 @@ class PlayerStats:
         return cls(d['strength'], d['agility'], d['endurance'], d['vitality'], d['radiance'], d['inferno'])
 
 
+@dataclass(frozen=True)
+class Effect:
+    attribute: str
+    scaling_type: str
+    value: float
+
+    def to_dict(self) -> dict[str, Any]:
+        return {'attribute': self.attribute, 'scaling_type': self.scaling_type, 'value': self.value}
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> Self:
+        return cls(d['attribute'], d['scaling_type'], d['value'])
+
+
+@dataclass(frozen=True)
+class Buff:
+    key: str
+    effects: tuple[Effect, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {'key': self.key, 'effects': [effect.to_dict() for effect in self.effects]}
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> Self:
+        return cls(d['key'], tuple(Effect.from_dict(ed) for ed in d['effects']))
+
+
+@dataclass(frozen=True)
+class Rune:
+    key: str
+    name: str
+    type: RUNE_TYPE
+    weapon_buff: Buff
+    weapon_buff_target: Literal['Character', 'Equipment']
+    armor_buff: Buff
+    armor_buff_target: Literal['Character', 'Equipment']
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'key': self.key,
+            'name': self.name,
+            'type': self.type,
+            'weapon_buff_key': self.weapon_buff.key,
+            'weapon_buff_target': self.weapon_buff_target,
+            'armor_buff_key': self.armor_buff.key,
+            'armor_buff_target': self.armor_buff_target,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any], buffs_d: dict[str, Buff]) -> Self:
+        return cls(
+            d['key'],
+            d['name'],
+            d['type'],
+            buffs_d[d['weapon_buff_key']],
+            d['weapon_buff_target'],
+            buffs_d[d['armor_buff_key']],
+            d['armor_buff_target'],
+        )
+
+
 # ================================
 # Ephemeral Primitives
 # ================================
+
+
+@dataclass(frozen=True)
+class ItemGameMeta:
+    class_name: str
+    localization_key: str
+    is_base_class: bool
 
 
 @dataclass(frozen=True)
@@ -283,24 +352,12 @@ class DamageSplit:
 
 
 @dataclass(frozen=True)
-class ItemGameMeta:
-    class_name: str
-    localization_key: str
-    is_base_class: bool
-
-
-# ================================
-# Weapon-Specific Things
-# ================================
-
-
-@dataclass(frozen=True)
-class WeaponRunes:
-    rune_sockets: tuple[str, ...]
+class WeaponRuneSockets:
+    rune_sockets: tuple[RUNE_TYPE, ...]
     num_by_level: Curve | None
 
     @lru_cache(maxsize=1024)
-    def get_sockets(self, upgrade_level: int) -> tuple[str, ...]:
+    def get_sockets(self, upgrade_level: int) -> tuple[RUNE_TYPE, ...]:
         if not self.num_by_level:
             return ()
         num_runes = epsilon_floor(self.num_by_level.interpolate(upgrade_level))
@@ -548,7 +605,7 @@ class Weapon:
     weight: float
     max_upg_level: int
     wield_reqs: PlayerStats
-    runes: WeaponRunes
+    rune_sockets: WeaponRuneSockets
     offense: WeaponOffense
     defense: WeaponDefense
     _stat_grade_ranges: tuple[StatScalarGradeRange, ...]
@@ -558,7 +615,7 @@ class Weapon:
         upgrade_level = min(upgrade_level, self.max_upg_level)  # clamp upgrade level <= max upgrade level
         offense_values = self.offense.calculate(upgrade_level, player_stats, self.wield_reqs, self._stat_grade_ranges)
         defense_values = self.defense.calculate(upgrade_level)
-        rune_sockets = self.runes.get_sockets(upgrade_level)
+        rune_sockets = self.rune_sockets.get_sockets(upgrade_level)
 
         return CalculatedWeaponStats(self, offense_values, defense_values, rune_sockets, upgrade_level, player_stats)
 
@@ -570,7 +627,7 @@ class Weapon:
             'weight': self.weight,
             'max_upg_level': self.max_upg_level,
             'wield_reqs': self.wield_reqs.to_dict(),
-            'runes': self.runes.to_dict(),
+            'rune_sockets': self.rune_sockets.to_dict(),
             'offense': self.offense.to_dict(),
             'defense': self.defense.to_dict(),
         }
@@ -590,7 +647,7 @@ class Weapon:
             d['weight'],
             d['max_upg_level'],
             PlayerStats.from_dict(d['wield_reqs']),
-            WeaponRunes.from_dict(d['runes'], curves_d),
+            WeaponRuneSockets.from_dict(d['rune_sockets'], curves_d),
             WeaponOffense.from_dict(d['offense'], curves_d, base_damages_d),
             WeaponDefense.from_dict(d['defense'], curves_d),
             grade_ranges,

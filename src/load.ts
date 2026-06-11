@@ -12,15 +12,21 @@ import type {
     WeaponDamageStatus,
     WeaponDefense,
     WeaponOffense,
-    WeaponRunes,
+    WeaponRuneSockets,
     WeaponClass,
+    RuneType,
+    ScalingType,
+    BuffTarget,
+    Effect,
+    Buff,
+    Rune,
 } from './model.js';
 
 // interfaces matching JSON structures
 interface RawCurve {
     key: string;
     _interp_mode: string;
-    _points: [number, number][];
+    _points: readonly [number, number][];
 }
 interface RawLeveledValue {
     base: number;
@@ -54,8 +60,8 @@ interface RawPlayerStats {
     radiance: number;
     inferno: number;
 }
-interface RawWeaponRunes {
-    rune_sockets: string[];
+interface RawWeaponRuneSockets {
+    rune_sockets: readonly RuneType[];
     curve_key: string | null;
 }
 interface RawWeaponDamageAR {
@@ -99,17 +105,37 @@ interface RawWeapon {
     weight: number;
     max_upg_level: number;
     wield_reqs: RawPlayerStats;
-    runes: RawWeaponRunes;
+    rune_sockets: RawWeaponRuneSockets;
     offense: RawWeaponOffense;
     defense: RawWeaponDefense;
+}
+interface RawEffect {
+    attribute: string;
+    scaling_type: ScalingType;
+    value: number;
+}
+interface RawBuff {
+    key: string;
+    effects: RawEffect[];
+}
+interface RawRune {
+    key: string;
+    name: string;
+    type: RuneType;
+    weapon_buff_key: string;
+    weapon_buff_target: BuffTarget;
+    armor_buff_key: string;
+    armor_buff_target: BuffTarget;
 }
 
 // weapons.json data interface
 interface RawWeaponsJSONData {
-    curves: RawCurve[];
-    base_damages: RawBaseDamage[];
-    stat_grade_ranges: RawStatScalarGradeRange[];
-    weapons: RawWeapon[];
+    curves: readonly RawCurve[];
+    base_damages: readonly RawBaseDamage[];
+    stat_grade_ranges: readonly RawStatScalarGradeRange[];
+    weapons: readonly RawWeapon[];
+    buffs: readonly RawBuff[];
+    runes: readonly RawRune[];
 }
 
 // helpers
@@ -181,9 +207,9 @@ function toPlayerStats(r: RawPlayerStats): PlayerStats {
     };
 }
 
-function toWeaponRunes(r: RawWeaponRunes, curves: Map<string, Curve>): WeaponRunes {
+function toWeaponRunes(r: RawWeaponRuneSockets, curves: Map<string, Curve>): WeaponRuneSockets {
     return {
-        runeSockets: r.rune_sockets,
+        runeSockets: r.rune_sockets as RuneType[],
         numByLevel: getCurveOrNull(r.curve_key, curves),
     };
 }
@@ -253,9 +279,34 @@ function toWeapon(r: RawWeapon, curves: Map<string, Curve>, baseDamages: Map<str
         weight: r.weight,
         maxUpgLevel: r.max_upg_level,
         wieldReqs: toPlayerStats(r.wield_reqs),
-        runes: toWeaponRunes(r.runes, curves),
+        runeSockets: toWeaponRunes(r.rune_sockets, curves),
         offense: toWeaponOffense(r.offense, curves, baseDamages),
         defense: toWeaponDefense(r.defense, curves),
+    };
+}
+
+function toEffect(r: RawEffect): Effect {
+    return { attribute: r.attribute, scalingType: r.scaling_type, value: r.value };
+}
+
+function toBuff(r: RawBuff): Buff {
+    return { key: r.key, effects: r.effects.map((rEff) => toEffect(rEff)) };
+}
+
+function toRune(r: RawRune, buffs: Map<string, Buff>): Rune {
+    const weaponBuff = buffs.get(r.weapon_buff_key);
+    if (weaponBuff === undefined) throw new Error(`Failed to retrieve Buff with key: ${r.weapon_buff_key}`);
+    const armorBuff = buffs.get(r.armor_buff_key);
+    if (armorBuff === undefined) throw new Error(`Failed to retrieve Buff with key: ${r.armor_buff_key}`);
+
+    return {
+        key: r.key,
+        name: r.name,
+        type: r.type,
+        weaponBuff,
+        weaponBuffTarget: r.weapon_buff_target,
+        armorBuff,
+        armorBuffTarget: r.armor_buff_target,
     };
 }
 
@@ -266,7 +317,8 @@ function toWeapon(r: RawWeapon, curves: Map<string, Curve>, baseDamages: Map<str
 export async function loadJSONData(): Promise<{
     weapons: Weapon[];
     gradeRanges: StatScalarGradeRange[];
-    curves: Map<string, Curve>
+    curves: Map<string, Curve>;
+    runes: Rune[];
 }> {
     const res = await fetch('data/weapons.json');
     if (!res.ok) throw new Error(`Failed to load weapons.json: ${res.status}`);
@@ -284,8 +336,15 @@ export async function loadJSONData(): Promise<{
         baseDamages.set(baseDamage.key, baseDamage);
     }
 
+    const buffs = new Map<string, Buff>();
+    for (const rawBuff of data.buffs) {
+        const buff = toBuff(rawBuff);
+        buffs.set(buff.key, buff);
+    }
+
     const gradeRanges = data.stat_grade_ranges.map(toStatScalarGradeRange);
     const weapons = data.weapons.map((w) => toWeapon(w, curves, baseDamages));
+    const runes = data.runes.map((r) => toRune(r, buffs));
 
-    return { weapons, gradeRanges, curves };
+    return { weapons, gradeRanges, curves, runes };
 }

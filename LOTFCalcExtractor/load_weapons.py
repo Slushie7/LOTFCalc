@@ -1,10 +1,10 @@
 import json
 from pathlib import Path
 
-from .classes import BaseDamage, Curve, StatScalarGradeRange, Weapon
+from .classes import BaseDamage, Curve, StatScalarGradeRange, Weapon, Buff, Rune
 
 
-def load_weapons() -> tuple[tuple[Weapon, ...], dict[str, Curve]]:
+def load_json_data() -> tuple[tuple[Weapon, ...], dict[str, Curve], tuple[Rune, ...]]:
     """Read the weapons data from JSON into a tuple of Weapons usable by LOTFCalc."""
 
     json_path = (Path(__file__).parent / '../data/weapons.json').resolve()
@@ -17,10 +17,10 @@ def load_weapons() -> tuple[tuple[Weapon, ...], dict[str, Curve]]:
         curve = Curve.from_dict(curve_d)
         curves_d[curve.key] = curve
 
-    base_damages: dict[str, BaseDamage] = {}
+    base_damages_d: dict[str, BaseDamage] = {}
     for base_damage_d in data_d['base_damages']:
         base_damage = BaseDamage.from_dict(base_damage_d, curves_d)
-        base_damages[base_damage.key] = base_damage
+        base_damages_d[base_damage.key] = base_damage
 
     grade_ranges: list[StatScalarGradeRange] = []
     for grade_range_d in data_d['stat_grade_ranges']:
@@ -29,7 +29,17 @@ def load_weapons() -> tuple[tuple[Weapon, ...], dict[str, Curve]]:
 
     weapons: list[Weapon] = []
     for weapon_d in data_d['weapons']:
-        weapon = Weapon.from_dict(weapon_d, curves_d, base_damages, tuple(grade_ranges))
+        weapon = Weapon.from_dict(weapon_d, curves_d, base_damages_d, tuple(grade_ranges))
         weapons.append(weapon)
 
-    return tuple(weapons), curves_d
+    buffs_d: dict[str, Buff] = {}
+    for buff_d in data_d['buffs']:
+        buff = Buff.from_dict(buff_d)
+        buffs_d[buff.key] = buff
+
+    runes: list[Rune] = []
+    for rune_d in data_d['runes']:
+        rune = Rune.from_dict(rune_d, buffs_d)
+        runes.append(rune)
+
+    return tuple(weapons), curves_d, tuple(runes)

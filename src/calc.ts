@@ -9,7 +9,7 @@ import type {
     StatScaledDamage,
     Weapon,
     CalculatedCanWield,
-    WeaponRunes,
+    WeaponRuneSockets,
     CalculatedWeaponAR,
     CalculatedWeaponDefense,
     CalculatedWeaponExtras,
@@ -104,16 +104,16 @@ export function getValue(lv: LeveledValue, level: number): number {
 
 /**
  * Returns an Array of the rune sockets available for the weapon's given upgrade level
- * @param weaponRunes
+ * @param weaponRuneSockets
  * @param upg_level
  * @returns
  */
-export function getRunes(weaponRunes: WeaponRunes, upg_level: number): string[] {
-    if (weaponRunes.numByLevel === null) return [];
-    const numRunes = epsilonFloor(interpolate(weaponRunes.numByLevel, upg_level));
+export function getRunes(weaponRuneSockets: WeaponRuneSockets, upg_level: number): string[] {
+    if (weaponRuneSockets.numByLevel === null) return [];
+    const numRunes = epsilonFloor(interpolate(weaponRuneSockets.numByLevel, upg_level));
     if (numRunes < 0) throw new Error(`Failed to get rune sockets: negative Curve value`);
 
-    return weaponRunes.runeSockets.slice(0, numRunes);
+    return weaponRuneSockets.runeSockets.slice(0, numRunes);
 }
 
 /**
@@ -358,9 +358,9 @@ export function calculateStats(
     const wieldability = canWield(playerStats, weapon.wieldReqs);
     const offense = calculateOffense(weapon.offense, upgLevel, playerStats, wieldability, gradeRanges);
     const defense = calculateDefense(weapon.defense, upgLevel, wieldability.wieldable);
-    const runes = getRunes(weapon.runes, upgLevel);
+    const runeSockets = getRunes(weapon.runeSockets, upgLevel);
 
-    return { weapon, offense, defense, runes, upgLevel, playerStats, wieldability };
+    return { weapon, offense, defense, runeSockets, upgLevel, playerStats, wieldability };
 }
 
 export function calculatePlayerStats(playerStats: PlayerStats, curves: Map<string, Curve>): CalculatedPlayerStats {
