@@ -1,12 +1,11 @@
 import json
 from pathlib import Path
-from typing import Any, Iterable, Literal
+from typing import Any, Iterable, Literal, get_args as literal_args, cast
 
 from .classes import (
     STAT,
     BaseDamage,
     Curve,
-    ItemGameMeta,
     LeveledValue,
     PlayerStats,
     StatScalarGradeRange,
@@ -21,6 +20,7 @@ from .classes import (
     RUNE_TYPE,
     Effect,
     Buff,
+    SCALING_TYPE,
     Rune,
 )
 from .load_weapons import load_json_data
@@ -84,18 +84,15 @@ class LOTFExtractor:
             buffs = self._extract_buffs()
             runes = self._extract_runes(local_names, buffs)
             ranged_ammo = self._extract_ranged_ammo()
-            weapons, base_damages = self._extract_weapons(
-                local_names, curves, stat_grade_ranges, ranged_ammo
-            )
+            weapons, base_damages = self._extract_weapons(local_names, curves, stat_grade_ranges, ranged_ammo)
             self.export_json(curves, stat_grade_ranges, weapons, base_damages, buffs, runes)
 
         elif mode == 'runes-test':
             print('LOTFCalcExtractor: Runes Test')
-            # local_names = self._extract_item_strings()
-            # self.buffs = self._extract_buffs()
-            # self.runes = self._extract_runes(local_names)
-            # self._runes_test()
-            # print(f'Number of runes extracted: {len(self.runes)}')
+            local_names = self._extract_item_strings()
+            buffs = self._extract_buffs()
+            runes = self._extract_runes(local_names, buffs)
+            self._runes_test(runes)
 
         else:
             print(f'Unknown mode: "{mode}"')
@@ -217,6 +214,8 @@ class LOTFExtractor:
         return tuple(grades)
 
     def _extract_buffs(self) -> dict[str, Buff]:
+        print('Extracting buffs')
+
         with open(self.BATTLE_EFFECTS_PATH, encoding='utf-8') as f:
             d = json.load(f)[0]['Rows']
 
@@ -236,16 +235,38 @@ class LOTFExtractor:
                 mod_type = param.get('ModType', '')
                 if not mod_type:
                     continue
+
+                # parse the buff's operation
                 operation = mod_type.split('::')[1]
+                if operation == 'Max':
+                    # 'Max' ops don't seem to apply to runes - skip
+                    continue
+                if operation == 'Override':
+                    # 'Override' ops only apply to status effects - skip
+                    continue
+                if isinstance(operation, str) and operation == 'HexMultiplicitive':
+                    # a HexMultiplicitive is equivalent to a Multiplicative with value+1
+                    value += 1.0
+                    operation = 'Multiplicative'
+                if operation == 'Multiplicitive':
+                    # fix devs' typo
+                    operation = 'Multiplicative'
+                if operation not in literal_args(SCALING_TYPE):
+                    raise ValueError(f'Unexpected ModType value "{operation}" (expected {SCALING_TYPE})')
+                operation = cast(SCALING_TYPE, operation)
+
                 attr = param.get('Attribute', {}).get('AttributeName', '')
                 if not attr:
                     continue
                 effects.append(Effect(attr, operation, value))
             buffs[buff_key] = Buff(buff_key, tuple(effects))
 
+        print(f'Extracted {len(buffs)} buffs!')
         return buffs
 
     def _extract_runes(self, local_names: dict[str, str], buffs: dict[str, Buff]) -> tuple[Rune, ...]:
+        print('Extracting runes')
+
         runes: list[Rune] = []
 
         with open(self.RUNES_DT_PATH, encoding='utf-8') as f:
@@ -296,6 +317,7 @@ class LOTFExtractor:
                 Rune(rune_key, rune_name, rune_type, weap_buff, weap_buff_target, armor_buff, armor_buff_target)
             )
 
+        print(f'Extracted {len(runes)} runes!')
         return tuple(runes)
 
     def _extract_ranged_ammo(self) -> dict[str, int]:
@@ -308,186 +330,6 @@ class LOTFExtractor:
             ammo_d[weapon_key] = ammo_num
 
         return ammo_d
-
-    def _extract_weapons_og(
-        self,
-        local_names: dict[str, str],
-        weapon_metas: dict[str, ItemGameMeta],
-        curves: dict[str, Curve],
-        stat_grade_ranges: tuple[StatScalarGradeRange, ...],
-        ranged_ammo: dict[str, int],
-    ) -> tuple[tuple[Weapon, ...], tuple[BaseDamage, ...]]:
-        def read_int(key: str) -> int:
-            val = stats_d[key]
-            if not isinstance(val, int):
-                raise TypeError(f'Expected int value from key "{key}" but got {type(val)}')
-            return val
-
-        def read_float(key: str) -> float:
-            val = stats_d[key]
-            if not isinstance(val, float):
-                raise TypeError(f'Expected float value from key "{key}" but got {type(val)}')
-            return val
-
-        def read_leveled_val(base_key: str, scaling_key: str | None = None, base_scalar: float = 1.0) -> LeveledValue:
-            if scaling_key is None:
-                scaling_key = base_key + 'ByLevel'
-            base_val = stats_d[base_key]
-            if not isinstance(base_val, (int, float)):
-                raise TypeError(f'Expected int or float value from key "{base_key}" but got {type(base_val)}')
-            base_val *= base_scalar
-            scaling_d = stats_d[scaling_key]
-            scaling_type = scaling_d['ApplicationType'].split('::')[1]
-            if not isinstance(scaling_type, str):
-                raise TypeError(f'Expected str value from key "ApplicationType" but got {type(scaling_type)}')
-            curve_key = scaling_d['Curve']['RowName']
-            curve = curves[curve_key] if curve_key != 'None' else None
-            return LeveledValue(base_val, curve, scaling_type)
-
-        def read_stat_scaled_dmg_val(stat: STAT, key: str, curve_key: str) -> StatScaledDamage:
-            scaling = read_leveled_val(key)
-            stat_curve = curves[curve_key]
-            return StatScaledDamage(stat, base_damage, scaling, stat_curve)
-
-        def read_curve(key: str) -> Curve | None:
-            curve_d = stats_d[key]
-            curve_key = curve_d['Curve']['RowName']
-            if not isinstance(curve_key, str):
-                raise TypeError(f'Expected str value from key "RowName" but got {type(curve_key)}')
-            return curves[curve_key] if curve_key != 'None' else None
-
-        # Method Start
-        weapons: list[Weapon] = []
-        base_damages: list[BaseDamage] = []
-
-        print(f'Extracting weapon stats from {self.WEAPON_STATS_PATH}')
-
-        with open(self.WEAPON_STATS_PATH, encoding='utf-8') as f:
-            weapons_d: dict[str, Any] = json.load(f)[0]['Rows']
-
-        for weapon_key, stats_d in weapons_d.items():
-            if (
-                weapon_key != 'Default'
-                # and not weapon_key.endswith('_L')
-                and weapon_key != 'WPN_PLA_LA_SoulsLantern'
-                and weapon_key != 'WPN_PLA_TH_Hand'
-            ):
-                if weapon_key not in weapon_metas:
-                    print(
-                        f'DT_WeaponStats entry for "{weapon_key}" does not correspond to a weapon definition - skipping'
-                    )
-                    continue
-
-                item_meta = weapon_metas[weapon_key]
-
-                if item_meta.is_base_class:
-                    # skip base classes
-                    continue
-
-                if item_meta.localization_key not in local_names:
-                    print(
-                        f'WeaponStats entry for "{weapon_key}" does not correspond to a localization string - skipping'
-                    )
-                    continue
-
-                # --- weapon metadata ---
-                weapon_name = local_names[item_meta.localization_key]
-                # map class names from internal to user-displayed values
-                weapon_class = WEAP_CLASS_MAP.get(item_meta.class_name, item_meta.class_name)
-                weight = read_float('Weight')
-                max_upg_level = read_int('MaxEquipmentLevel')
-
-                # stats needed to wield the weapon
-                req_str = read_int('RequirementStrength')
-                req_agi = read_int('RequirementAgility')
-                req_end = read_int('RequirementEndurance')
-                req_vit = read_int('RequirementVitality')
-                req_rad = read_int('RequirementFaith')
-                req_inf = read_int('RequirementChaos')
-                wield_reqs = PlayerStats(req_str, req_agi, req_end, req_vit, req_rad, req_inf)
-
-                # runes
-                rune_sockets: list[RUNE_TYPE] = []
-                for rune_shape in stats_d['RuneSocketShapes']:
-                    if not isinstance(rune_shape, str):
-                        raise TypeError(f'Expected str value from key "RuneSocketShapes" but got {type(rune_shape)}')
-                    rune_shape = rune_shape.split('::')[1]  # strip everything before '::'
-                    rune_type: RUNE_TYPE = RUNE_SHAPE_MAP[rune_shape]
-                    rune_sockets.append(rune_type)
-                rune_sockets_by_level = read_curve('RuneSocketsByLevel')
-                weap_rune_sockets = WeaponRuneSockets(tuple(rune_sockets), rune_sockets_by_level)
-
-                # --- offensive stats ---
-
-                # 'extras'
-                # stamina_cost = read_float('StaminaCost')
-                pvp_mult = read_float('MultiplierForPVP')
-                dmg_poise = read_leveled_val('DamagePoise')
-                dmg_stagger = read_leveled_val('DamageStagger')
-                dmg_stamina = read_leveled_val('DamageStamina')
-                spell_slots = ranged_ammo.get(weapon_key, 0) if weapon_class in ('Catalysts', 'Magic') else 0
-                weapon_dmg_extras = WeaponDamageExtras(dmg_poise, dmg_stagger, dmg_stamina, pvp_mult, spell_slots)
-
-                dmg_physical = read_leveled_val('DamagePhysical')
-                dmg_holy = read_leveled_val('DamageHoly')
-                dmg_fire = read_leveled_val('DamageFire')
-                dmg_wither = read_leveled_val('DamageDark')
-                dmg_spell = read_leveled_val(
-                    'SpellPower', base_scalar=100.0
-                )  # SP's base value must be multiplied by 100
-                base_damage = BaseDamage(dmg_physical, dmg_holy, dmg_fire, dmg_wither, dmg_spell)
-                base_damages.append(base_damage)  # keep a reference for exporting
-
-                # damage from stat scaling
-                str_scaled = read_stat_scaled_dmg_val('S', 'ScalingStrength', 'Scaling_Damage_Strength')
-                agi_scaled = read_stat_scaled_dmg_val('A', 'ScalingAgility', 'Scaling_Damage_Agility')
-                rad_scaled = read_stat_scaled_dmg_val('R', 'ScalingOrder', 'Scaling_Damage_Faith')
-                inf_scaled = read_stat_scaled_dmg_val('I', 'ScalingChaos', 'Scaling_Damage_Chaos')
-                weapon_dmg_ar = WeaponDamageAR(base_damage, str_scaled, agi_scaled, rad_scaled, inf_scaled)
-
-                # status effects
-                dmg_status_bleed = read_leveled_val('DamageStatusEffectBleed')
-                dmg_status_poison = read_leveled_val('DamageStatusEffectPoison')
-                dmg_status_frost = read_leveled_val('DamageStatusEffectFrostbite')
-                dmg_status_smite = read_leveled_val('DamageStatusEffectSmite')
-                dmg_status_burn = read_leveled_val('DamageStatusEffectBurn')
-                dmg_status_ignite = read_leveled_val('DamageStatusEffectIgnite')
-                weapon_dmg_status = WeaponDamageStatus(
-                    dmg_status_bleed,
-                    dmg_status_poison,
-                    dmg_status_frost,
-                    dmg_status_smite,
-                    dmg_status_burn,
-                    dmg_status_ignite,
-                )
-
-                weapon_offense = WeaponOffense(weapon_dmg_ar, weapon_dmg_extras, weapon_dmg_status)
-
-                # --- defensive stats ---
-                guard_physical = read_leveled_val('GuardProtectionPhysical')
-                guard_holy = read_leveled_val('GuardProtectionHoly')
-                guard_fire = read_leveled_val('GuardProtectionFire')
-                guard_wither = read_leveled_val('GuardProtectionDark')
-                guard_stability = read_leveled_val('Stability')
-                weapon_defense = WeaponDefense(guard_physical, guard_holy, guard_fire, guard_wither, guard_stability)
-
-                weapon = Weapon(
-                    weapon_key,
-                    weapon_name,
-                    weapon_class,
-                    weight,
-                    max_upg_level,
-                    wield_reqs,
-                    weap_rune_sockets,
-                    weapon_offense,
-                    weapon_defense,
-                    stat_grade_ranges,
-                )
-                weapons.append(weapon)
-
-        print(f'Extracted stats for {len(weapons)} weapons!')
-
-        return tuple(weapons), tuple(base_damages)
 
     def _extract_weapons(
         self,
@@ -519,6 +361,9 @@ class LOTFExtractor:
             scaling_type = scaling_d['ApplicationType'].split('::')[1]
             if not isinstance(scaling_type, str):
                 raise TypeError(f'Expected str value from key "ApplicationType" but got {type(scaling_type)}')
+            if scaling_type not in literal_args(SCALING_TYPE):
+                raise TypeError(f'Unexpected ApplicationType value "{scaling_type}" (expected {SCALING_TYPE})')
+            scaling_type: SCALING_TYPE
             curve_key = scaling_d['Curve']['RowName']
             curve = curves[curve_key] if curve_key != 'None' else None
             return LeveledValue(base_val, curve, scaling_type)
@@ -717,5 +562,11 @@ class LOTFExtractor:
             else:
                 print('Weapons export failed validation!')
 
-    def _runes_test(self) -> None:
-        pass
+    def _runes_test(self, runes: tuple[Rune, ...]) -> None:
+        print('Weapon Rune Buffs:')
+        for rune in runes:
+            for eff in rune.weapon_buff.effects:
+                eff.scaling_type
+                print(f'{eff.attribute}')
+
+        print('\nArmor Rune Buffs:')

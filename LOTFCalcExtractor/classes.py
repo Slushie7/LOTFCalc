@@ -6,6 +6,7 @@ from typing import Any, Literal, Self
 
 STAT = Literal['S', 'A', 'R', 'I']
 RUNE_TYPE = Literal['S', 'A', 'R', 'I', '*']
+SCALING_TYPE = Literal['Additive', 'Multiplicative']
 
 
 def epsilon_floor(x: float) -> int:
@@ -62,7 +63,7 @@ class Curve:
 class LeveledValue:
     base: float
     curve: Curve | None
-    scaling_type: str
+    scaling_type: SCALING_TYPE
 
     @lru_cache(maxsize=1024)
     def get_value(self, level: int | float) -> float:
@@ -253,7 +254,7 @@ class PlayerStats:
 @dataclass(frozen=True)
 class Effect:
     attribute: str
-    scaling_type: str
+    scaling_type: SCALING_TYPE
     value: float
 
     def to_dict(self) -> dict[str, Any]:
@@ -314,13 +315,6 @@ class Rune:
 # ================================
 # Ephemeral Primitives
 # ================================
-
-
-@dataclass(frozen=True)
-class ItemGameMeta:
-    class_name: str
-    localization_key: str
-    is_base_class: bool
 
 
 @dataclass(frozen=True)
