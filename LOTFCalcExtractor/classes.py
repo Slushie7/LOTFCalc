@@ -22,8 +22,8 @@ def epsilon_floor(x: float) -> int:
 class Curve:
     key: str
     _interp_mode: str
-    _points: tuple[tuple[float, float], ...]
-    _x_coords: tuple[float, ...] = field(init=False, compare=False)
+    _points: tuple[tuple[float, float], ...] = field(repr=False)
+    _x_coords: tuple[float, ...] = field(init=False, compare=False, repr=False)
 
     def __post_init__(self) -> None:
         object.__setattr__(self, '_x_coords', tuple(x for x, _ in self._points))
@@ -101,7 +101,7 @@ class BaseDamage:
     dmg_fire: LeveledValue
     dmg_wither: LeveledValue
     dmg_spell: LeveledValue
-    key: str = ''
+    key: str = field(default='', compare=False)
 
     def __post_init__(self) -> None:
         if not self.key:
@@ -602,7 +602,7 @@ class Weapon:
     rune_sockets: WeaponRuneSockets
     offense: WeaponOffense
     defense: WeaponDefense
-    _stat_grade_ranges: tuple[StatScalarGradeRange, ...]
+    _stat_grade_ranges: tuple[StatScalarGradeRange, ...] = field(repr=False)
 
     @lru_cache(maxsize=1024)
     def calculate_stats(self, upgrade_level: int, player_stats: PlayerStats) -> 'CalculatedWeaponStats':

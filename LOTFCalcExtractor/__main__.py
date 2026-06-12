@@ -30,7 +30,8 @@ def main() -> None:
         try:
             content_dir = args[0]
             mode = args[1] if len(args) > 1 else ''
-            LOTFExtractor(content_dir, mode)
+            options = args[2:]
+            LOTFExtractor(content_dir, mode, *options)
         except Exception as e:
             if isinstance(e, FileNotFoundError):
                 print('\nLOTFCalcExtractor failed to extract weapons data from the given directory.')

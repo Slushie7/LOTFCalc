@@ -36,13 +36,14 @@ WEAP_CLASS_MAP: dict[str, str] = {
     'Magic': 'Catalysts',
     'ShortSwords': 'Short Swords',
     'UltraGreatSwords': 'Grand Swords',
+    'crossbows': 'Crossbows',
 }
 
 RUNE_SHAPE_MAP: dict[str, RUNE_TYPE] = {'Circle': 'S', 'Triangle': 'A', 'Square': 'R', 'Star': 'I', 'Meta': '*'}
 
 
 class LOTFExtractor:
-    def __init__(self, lotf2_dir: str | Path, mode: str) -> None:
+    def __init__(self, lotf2_dir: str | Path, mode: str, *args) -> None:
         lotf2_dir = Path(lotf2_dir)
         content_dir = lotf2_dir / 'Content'
         blueprints_dir = content_dir / 'Blueprints'
@@ -93,6 +94,9 @@ class LOTFExtractor:
             buffs = self._extract_buffs()
             runes = self._extract_runes(local_names, buffs)
             self._runes_test(runes)
+
+        elif mode == 'compare':
+            self._compare_json(*args)
 
         else:
             print(f'Unknown mode: "{mode}"')
@@ -554,3 +558,67 @@ class LOTFExtractor:
             if op == '+' and val.startswith('-'):
                 op = ''
             print(f'{eff}{op}{val} -> {wbt}')
+
+    def _compare_json(self, file1: Path | str, file2: Path | str) -> None:
+        def compare_dicts(
+            d1: dict[str, Any], d2: dict[str, Any], n1: str, n2: str, checked_set: set[str], type_name: str
+        ) -> bool:
+            def _compare_dicts(
+                d1: dict[str, Any], d2: dict[str, Any], n1: str, n2: str, checked_set: set[str], type_name: str
+            ) -> bool:
+                _mismatch = False
+                for key, v1 in d1.items():
+                    if key not in checked_set:
+                        v2 = d2.get(key)
+                        if v2 is None:
+                            _mismatch = True
+                            print(f'{type_name} "{key}" in {n1} does not exist in {n2}')
+                        else:
+                            if v1 != v2:
+                                _mismatch = True
+                                print(f'{type_name} value mismatch for {type_name} "{key}":')
+                                print(f'    {n1} has: {v1}')
+                                print(f'    {n2} has: {v2}')
+                        checked_set.add(key)
+                return _mismatch
+
+            mismatch = False
+            print(f'Comparing {type_name}s')
+            if len(d1) != len(d2):
+                mismatch = True
+                print(f'{type_name} count mismatch:')
+                print(f'{n1} has {len(d1)}')
+                print(f'{n2} has {len(d2)}')
+            mm1 = _compare_dicts(d1, d2, n1, n2, checked_set, type_name)
+            mm2 = _compare_dicts(d2, d1, n2, n1, checked_set, type_name)
+            mismatch = mismatch or mm1 or mm2
+            if not mismatch:
+                print(f'All {type_name}s match')
+            else:
+                print(f'At least one {type_name} mismatch was present')
+            return mismatch
+
+        # Method start
+        file1 = (Path(__file__).parent / f'../data/{file1}').resolve()
+        file2 = (Path(__file__).parent / f'../data/{file2}').resolve()
+
+        name1 = file1.name
+        name2 = file2.name
+
+        print(f'Comparing extracted data in {file1} against data in {file2}')
+
+        weaps1, curves1, runes1 = load_json_data(file1)
+        weaps2, curves2, runes2 = load_json_data(file2)
+
+        checked_curves: set[str] = set()
+        compare_dicts(curves1, curves2, name1, name2, checked_curves, 'Curve')
+
+        rune_d1 = {rune.key: rune for rune in runes1}
+        rune_d2 = {rune.key: rune for rune in runes2}
+        checked_runes: set[str] = set()
+        compare_dicts(rune_d1, rune_d2, name1, name2, checked_runes, 'Rune')
+
+        weap_d1 = {weap.key: weap for weap in weaps1}
+        weap_d2 = {weap.key: weap for weap in weaps2}
+        checked_weaps: set[str] = set()
+        compare_dicts(weap_d1, weap_d2, name1, name2, checked_weaps, 'Weapon')
