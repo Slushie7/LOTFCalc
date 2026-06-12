@@ -1,25 +1,27 @@
-import type {
-    Curve,
-    LeveledValue,
-    BaseDamage,
-    StatKey,
-    StatScalarGradeRange,
-    StatScaledDamage,
-    PlayerStats,
-    Weapon,
-    WeaponDamageAR,
-    WeaponDamageExtras,
-    WeaponDamageStatus,
-    WeaponDefense,
-    WeaponOffense,
-    WeaponRuneSockets,
-    WeaponClass,
-    RuneType,
-    ScalingType,
-    BuffTarget,
-    Effect,
-    Buff,
-    Rune,
+import {
+    type Curve,
+    type LeveledValue,
+    type BaseDamage,
+    type StatKey,
+    type StatScalarGradeRange,
+    type StatScaledDamage,
+    type PlayerStats,
+    type Weapon,
+    type WeaponDamageAR,
+    type WeaponDamageExtras,
+    type WeaponDamageStatus,
+    type WeaponDefense,
+    type WeaponOffense,
+    type WeaponRuneSockets,
+    type WeaponClass,
+    type RuneType,
+    type ScalingType,
+    type BuffTarget,
+    type Effect,
+    type Buff,
+    type Rune,
+    isRuneType,
+    isWeaponClass,
 } from './model.js';
 
 // interfaces matching JSON structures
@@ -208,8 +210,11 @@ function toPlayerStats(r: RawPlayerStats): PlayerStats {
 }
 
 function toWeaponRunes(r: RawWeaponRuneSockets, curves: Map<string, Curve>): WeaponRuneSockets {
+    const runeSockets = r.rune_sockets as RuneType[];
+    if (!r.rune_sockets.every((rs) => isRuneType(rs))) throw new Error(`Invalid rune socket type in ${r}`);
+
     return {
-        runeSockets: r.rune_sockets as RuneType[],
+        runeSockets,
         numByLevel: getCurveOrNull(r.curve_key, curves),
     };
 }
@@ -272,10 +277,13 @@ function toWeaponDefense(r: RawWeaponDefense, curves: Map<string, Curve>): Weapo
 }
 
 function toWeapon(r: RawWeapon, curves: Map<string, Curve>, baseDamages: Map<string, BaseDamage>): Weapon {
+    const className = r.class_name as WeaponClass;
+    if (!isWeaponClass(className)) throw new Error(`Invalid weapon class: ${className}`);
+
     return {
         key: r.key,
         name: r.name,
-        className: r.class_name as WeaponClass,
+        className,
         weight: r.weight,
         maxUpgLevel: r.max_upg_level,
         wieldReqs: toPlayerStats(r.wield_reqs),

@@ -1,3 +1,4 @@
+import { isRuneType, isWeaponClass, } from './model.js';
 // helpers
 function getCurveOrNull(key, curves) {
     if (key === null)
@@ -57,8 +58,11 @@ function toPlayerStats(r) {
     };
 }
 function toWeaponRunes(r, curves) {
+    const runeSockets = r.rune_sockets;
+    if (!r.rune_sockets.every((rs) => isRuneType(rs)))
+        throw new Error(`Invalid rune socket type in ${r}`);
     return {
-        runeSockets: r.rune_sockets,
+        runeSockets,
         numByLevel: getCurveOrNull(r.curve_key, curves),
     };
 }
@@ -107,10 +111,13 @@ function toWeaponDefense(r, curves) {
     };
 }
 function toWeapon(r, curves, baseDamages) {
+    const className = r.class_name;
+    if (!isWeaponClass(className))
+        throw new Error(`Invalid weapon class: ${className}`);
     return {
         key: r.key,
         name: r.name,
-        className: r.class_name,
+        className,
         weight: r.weight,
         maxUpgLevel: r.max_upg_level,
         wieldReqs: toPlayerStats(r.wield_reqs),

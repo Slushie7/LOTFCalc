@@ -1,6 +1,15 @@
 import { loadJSONData } from './load.js';
 import { HEADER_GROUPS } from './header.js';
-import type { Weapon, HeaderKey, SuperheaderKey, PlayerStats, WeaponClass, CalculatedPlayerStats } from './model.js';
+import {
+    type Weapon,
+    type HeaderKey,
+    type SuperheaderKey,
+    type PlayerStats,
+    type WeaponClass,
+    type CalculatedPlayerStats,
+    isWeaponClass,
+    isSuperheaderKey,
+} from './model.js';
 import { getClassesHtml, getHeaderHtml, getWeaponRow, getWeaponsHtml, sortCalculated } from './render.js';
 import { calculateStats, calculatePlayerStats } from './calc.js';
 
@@ -8,19 +17,10 @@ import { calculateStats, calculatePlayerStats } from './calc.js';
 const STORAGE_KEY = 'lotfcalc.settings';
 const STORAGE_VER = 2;
 
-// map HTML checkboxes' 'data-setting' fields to AppState fields
-type SettingKey = 'UNWIELDABLE' | 'SPLIT' | 'REMEMBER';
-type BooleanKeys<T> = { [K in keyof T]: T[K] extends boolean ? K : never }[keyof T];
-const htmlTogglesMapping: Record<SettingKey, BooleanKeys<AppState>> = {
-    UNWIELDABLE: 'showUnwieldable',
-    SPLIT: 'showSplit',
-    REMEMBER: 'saveSettings',
-};
-
 // main app variables
 const { weapons, gradeRanges, curves, runes } = await loadJSONData();
 const loadedWeaponClasses: string[] = [...new Set(weapons.map((w) => w.className))].sort();
-interface AppState {
+type AppState = {
     playerStats: PlayerStats;
     upgLevel: number;
     selectedClasses: Set<WeaponClass>;
@@ -31,8 +31,9 @@ interface AppState {
     showSplit: boolean;
     saveSettings: boolean;
     pinnedWeapons: Set<string>;
-}
-interface ExportedAppState {
+    showRawScaling: boolean;
+};
+type ExportedAppState = {
     v: number;
     playerStats: PlayerStats;
     upgLevel: number;
@@ -44,11 +45,9 @@ interface ExportedAppState {
     showSplit: boolean;
     saveSettings: boolean;
     pinnedWeapons: string[];
-}
-interface ExportedNoSave {
-    saveSettings: boolean;
-}
-const state: AppState = {
+    showRawScaling: boolean;
+};
+let state: AppState = {
     // defaults
     playerStats: { strength: 30, agility: 30, endurance: 30, vitality: 30, radiance: 30, inferno: 30 },
     upgLevel: 10,
@@ -60,6 +59,7 @@ const state: AppState = {
     showSplit: false,
     saveSettings: true,
     pinnedWeapons: new Set(),
+    showRawScaling: false,
 };
 
 // =========================================
@@ -96,8 +96,8 @@ function updateSettingsToggles(): void {
     for (const el of document.getElementsByClassName('setting-toggle')) {
         if (el instanceof HTMLInputElement && typeof el.dataset.setting === 'string') {
             // map element's 'data-setting' value to relevant current AppState value
-            const setting = htmlTogglesMapping[el.dataset.setting as SettingKey];
-            el.checked = state[setting];
+            const settingValue = state[el.dataset.setting as keyof AppState];
+            if (typeof settingValue === 'boolean') el.checked = settingValue;
         }
     }
     for (const el of document.getElementsByClassName('group-toggle')) {
@@ -167,28 +167,53 @@ function loadState(): void {
     } catch {
         return; // couldn't parse settings
     }
-    if (typeof parsed !== 'object' || parsed === null) return;
 
-    // process the save settings
-    const data = parsed as Record<string, unknown>;
+    function validate(d: unknown): d is ExportedAppState {
+        if (typeof d !== 'object' || !d) return false;
+        const o = d as Record<string, unknown>;
+        if (!(typeof o.v === 'number')) return false;
+        if (!(typeof o.playerStats === 'object') || !o.playerStats) return false;
+        const ps = o.playerStats as Record<string, unknown>;
+        if (!Object.keys(state.playerStats).every((k) => typeof ps[k] === 'number')) return false;
+        if (!(typeof o.upgLevel === 'number')) return false;
+        if (!Array.isArray(o.selectedClasses)) return false;
+        if (!o.selectedClasses.every((v) => isWeaponClass(v))) return false;
+        if (!(typeof o.sortKey === 'string')) return false;
+        if (!(typeof o.ascending === 'boolean')) return false;
+        if (!Array.isArray(o.showColGroups)) return false;
+        if (!o.showColGroups.every((v) => isSuperheaderKey(v))) return false;
+        if (!(typeof o.showUnwieldable === 'boolean')) return false;
+        if (!(typeof o.showSplit === 'boolean')) return false;
+        if (!(typeof o.saveSettings === 'boolean')) return false;
+        if (!Array.isArray(o.pinnedWeapons)) return false;
+        if (!o.pinnedWeapons.every((v) => typeof v === 'string')) return false;
+        if (!(typeof o.showRawScaling === 'boolean')) return false;
+        return true;
+    }
 
-    if (!(typeof data.saveSettings === 'boolean')) return;
-    const saveSettings = data.saveSettings;
-    if (!saveSettings) {
+    // check whether parsed.saveSettings is false
+    if (parsed && Object.hasOwn(parsed, 'saveSettings')) {
+        if (!(parsed as Record<string, unknown>)['saveSettings']) {
+            state.saveSettings = false;
+            return;
+        }
+    }
+
+    // check whether parsed is a valid ExportedAppState
+    if (!validate(parsed)) return;
+
+    if (!parsed.saveSettings) {
         // user doesn't want to use cached-settings feature
         state.saveSettings = false;
         return;
     }
 
-    if (data.v !== STORAGE_VER)
+    if (parsed.v !== STORAGE_VER)
         // wrong version - keep defaults
         return;
 
     // parse PlayerStats
-    const ds = data.playerStats as Record<string, unknown>;
-    if (typeof ds !== 'object' || ds === null) return;
-    if (!Object.keys(state.playerStats).every((k) => typeof ds[k] === 'number')) return;
-    const ps = ds as unknown as PlayerStats; // ds has a number value for every PlayerStats key
+    const ps = parsed.playerStats;
     const playerStats: PlayerStats = {
         strength: clampStat(ps.strength),
         agility: clampStat(ps.agility),
@@ -198,50 +223,35 @@ function loadState(): void {
         inferno: clampStat(ps.inferno),
     };
 
-    if (!(typeof data.upgLevel === 'number')) return;
-    const upgLevel = Math.max(0, Math.min(99, Math.floor(data.upgLevel)));
+    const upgLevel = Math.max(0, Math.min(10, Math.floor(parsed.upgLevel)));
+    const selectedClasses = new Set(parsed.selectedClasses);
 
-    if (!Array.isArray(data.selectedClasses)) return;
-    const validClasses = new Set<string>(loadedWeaponClasses);
-    const selectedClasses = new Set(data.selectedClasses.filter((v) => typeof v === 'string' && validClasses.has(v)));
-
-    if (!(typeof data.sortKey === 'string')) return;
-    const sortKey = data.sortKey as HeaderKey;
-
-    if (!(typeof data.ascending === 'boolean')) return;
-    const ascending = data.ascending;
-
-    if (!Array.isArray(data.showColGroups)) return;
-    const showColGroups = new Set(data.showColGroups.filter((v): v is SuperheaderKey => typeof v === 'string'));
+    const showColGroups: Set<SuperheaderKey> = new Set(parsed.showColGroups);
     showColGroups.add('INFO');
 
-    if (!(typeof data.showUnwieldable === 'boolean')) return;
-    const showUnwieldable = data.showUnwieldable;
-
-    if (!(typeof data.showSplit === 'boolean')) return;
-    const showSplit = data.showSplit;
-
-    if (!Array.isArray(data.pinnedWeapons)) return;
-    const pinnedWeapons = new Set(data.pinnedWeapons.filter((v) => typeof v === 'string'));
+    const pinnedWeapons = new Set(parsed.pinnedWeapons);
 
     // all data read successfully - assign values
-    state.playerStats = playerStats;
-    state.upgLevel = upgLevel;
-    state.selectedClasses = selectedClasses;
-    state.sortKey = sortKey;
-    state.ascending = ascending;
-    state.showColGroups = showColGroups;
-    state.showUnwieldable = showUnwieldable;
-    state.showSplit = showSplit;
-    state.saveSettings = saveSettings;
-    state.pinnedWeapons = pinnedWeapons;
+    state = {
+        playerStats,
+        upgLevel,
+        selectedClasses,
+        sortKey: parsed.sortKey,
+        ascending: parsed.ascending,
+        showColGroups,
+        showUnwieldable: parsed.showUnwieldable,
+        showSplit: parsed.showSplit,
+        saveSettings: parsed.saveSettings,
+        pinnedWeapons,
+        showRawScaling: parsed.showRawScaling,
+    };
 }
 
 /**
  * Save the current AppState to localStorage
  */
 function saveState(): void {
-    let data: ExportedAppState | ExportedNoSave;
+    let data: ExportedAppState | { saveSettings: boolean };
     if (state.saveSettings) {
         data = {
             v: STORAGE_VER,
@@ -255,10 +265,11 @@ function saveState(): void {
             showSplit: state.showSplit,
             saveSettings: state.saveSettings,
             pinnedWeapons: [...state.pinnedWeapons],
-        } as ExportedAppState;
+            showRawScaling: state.showRawScaling,
+        };
     } else {
-        // user doesn't want to cache their settings - just store a flag
-        data = { saveSettings: false } as ExportedNoSave;
+        // user doesn't want to cache their settings
+        data = { saveSettings: false };
     }
 
     try {
@@ -384,11 +395,9 @@ function setColGroup(el: HTMLInputElement): void {
 
 function setSetting(el: HTMLInputElement): void {
     const setting = el.dataset.setting;
-    if (typeof setting === 'string') {
-        const stateKey = htmlTogglesMapping[setting as SettingKey];
-        if (typeof stateKey === 'string' && typeof state[stateKey] === 'boolean') {
-            state[stateKey] = el.checked;
-        }
+    if (setting && typeof setting === 'string' && Object.hasOwn(state, setting)) {
+        const key = setting as keyof AppState;
+        if (typeof state[key] === 'boolean') (state as Record<string, unknown>)[key] = el.checked;
     }
 
     saveState();

@@ -1,19 +1,15 @@
 import { loadJSONData } from './load.js';
 import { HEADER_GROUPS } from './header.js';
+import { isWeaponClass, isSuperheaderKey, } from './model.js';
 import { getClassesHtml, getHeaderHtml, getWeaponRow, getWeaponsHtml, sortCalculated } from './render.js';
 import { calculateStats, calculatePlayerStats } from './calc.js';
 // for localStorage
 const STORAGE_KEY = 'lotfcalc.settings';
 const STORAGE_VER = 2;
-const htmlTogglesMapping = {
-    UNWIELDABLE: 'showUnwieldable',
-    SPLIT: 'showSplit',
-    REMEMBER: 'saveSettings',
-};
 // main app variables
 const { weapons, gradeRanges, curves, runes } = await loadJSONData();
 const loadedWeaponClasses = [...new Set(weapons.map((w) => w.className))].sort();
-const state = {
+let state = {
     // defaults
     playerStats: { strength: 30, agility: 30, endurance: 30, vitality: 30, radiance: 30, inferno: 30 },
     upgLevel: 10,
@@ -25,6 +21,7 @@ const state = {
     showSplit: false,
     saveSettings: true,
     pinnedWeapons: new Set(),
+    showRawScaling: false,
 };
 // =========================================
 // UI INITIALIZATION
@@ -57,8 +54,9 @@ function updateSettingsToggles() {
     for (const el of document.getElementsByClassName('setting-toggle')) {
         if (el instanceof HTMLInputElement && typeof el.dataset.setting === 'string') {
             // map element's 'data-setting' value to relevant current AppState value
-            const setting = htmlTogglesMapping[el.dataset.setting];
-            el.checked = state[setting];
+            const settingValue = state[el.dataset.setting];
+            if (typeof settingValue === 'boolean')
+                el.checked = settingValue;
         }
     }
     for (const el of document.getElementsByClassName('group-toggle')) {
@@ -127,28 +125,65 @@ function loadState() {
     catch {
         return; // couldn't parse settings
     }
-    if (typeof parsed !== 'object' || parsed === null)
+    function validate(d) {
+        if (typeof d !== 'object' || !d)
+            return false;
+        const o = d;
+        if (!(typeof o.v === 'number'))
+            return false;
+        if (!(typeof o.playerStats === 'object') || !o.playerStats)
+            return false;
+        const ps = o.playerStats;
+        if (!Object.keys(state.playerStats).every((k) => typeof ps[k] === 'number'))
+            return false;
+        if (!(typeof o.upgLevel === 'number'))
+            return false;
+        if (!Array.isArray(o.selectedClasses))
+            return false;
+        if (!o.selectedClasses.every((v) => isWeaponClass(v)))
+            return false;
+        if (!(typeof o.sortKey === 'string'))
+            return false;
+        if (!(typeof o.ascending === 'boolean'))
+            return false;
+        if (!Array.isArray(o.showColGroups))
+            return false;
+        if (!o.showColGroups.every((v) => isSuperheaderKey(v)))
+            return false;
+        if (!(typeof o.showUnwieldable === 'boolean'))
+            return false;
+        if (!(typeof o.showSplit === 'boolean'))
+            return false;
+        if (!(typeof o.saveSettings === 'boolean'))
+            return false;
+        if (!Array.isArray(o.pinnedWeapons))
+            return false;
+        if (!o.pinnedWeapons.every((v) => typeof v === 'string'))
+            return false;
+        if (!(typeof o.showRawScaling === 'boolean'))
+            return false;
+        return true;
+    }
+    // check whether parsed.saveSettings is false
+    if (parsed && Object.hasOwn(parsed, 'saveSettings')) {
+        if (!parsed['saveSettings']) {
+            state.saveSettings = false;
+            return;
+        }
+    }
+    // check whether parsed is a valid ExportedAppState
+    if (!validate(parsed))
         return;
-    // process the save settings
-    const data = parsed;
-    if (!(typeof data.saveSettings === 'boolean'))
-        return;
-    const saveSettings = data.saveSettings;
-    if (!saveSettings) {
+    if (!parsed.saveSettings) {
         // user doesn't want to use cached-settings feature
         state.saveSettings = false;
         return;
     }
-    if (data.v !== STORAGE_VER)
+    if (parsed.v !== STORAGE_VER)
         // wrong version - keep defaults
         return;
     // parse PlayerStats
-    const ds = data.playerStats;
-    if (typeof ds !== 'object' || ds === null)
-        return;
-    if (!Object.keys(state.playerStats).every((k) => typeof ds[k] === 'number'))
-        return;
-    const ps = ds; // ds has a number value for every PlayerStats key
+    const ps = parsed.playerStats;
     const playerStats = {
         strength: clampStat(ps.strength),
         agility: clampStat(ps.agility),
@@ -157,43 +192,25 @@ function loadState() {
         radiance: clampStat(ps.radiance),
         inferno: clampStat(ps.inferno),
     };
-    if (!(typeof data.upgLevel === 'number'))
-        return;
-    const upgLevel = Math.max(0, Math.min(99, Math.floor(data.upgLevel)));
-    if (!Array.isArray(data.selectedClasses))
-        return;
-    const validClasses = new Set(loadedWeaponClasses);
-    const selectedClasses = new Set(data.selectedClasses.filter((v) => typeof v === 'string' && validClasses.has(v)));
-    if (!(typeof data.sortKey === 'string'))
-        return;
-    const sortKey = data.sortKey;
-    if (!(typeof data.ascending === 'boolean'))
-        return;
-    const ascending = data.ascending;
-    if (!Array.isArray(data.showColGroups))
-        return;
-    const showColGroups = new Set(data.showColGroups.filter((v) => typeof v === 'string'));
+    const upgLevel = Math.max(0, Math.min(10, Math.floor(parsed.upgLevel)));
+    const selectedClasses = new Set(parsed.selectedClasses);
+    const showColGroups = new Set(parsed.showColGroups);
     showColGroups.add('INFO');
-    if (!(typeof data.showUnwieldable === 'boolean'))
-        return;
-    const showUnwieldable = data.showUnwieldable;
-    if (!(typeof data.showSplit === 'boolean'))
-        return;
-    const showSplit = data.showSplit;
-    if (!Array.isArray(data.pinnedWeapons))
-        return;
-    const pinnedWeapons = new Set(data.pinnedWeapons.filter((v) => typeof v === 'string'));
+    const pinnedWeapons = new Set(parsed.pinnedWeapons);
     // all data read successfully - assign values
-    state.playerStats = playerStats;
-    state.upgLevel = upgLevel;
-    state.selectedClasses = selectedClasses;
-    state.sortKey = sortKey;
-    state.ascending = ascending;
-    state.showColGroups = showColGroups;
-    state.showUnwieldable = showUnwieldable;
-    state.showSplit = showSplit;
-    state.saveSettings = saveSettings;
-    state.pinnedWeapons = pinnedWeapons;
+    state = {
+        playerStats,
+        upgLevel,
+        selectedClasses,
+        sortKey: parsed.sortKey,
+        ascending: parsed.ascending,
+        showColGroups,
+        showUnwieldable: parsed.showUnwieldable,
+        showSplit: parsed.showSplit,
+        saveSettings: parsed.saveSettings,
+        pinnedWeapons,
+        showRawScaling: parsed.showRawScaling,
+    };
 }
 /**
  * Save the current AppState to localStorage
@@ -213,10 +230,11 @@ function saveState() {
             showSplit: state.showSplit,
             saveSettings: state.saveSettings,
             pinnedWeapons: [...state.pinnedWeapons],
+            showRawScaling: state.showRawScaling,
         };
     }
     else {
-        // user doesn't want to cache their settings - just store a flag
+        // user doesn't want to cache their settings
         data = { saveSettings: false };
     }
     try {
@@ -330,11 +348,10 @@ function setColGroup(el) {
 }
 function setSetting(el) {
     const setting = el.dataset.setting;
-    if (typeof setting === 'string') {
-        const stateKey = htmlTogglesMapping[setting];
-        if (typeof stateKey === 'string' && typeof state[stateKey] === 'boolean') {
-            state[stateKey] = el.checked;
-        }
+    if (setting && typeof setting === 'string' && Object.hasOwn(state, setting)) {
+        const key = setting;
+        if (typeof state[key] === 'boolean')
+            state[key] = el.checked;
     }
     saveState();
     renderWeapons();

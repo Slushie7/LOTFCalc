@@ -92,7 +92,7 @@ export function getWeaponsHtml(weaponRows, weaponFadeIn) {
                 rowParts.push(`<td class="${cell.cls}">${escapeHtml(cell.text)}</td>`);
             }
         });
-        const trClasses = `${row.pinned ? 'pinned' : ''} ${row.weaponKey === weaponFadeIn ? 'fade' : ''}`.trim();
+        const trClasses = `${row.pinned ? 'pinned' : ''} ${row.weaponKey === weaponFadeIn ? 'fade-size-in' : ''}`.trim();
         const clsStr = trClasses ? ` class="${trClasses}"` : '';
         tableParts.push(`<tr${clsStr}>${rowParts.join('')}</tr>`);
     }
@@ -274,6 +274,8 @@ export function sortCalculated(calculated, sortKey, ascending) {
             unpinned.sort((a, b) => -fn(a, b));
         }
     }
+    else
+        console.log(`Failed to retrieve sort function for sortKey "${sortKey}"`);
     return { pinned, unpinned };
 }
 //# sourceMappingURL=render.js.map

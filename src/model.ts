@@ -1,5 +1,15 @@
-export type StatKey = 'S' | 'A' | 'R' | 'I';
-export type RuneType = 'S' | 'A' | 'R' | 'I' | '*';
+const STAT_KEYS = ['S', 'A', 'R', 'I'] as const;
+export type StatKey = (typeof STAT_KEYS)[number];
+export function isStatKey(v: unknown): v is StatKey {
+    return STAT_KEYS.includes(v as StatKey);
+}
+
+const RUNE_TYPES = [...STAT_KEYS, '*'] as const;
+export type RuneType = (typeof RUNE_TYPES)[number];
+export function isRuneType(v: unknown): v is RuneType {
+    return RUNE_TYPES.includes(v as RuneType);
+}
+
 export type HeaderKey =
     // basic
     | 'WEAP'
@@ -45,31 +55,53 @@ export type HeaderKey =
     | 'RR'
     | 'RI';
 
-export type SuperheaderKey = 'INFO' | 'AR' | 'MAGIC' | 'STATUS' | 'MISC' | 'RUNES' | 'DEF' | 'SCALING' | 'REQS';
+const SUPERHEADER_KEYS = ['INFO', 'AR', 'MAGIC', 'STATUS', 'MISC', 'RUNES', 'DEF', 'SCALING', 'REQS'] as const;
+export type SuperheaderKey = (typeof SUPERHEADER_KEYS)[number];
+export function isSuperheaderKey(v: unknown): v is SuperheaderKey {
+    return SUPERHEADER_KEYS.includes(v as SuperheaderKey);
+}
 
-export type WeaponClass =
-    | 'Axes'
-    | 'Bows'
-    | 'Catalysts'
-    | 'Crossbows'
-    | 'Daggers'
-    | 'Fists'
-    | 'Flails'
-    | 'Grand Axes'
-    | 'Grand Hammers'
-    | 'Grand Swords'
-    | 'Hammers'
-    | 'Long Swords'
-    | 'Polearms'
-    | 'Shields'
-    | 'Short Swords'
-    | 'Spears';
+const WEAPON_CLASSES = [
+    'Axes',
+    'Bows',
+    'Catalysts',
+    'Crossbows',
+    'Daggers',
+    'Fists',
+    'Flails',
+    'Grand Axes',
+    'Grand Hammers',
+    'Grand Swords',
+    'Hammers',
+    'Long Swords',
+    'Polearms',
+    'Shields',
+    'Short Swords',
+    'Spears',
+] as const;
+export type WeaponClass = (typeof WEAPON_CLASSES)[number];
+export function isWeaponClass(v: unknown): v is WeaponClass {
+    return WEAPON_CLASSES.includes(v as WeaponClass);
+}
 
 // stored types
+const INTERP_MODES = ['RCIM_Linear'] as const;
+export type InterpMode = (typeof INTERP_MODES)[number];
+export function isInterpMode(v: unknown): v is InterpMode {
+    return INTERP_MODES.includes(v as InterpMode);
+}
 
-export type InterpMode = 'RCIM_Linear';
-export type ScalingType = 'Additive' | 'Multiplicative';
-export type BuffTarget = 'Character' | 'Equipment';
+const SCALING_TYPES = ['Additive', 'Multiplicative'] as const;
+export type ScalingType = (typeof SCALING_TYPES)[number];
+export function isScalingType(v: unknown): v is ScalingType {
+    return SCALING_TYPES.includes(v as ScalingType);
+}
+
+const BUFF_TARGETS = ['Character', 'Equipment'] as const;
+export type BuffTarget = (typeof BUFF_TARGETS)[number];
+export function isBuffTarget(v: unknown): v is BuffTarget {
+    return BUFF_TARGETS.includes(v as BuffTarget);
+}
 
 export interface Curve {
     readonly key: string;

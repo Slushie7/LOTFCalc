@@ -135,42 +135,6 @@ class LOTFExtractor:
 
         return item_strings
 
-    # def _extract_weapon_item_metas(self) -> dict[str, ItemGameMeta]:
-    #     """Read the weapon definition files, extracting weapon class names and localization reference keys.
-
-    #     Returns a dict mapping weapon_key -> class_name and a dict mapping weapon_key -> loc_key"""
-
-    #     def extract_meta(file_path: Path, weap_class: str, is_base_class: bool) -> None:
-    #         with open(file_path, encoding='utf-8') as f:
-    #             weapon_d = json.load(f)[1]['Properties']
-
-    #         weap_key = weapon_d['StatsRow']['RowName']
-    #         loc_key = weapon_d['ItemName']['Key'] if not is_base_class else ''
-    #         weapon_meta[weap_key] = ItemGameMeta(weap_class, loc_key, is_base_class)
-
-    #     print(f'Extracting weapon metadata from {self.PLAYER_WEAPONS_DIR}')
-
-    #     weapon_meta: dict[str, ItemGameMeta] = {}
-
-    #     for class_dir in self.PLAYER_WEAPONS_DIR.iterdir():
-    #         if class_dir.is_dir():
-    #             weapon_class = class_dir.stem
-    #             for file in class_dir.iterdir():
-    #                 if file.suffix.lower() == '.json':
-    #                     extract_meta(file, weapon_class, False)
-
-    #             base_dir = class_dir / 'Base'
-    #             if base_dir.exists() and base_dir.is_dir():
-    #                 for file in base_dir.iterdir():
-    #                     # read the Base weapon metas
-    #                     if file.suffix.lower() == '.json':
-    #                         # extract Base weapon metas but flag them
-    #                         extract_meta(file, weapon_class, True)
-
-    #     print(f'Extracted metadata for {len(weapon_meta)} weapons (including base classes and deprecated assets)')
-
-    #     return weapon_meta
-
     def _extract_curves(self) -> dict[str, Curve]:
         """Reads the scaling curves used by the game for numerical calculations.
 
