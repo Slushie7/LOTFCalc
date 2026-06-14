@@ -502,7 +502,20 @@ class LOTFExtractor:
 
                 key = d['StatsRow']['RowName']
                 name = local_names[d['ItemName']['Key']]
-                icon = d['ItemIcon']['ObjectPath']
+                # get the path to the armor's thumbnail and clean it up
+                icon = Path(d['ItemIcon']['ObjectPath']).name
+                if not icon.startswith('thumb_ItemImg_ARM_'):
+                    raise ValueError(f'Unhandled thumbnail path prefix for "{icon}"')
+                icon = icon[len('thumb_ItemImg_ARM_') :]
+                if icon.startswith('PLA_'):
+                    icon = 'Armor_' + icon[len('PLA_') :]
+                if not icon.startswith('Armor_'):
+                    raise ValueError(f'Inconsistent thumbnail prefix for "{icon}"')
+                icon = icon[len('Armor_') :]
+                if not icon.endswith('.0'):
+                    raise ValueError(f'Unhandled thumbnail suffix for "{icon}"')
+                icon = icon[:-2] + '.png'
+                # extract slot, weight class, and set name from armor's TagName
                 _info_str = d['itemCategory']['TagName']
                 m = ARMOR_INFO_PAT.match(_info_str)
                 if m is None:

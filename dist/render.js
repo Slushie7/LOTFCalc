@@ -30,12 +30,12 @@ export function getClassesHtml(weaponClasses, checkedClasses) {
     return parts.join('');
 }
 const headerImagePaths = {
-    BLE: './img/Bleed.png',
-    BRN: './img/Burn.png',
-    PSN: './img/Poison.png',
-    SMI: './img/Smite.png',
-    IGN: './img/Ignite.png',
-    FRO: './img/Frostbite.png',
+    BLE: './img/Header/Bleed.png',
+    BRN: './img/Header/Burn.png',
+    PSN: './img/Header/Poison.png',
+    SMI: './img/Header/Smite.png',
+    IGN: './img/Header/Ignite.png',
+    FRO: './img/Header/Frostbite.png',
 };
 /**
  * Given the currently visible HeaderGroups, generates the HTML to display the grouping header and
