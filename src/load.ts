@@ -22,6 +22,12 @@ import {
     type Rune,
     isRuneType,
     isWeaponClass,
+    isArmorSlot,
+    isArmorWeightClass,
+    type ArmorSlot,
+    type Armor,
+    type ArmorWeightClass,
+    type ArmorStats,
 } from './model.js';
 
 // interfaces matching JSON structures
@@ -72,6 +78,7 @@ interface RawWeaponDamageAR {
     scaled_agi: RawStatScaledDamage;
     scaled_rad: RawStatScaledDamage;
     scaled_inf: RawStatScaledDamage;
+    two_hand_bonus: number;
 }
 interface RawWeaponDamageExtras {
     dmg_poise: RawLeveledValue;
@@ -82,11 +89,11 @@ interface RawWeaponDamageExtras {
 }
 interface RawWeaponDamageStatus {
     dmg_status_bleed: RawLeveledValue;
-    dmg_status_poison: RawLeveledValue;
-    dmg_status_frost: RawLeveledValue;
-    dmg_status_smite: RawLeveledValue;
     dmg_status_burn: RawLeveledValue;
+    dmg_status_poison: RawLeveledValue;
+    dmg_status_smite: RawLeveledValue;
     dmg_status_ignite: RawLeveledValue;
+    dmg_status_frost: RawLeveledValue;
 }
 interface RawWeaponOffense {
     damage_ar: RawWeaponDamageAR;
@@ -129,6 +136,30 @@ interface RawRune {
     armor_buff_key: string;
     armor_buff_target: BuffTarget;
 }
+interface RawArmorStats {
+    readonly weight: number;
+    readonly def_physical: number;
+    readonly def_fire: number;
+    readonly def_holy: number;
+    readonly def_wither: number;
+    readonly res_bleed: number;
+    readonly res_burn: number;
+    readonly res_poison: number;
+    readonly res_smite: number;
+    readonly res_ignite: number;
+    readonly res_frost: number;
+    readonly poise: number;
+    readonly kick_mult: number;
+}
+interface RawArmor {
+    key: string;
+    name: string;
+    icon: string;
+    slot: ArmorSlot;
+    weight_class: ArmorWeightClass;
+    set: string;
+    stats: RawArmorStats;
+}
 
 // weapons.json data interface
 interface RawWeaponsJSONData {
@@ -138,6 +169,7 @@ interface RawWeaponsJSONData {
     weapons: readonly RawWeapon[];
     buffs: readonly RawBuff[];
     runes: readonly RawRune[];
+    armor: readonly RawArmor[];
 }
 
 // helpers
@@ -230,6 +262,7 @@ function toWeaponDamageAR(
         scaledAgi: toStatScaledDamage(r.scaled_agi, curves, baseDamages),
         scaledRad: toStatScaledDamage(r.scaled_rad, curves, baseDamages),
         scaledInf: toStatScaledDamage(r.scaled_inf, curves, baseDamages),
+        twoHandBonus: r.two_hand_bonus,
     };
 }
 
@@ -246,11 +279,11 @@ function toWeaponDamageExtras(r: RawWeaponDamageExtras, curves: Map<string, Curv
 function toWeaponDamageStatus(r: RawWeaponDamageStatus, curves: Map<string, Curve>): WeaponDamageStatus {
     return {
         dmgStatusBleed: toLeveledValue(r.dmg_status_bleed, curves),
-        dmgStatusPoison: toLeveledValue(r.dmg_status_poison, curves),
-        dmgStatusFrost: toLeveledValue(r.dmg_status_frost, curves),
-        dmgStatusSmite: toLeveledValue(r.dmg_status_smite, curves),
         dmgStatusBurn: toLeveledValue(r.dmg_status_burn, curves),
+        dmgStatusPoison: toLeveledValue(r.dmg_status_poison, curves),
+        dmgStatusSmite: toLeveledValue(r.dmg_status_smite, curves),
         dmgStatusIgnite: toLeveledValue(r.dmg_status_ignite, curves),
+        dmgStatusFrost: toLeveledValue(r.dmg_status_frost, curves),
     };
 }
 
@@ -318,6 +351,34 @@ function toRune(r: RawRune, buffs: Map<string, Buff>): Rune {
     };
 }
 
+function toArmorStats(r: RawArmorStats): ArmorStats {
+    return {
+        weight: r.weight,
+        defPhysical: r.def_physical,
+        defFire: r.def_fire,
+        defHoly: r.def_holy,
+        defWither: r.def_wither,
+        resBleed: r.res_bleed,
+        resBurn: r.res_burn,
+        resPoison: r.res_poison,
+        resSmite: r.res_smite,
+        resIgnite: r.res_ignite,
+        resFrost: r.res_frost,
+        poise: r.poise,
+        kickMult: r.kick_mult,
+    };
+}
+
+function toArmor(r: RawArmor): Armor {
+    const slot = r.slot as ArmorSlot;
+    if (!isArmorSlot(slot)) throw new Error(`Invalid armor slot: ${slot}`);
+    const weightClass = r.weight_class as ArmorWeightClass;
+    if (!isArmorWeightClass(weightClass)) throw new Error(`Invalid armor weightClass: ${weightClass}`);
+    const stats = toArmorStats(r.stats);
+
+    return { key: r.key, name: r.name, icon: r.icon, slot, weightClass, set: r.set, stats };
+}
+
 /**
  * weapons.json data loader
  * @returns
@@ -327,6 +388,7 @@ export async function loadJSONData(): Promise<{
     gradeRanges: StatScalarGradeRange[];
     curves: Map<string, Curve>;
     runes: Rune[];
+    armor: Armor[];
 }> {
     const res = await fetch('data/weapons.json');
     if (!res.ok) throw new Error(`Failed to load weapons.json: ${res.status}`);
@@ -353,6 +415,7 @@ export async function loadJSONData(): Promise<{
     const gradeRanges = data.stat_grade_ranges.map(toStatScalarGradeRange);
     const weapons = data.weapons.map((w) => toWeapon(w, curves, baseDamages));
     const runes = data.runes.map((r) => toRune(r, buffs));
+    const armor = data.armor.map((arm) => toArmor(arm));
 
-    return { weapons, gradeRanges, curves, runes };
+    return { weapons, gradeRanges, curves, runes, armor };
 }

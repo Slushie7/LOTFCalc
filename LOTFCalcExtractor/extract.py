@@ -20,26 +20,18 @@ from .classes import (
     RUNE_TYPE,
     Effect,
     Buff,
+    RUNE_SHAPE_MAP,
     SCALING_TYPE,
     Rune,
+    WEAP_CLASS_MAP,
+    ARMOR_SLOT_MAP,
+    ARMOR_INFO_PAT,
+    ARMOR_SLOT,
+    ARMOR_WEIGHT_CLASSES,
+    Armor,
+    ArmorStats,
 )
 from .load_weapons import load_json_data
-
-
-WEAP_CLASS_MAP: dict[str, str] = {
-    # maps the game's internal weapon classes to user-displayed classes
-    'CrossBows': 'Crossbows',
-    'FistWeapons': 'Fists',
-    'GreatAxes': 'Grand Axes',
-    'GreatHammers': 'Grand Hammers',
-    'GreatSwords': 'Long Swords',
-    'Magic': 'Catalysts',
-    'ShortSwords': 'Short Swords',
-    'UltraGreatSwords': 'Grand Swords',
-    'crossbows': 'Crossbows',
-}
-
-RUNE_SHAPE_MAP: dict[str, RUNE_TYPE] = {'Circle': 'S', 'Triangle': 'A', 'Square': 'R', 'Star': 'I', 'Meta': '*'}
 
 
 class LOTFExtractor:
@@ -47,35 +39,23 @@ class LOTFExtractor:
         lotf2_dir = Path(lotf2_dir)
         content_dir = lotf2_dir / 'Content'
         blueprints_dir = content_dir / 'Blueprints'
+        data_dir = blueprints_dir / 'Data'
         atk_defs_dir = blueprints_dir / 'Combat/AttackDefinitions'
-        stats_dir = blueprints_dir / 'Data/Stats'
+        self.STATS_DIR = data_dir / 'Stats'
         localization_dir = content_dir / 'Localization/Game/en'
 
         # required paths
         self.STAT_SC_DEFS_PATH = atk_defs_dir / 'DT_UI_StatScalarDefinition.json'
-        self.BATTLE_EFFECTS_PATH = blueprints_dir / 'Data/BattleEffects/DT_BattleEffectsData.json'
-        self.PLAYER_WEAPONS_DIR = blueprints_dir / 'Data/Equipment/Weapons/Player'
-        self.RUNES_DT_PATH = blueprints_dir / 'Data/Runes/DT_RunesDataTable.json'
-        self.RUNES_RELEASE_PATH = blueprints_dir / 'Data/Runes/Release'
-        self.CURVE_LIB_PATH = stats_dir / 'DT_CurveLibrary.json'
-        self.RANGED_STATS_PATH = stats_dir / 'DT_RangedWeaponStats.json'
-        self.SC_CURVE_LIB_PATH = stats_dir / 'DT_ScalingCurveLibrary.json'
-        self.WEAPON_STATS_PATH = stats_dir / 'DT_WeaponStats.json'
+        self.BATTLE_EFFECTS_PATH = data_dir / 'BattleEffects/DT_BattleEffectsData.json'
+        self.ARMOR_META_DIR = data_dir / 'Equipment/Armor/Player'
+        self.WEAPONS_META_DIR = data_dir / 'Equipment/Weapons/Player'
+        self.RUNES_DT_PATH = data_dir / 'Runes/DT_RunesDataTable.json'
+        self.RUNES_RELEASE_PATH = data_dir / 'Runes/Release'
+        self.CURVE_LIB_PATH = self.STATS_DIR / 'DT_CurveLibrary.json'
+        self.RANGED_STATS_PATH = self.STATS_DIR / 'DT_RangedWeaponStats.json'
+        self.SC_CURVE_LIB_PATH = self.STATS_DIR / 'DT_ScalingCurveLibrary.json'
+        self.WEAPON_STATS_PATH = self.STATS_DIR / 'DT_WeaponStats.json'
         self.GAME_LOC_PATH = localization_dir / 'Game.json'
-        self.REQUIRED_PATHS = (
-            self.STAT_SC_DEFS_PATH,
-            self.BATTLE_EFFECTS_PATH,
-            self.PLAYER_WEAPONS_DIR,
-            self.RUNES_DT_PATH,
-            self.RUNES_RELEASE_PATH,
-            self.CURVE_LIB_PATH,
-            self.RANGED_STATS_PATH,
-            self.SC_CURVE_LIB_PATH,
-            self.WEAPON_STATS_PATH,
-            self.GAME_LOC_PATH,
-        )
-
-        self._verify_paths()
 
         if not mode:
             print('LOTFCalcExtractor: Export Mode')
@@ -85,8 +65,9 @@ class LOTFExtractor:
             buffs = self._extract_buffs()
             runes = self._extract_runes(local_names, buffs)
             ranged_ammo = self._extract_ranged_ammo()
-            weapons, base_damages = self._extract_weapons(local_names, curves, stat_grade_ranges, ranged_ammo)
-            self.export_json(curves, stat_grade_ranges, weapons, base_damages, buffs, runes)
+            weapons, base_damages = self._extract_weapons(local_names, curves, stat_grade_ranges, ranged_ammo, buffs)
+            armor = self._extract_armor(local_names)
+            self.export_json(curves, stat_grade_ranges, weapons, base_damages, buffs, runes, armor)
 
         elif mode == 'runes-test':
             print('LOTFCalcExtractor: Runes Test')
@@ -100,24 +81,6 @@ class LOTFExtractor:
 
         else:
             print(f'Unknown mode: "{mode}"')
-
-    def _verify_paths(self) -> None:
-        """Verifies that all of the required exported game files are present."""
-
-        error: bool = False
-
-        for path in self.REQUIRED_PATHS:
-            if not path.exists():
-                error = True
-                ptype = 'file' if path.suffix else 'folder'
-                print(f'Failed to find {ptype} "{path.name}" at {path.resolve()}')
-
-        if error:
-            raise FileNotFoundError(
-                'One or more necessary files/folders could not be located. Ensure LOTFCalcExtractor is pointed at the main "LOTF2" folder exported from FModel.'
-            )
-        else:
-            print('All necessary files appear to be present.')
 
     def _extract_item_strings(self) -> dict[str, str]:
         """Reads the game's localization file, extracting item names.
@@ -305,6 +268,7 @@ class LOTFExtractor:
         curves: dict[str, Curve],
         stat_grade_ranges: tuple[StatScalarGradeRange, ...],
         ranged_ammo: dict[str, int],
+        buffs: dict[str, Buff],
     ) -> tuple[tuple[Weapon, ...], tuple[BaseDamage, ...]]:
         def read_int(key: str) -> int:
             val = stats_d[key]
@@ -357,7 +321,7 @@ class LOTFExtractor:
         with open(self.WEAPON_STATS_PATH, encoding='utf-8') as f:
             weapons_dt: dict[str, Any] = json.load(f)[0]['Rows']
 
-        for class_dir in self.PLAYER_WEAPONS_DIR.iterdir():
+        for class_dir in self.WEAPONS_META_DIR.iterdir():
             if not class_dir.is_dir():
                 continue
 
@@ -379,6 +343,29 @@ class LOTFExtractor:
                     print(f'Failed to retrieve localized name for weapon {weapon_key} - skipping')
                     continue
                 weapon_name = local_names[loc_key]
+                # check for StanceBattleEffects
+                two_hand_bonus: float = 1.0
+                if stance_data := defd.get('StanceMovesetData'):
+                    assert isinstance(stance_data, list)
+                    for stance_d in stance_data:
+                        key = stance_d['Key'].split('::')[1]
+                        if key == 'Secondary':
+                            # two-handing
+                            if stance_be := stance_d['Value'].get('StanceBattleEffects'):
+                                battle_effects: list = stance_be['BattleEffects']
+                                for be in battle_effects:
+                                    be_id = be['BattleEffectID']
+                                    if buff := buffs.get(be_id):
+                                        for effect in buff.effects:
+                                            if (
+                                                effect.attribute == 'PrimaryWeaponDamageMultiplier'
+                                                and effect.scaling_type == 'Additive'
+                                            ):
+                                                two_hand_bonus = 1 + effect.value
+                                            else:
+                                                print(
+                                                    f'Unhandled BattleEffect for weapon {weapon_name}: {effect.attribute} - skipping BattleEffect'
+                                                )
 
                 # get weapon stats from DT_WeaponStats
                 stats_d: dict[str, Any]
@@ -435,22 +422,24 @@ class LOTFExtractor:
                 agi_scaled = read_stat_scaled_dmg_val('A', 'ScalingAgility', 'Scaling_Damage_Agility')
                 rad_scaled = read_stat_scaled_dmg_val('R', 'ScalingOrder', 'Scaling_Damage_Faith')
                 inf_scaled = read_stat_scaled_dmg_val('I', 'ScalingChaos', 'Scaling_Damage_Chaos')
-                weapon_dmg_ar = WeaponDamageAR(base_damage, str_scaled, agi_scaled, rad_scaled, inf_scaled)
+                weapon_dmg_ar = WeaponDamageAR(
+                    base_damage, str_scaled, agi_scaled, rad_scaled, inf_scaled, two_hand_bonus
+                )
 
                 # status effects
                 dmg_status_bleed = read_leveled_val('DamageStatusEffectBleed')
-                dmg_status_poison = read_leveled_val('DamageStatusEffectPoison')
-                dmg_status_frost = read_leveled_val('DamageStatusEffectFrostbite')
-                dmg_status_smite = read_leveled_val('DamageStatusEffectSmite')
                 dmg_status_burn = read_leveled_val('DamageStatusEffectBurn')
+                dmg_status_poison = read_leveled_val('DamageStatusEffectPoison')
+                dmg_status_smite = read_leveled_val('DamageStatusEffectSmite')
                 dmg_status_ignite = read_leveled_val('DamageStatusEffectIgnite')
+                dmg_status_frost = read_leveled_val('DamageStatusEffectFrostbite')
                 weapon_dmg_status = WeaponDamageStatus(
                     dmg_status_bleed,
-                    dmg_status_poison,
-                    dmg_status_frost,
-                    dmg_status_smite,
                     dmg_status_burn,
+                    dmg_status_poison,
+                    dmg_status_smite,
                     dmg_status_ignite,
+                    dmg_status_frost,
                 )
 
                 weapon_offense = WeaponOffense(weapon_dmg_ar, weapon_dmg_extras, weapon_dmg_status)
@@ -481,6 +470,70 @@ class LOTFExtractor:
 
         return tuple(weapons), tuple(base_damages)
 
+    def _extract_armor(self, local_names: dict[str, str]) -> tuple[Armor, ...]:
+        print('Extracting armor stats')
+
+        armor: list[Armor] = []
+
+        # load all of the armor stats data tables
+        master_stats_d: dict[str, Any] = {}
+        for stats_file in (
+            'DT_ArmorBootsStats.json',
+            'DT_ArmorChestStats.json',
+            'DT_ArmorGauntletsStats.json',
+            'DT_ArmorHelmetStats.json',
+        ):
+            stats_path = self.STATS_DIR / stats_file
+            with open(stats_path, encoding='utf-8') as f:
+                d = json.load(f)[0]['Rows']
+                master_stats_d.update(d)
+
+        # scan through the armor definitions subdirs
+        for class_dir in self.ARMOR_META_DIR.iterdir():
+            if not class_dir.is_dir():
+                continue
+
+            for file in class_dir.iterdir():
+                if not file.is_file() or file.suffix.lower() != '.json':
+                    continue
+
+                with open(file, encoding='utf-8') as f:
+                    d = json.load(f)[0]['Properties']
+
+                key = d['StatsRow']['RowName']
+                name = local_names[d['ItemName']['Key']]
+                icon = d['ItemIcon']['ObjectPath']
+                _info_str = d['itemCategory']['TagName']
+                m = ARMOR_INFO_PAT.match(_info_str)
+                if m is None:
+                    raise ValueError(f'Failed to parse armor info string for {key}')
+                slot, weight_class, armor_set = m.groups()
+                stats_d = master_stats_d[key]
+
+                stats = ArmorStats(
+                    stats_d['Weight'],
+                    stats_d['DefensePhysical'],
+                    stats_d['DefenseFire'],
+                    stats_d['DefenseHoly'],
+                    stats_d['DefenseDark'],
+                    stats_d['ResistanceBleed'],
+                    stats_d['ResistanceBurn'],
+                    stats_d['ResistancePoison'],
+                    stats_d['ResistanceSmite'],
+                    stats_d['ResistanceIgnite'],
+                    stats_d['ResistanceFrostbite'],
+                    stats_d['Poise'],
+                    stats_d['KickPoiseDamageMultiplier'],
+                )
+                slot = ARMOR_SLOT_MAP[slot]
+                if weight_class not in literal_args(ARMOR_WEIGHT_CLASSES):
+                    raise ValueError
+                weight_class = cast(ARMOR_WEIGHT_CLASSES, weight_class)
+                armor.append(Armor(key, name, icon, slot, weight_class, armor_set, stats))
+
+        print(f'Extracted data for {len(armor)} armor pieces')
+        return tuple(armor)
+
     def export_json(
         self,
         curves: dict[str, Curve],
@@ -489,6 +542,7 @@ class LOTFExtractor:
         base_damages: tuple[BaseDamage, ...],
         buffs: dict[str, Buff],
         runes: tuple[Rune, ...],
+        armor: tuple[Armor, ...],
         verify=True,
     ) -> None:
         out_path = (Path(__file__).parent / '../data/weapons.json').resolve()
@@ -507,6 +561,8 @@ class LOTFExtractor:
 
         runes_export = [rune.to_dict() for rune in runes]
 
+        armor_export = [armor_piece.to_dict() for armor_piece in armor]
+
         output: dict[str, Any] = {
             'curves': curves_export,
             'base_damages': base_damages_export,
@@ -514,6 +570,7 @@ class LOTFExtractor:
             'weapons': weapons_export,
             'buffs': buffs_export,
             'runes': runes_export,
+            'armor': armor_export,
         }
 
         with open(out_path, 'w', encoding='utf-8') as f:
@@ -524,8 +581,8 @@ class LOTFExtractor:
         if verify:
             print('Verifying accuracy of export')
 
-            loaded_weaps, loaded_curves, loaded_runes = load_json_data()
-            if loaded_weaps == weapons and loaded_curves == curves and loaded_runes == runes:
+            loaded_weaps, loaded_curves, loaded_runes, loaded_armor = load_json_data()
+            if loaded_weaps == weapons and loaded_curves == curves and loaded_runes == runes and loaded_armor == armor:
                 print('Weapons export passed validation!')
             else:
                 print('Weapons export failed validation!')
@@ -607,8 +664,8 @@ class LOTFExtractor:
 
         print(f'Comparing extracted data in {file1} against data in {file2}')
 
-        weaps1, curves1, runes1 = load_json_data(file1)
-        weaps2, curves2, runes2 = load_json_data(file2)
+        weaps1, curves1, runes1, armor1 = load_json_data(file1)
+        weaps2, curves2, runes2, armor2 = load_json_data(file2)
 
         checked_curves: set[str] = set()
         compare_dicts(curves1, curves2, name1, name2, checked_curves, 'Curve')
@@ -622,3 +679,8 @@ class LOTFExtractor:
         weap_d2 = {weap.key: weap for weap in weaps2}
         checked_weaps: set[str] = set()
         compare_dicts(weap_d1, weap_d2, name1, name2, checked_weaps, 'Weapon')
+
+        armor_d1 = {armor.key: armor for armor in armor1}
+        armor_d2 = {armor.key: armor for armor in armor2}
+        checked_armor: set[str] = set()
+        compare_dicts(armor_d1, armor_d2, name1, name2, checked_armor, 'Armor')

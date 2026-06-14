@@ -7,7 +7,7 @@ import { calculateStats, calculatePlayerStats } from './calc.js';
 const STORAGE_KEY = 'lotfcalc.settings';
 const STORAGE_VER = 2;
 // main app variables
-const { weapons, gradeRanges, curves, runes } = await loadJSONData();
+const { weapons, gradeRanges, curves, runes, armor } = await loadJSONData();
 const loadedWeaponClasses = [...new Set(weapons.map((w) => w.className))].sort();
 let state = {
     // defaults
@@ -17,6 +17,7 @@ let state = {
     sortKey: 'WEAP',
     ascending: true,
     showColGroups: new Set(['INFO', 'AR', 'STATUS', 'SCALING', 'REQS']),
+    showTwoHanding: false,
     showUnwieldable: true,
     showSplit: false,
     saveSettings: true,
@@ -150,6 +151,8 @@ function loadState() {
             return false;
         if (!o.showColGroups.every((v) => isSuperheaderKey(v)))
             return false;
+        if (!(typeof o.showTwoHanding === 'boolean'))
+            return false;
         if (!(typeof o.showUnwieldable === 'boolean'))
             return false;
         if (!(typeof o.showSplit === 'boolean'))
@@ -205,6 +208,7 @@ function loadState() {
         sortKey: parsed.sortKey,
         ascending: parsed.ascending,
         showColGroups,
+        showTwoHanding: parsed.showTwoHanding,
         showUnwieldable: parsed.showUnwieldable,
         showSplit: parsed.showSplit,
         saveSettings: parsed.saveSettings,
@@ -226,6 +230,7 @@ function saveState() {
             sortKey: state.sortKey,
             ascending: state.ascending,
             showColGroups: [...state.showColGroups],
+            showTwoHanding: state.showTwoHanding,
             showUnwieldable: state.showUnwieldable,
             showSplit: state.showSplit,
             saveSettings: state.saveSettings,
@@ -276,7 +281,7 @@ function renderWeapons(weaponFadeIn = null) {
     const elBody = document.getElementById('weapons-body');
     if (elBody) {
         const showWeaps = weapons.filter((weap) => state.selectedClasses.has(weap.className) || state.pinnedWeapons.has(weap.key));
-        let calcStats = showWeaps.map((weap) => calculateStats(weap, state.upgLevel, state.playerStats, gradeRanges, state.pinnedWeapons));
+        let calcStats = showWeaps.map((weap) => calculateStats(weap, state.upgLevel, state.playerStats, state.showTwoHanding, gradeRanges, state.pinnedWeapons));
         if (!state.showUnwieldable)
             // remove any unwieldable weapons
             calcStats = calcStats.filter((ws) => ws.wieldability.wieldable);

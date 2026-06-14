@@ -1,4 +1,4 @@
-import { isRuneType, isWeaponClass, } from './model.js';
+import { isRuneType, isWeaponClass, isArmorSlot, isArmorWeightClass, } from './model.js';
 // helpers
 function getCurveOrNull(key, curves) {
     if (key === null)
@@ -73,6 +73,7 @@ function toWeaponDamageAR(r, curves, baseDamages) {
         scaledAgi: toStatScaledDamage(r.scaled_agi, curves, baseDamages),
         scaledRad: toStatScaledDamage(r.scaled_rad, curves, baseDamages),
         scaledInf: toStatScaledDamage(r.scaled_inf, curves, baseDamages),
+        twoHandBonus: r.two_hand_bonus,
     };
 }
 function toWeaponDamageExtras(r, curves) {
@@ -87,11 +88,11 @@ function toWeaponDamageExtras(r, curves) {
 function toWeaponDamageStatus(r, curves) {
     return {
         dmgStatusBleed: toLeveledValue(r.dmg_status_bleed, curves),
-        dmgStatusPoison: toLeveledValue(r.dmg_status_poison, curves),
-        dmgStatusFrost: toLeveledValue(r.dmg_status_frost, curves),
-        dmgStatusSmite: toLeveledValue(r.dmg_status_smite, curves),
         dmgStatusBurn: toLeveledValue(r.dmg_status_burn, curves),
+        dmgStatusPoison: toLeveledValue(r.dmg_status_poison, curves),
+        dmgStatusSmite: toLeveledValue(r.dmg_status_smite, curves),
         dmgStatusIgnite: toLeveledValue(r.dmg_status_ignite, curves),
+        dmgStatusFrost: toLeveledValue(r.dmg_status_frost, curves),
     };
 }
 function toWeaponOffense(r, curves, baseDamages) {
@@ -149,6 +150,33 @@ function toRune(r, buffs) {
         armorBuffTarget: r.armor_buff_target,
     };
 }
+function toArmorStats(r) {
+    return {
+        weight: r.weight,
+        defPhysical: r.def_physical,
+        defFire: r.def_fire,
+        defHoly: r.def_holy,
+        defWither: r.def_wither,
+        resBleed: r.res_bleed,
+        resBurn: r.res_burn,
+        resPoison: r.res_poison,
+        resSmite: r.res_smite,
+        resIgnite: r.res_ignite,
+        resFrost: r.res_frost,
+        poise: r.poise,
+        kickMult: r.kick_mult,
+    };
+}
+function toArmor(r) {
+    const slot = r.slot;
+    if (!isArmorSlot(slot))
+        throw new Error(`Invalid armor slot: ${slot}`);
+    const weightClass = r.weight_class;
+    if (!isArmorWeightClass(weightClass))
+        throw new Error(`Invalid armor weightClass: ${weightClass}`);
+    const stats = toArmorStats(r.stats);
+    return { key: r.key, name: r.name, icon: r.icon, slot, weightClass, set: r.set, stats };
+}
 /**
  * weapons.json data loader
  * @returns
@@ -176,6 +204,7 @@ export async function loadJSONData() {
     const gradeRanges = data.stat_grade_ranges.map(toStatScalarGradeRange);
     const weapons = data.weapons.map((w) => toWeapon(w, curves, baseDamages));
     const runes = data.runes.map((r) => toRune(r, buffs));
-    return { weapons, gradeRanges, curves, runes };
+    const armor = data.armor.map((arm) => toArmor(arm));
+    return { weapons, gradeRanges, curves, runes, armor };
 }
 //# sourceMappingURL=load.js.map

@@ -154,7 +154,9 @@ export function calculateContribution(statScaledDmg, upgLevel, statLevel) {
     const ar = { physical, holy, fire, wither, spellPower };
     return { ar, weaponScalingStatCoef: weaponScalingStat };
 }
-export function makeDamageSplit(base, fromStats, wieldable) {
+export function makeDamageSplit(base, fromStats, wieldable, scalar) {
+    base *= scalar;
+    fromStats *= scalar;
     if (!wieldable) {
         base /= 5;
         fromStats /= 5;
@@ -173,7 +175,7 @@ export function canWield(playerStats, wieldReqs) {
     const wieldable = strength && agility && radiance && inferno;
     return { strength, agility, radiance, inferno, wieldable };
 }
-export function calculateAR(AR, upgLevel, playerStats, wieldable, gradeRanges) {
+export function calculateAR(AR, upgLevel, playerStats, wieldable, twoHanding, gradeRanges) {
     const baseDamage = calculateBaseDamage(AR.baseDamage, upgLevel);
     // calculate contributions to AR (physical, holy, fire, wither, and spellpower) from stats
     const contribsStr = calculateContribution(AR.scaledStr, upgLevel, playerStats.strength);
@@ -190,12 +192,13 @@ export function calculateAR(AR, upgLevel, playerStats, wieldable, gradeRanges) {
     const addFire = arStr.fire + arAgi.fire + arRad.fire + arInf.fire;
     const addWither = arStr.wither + arAgi.wither + arRad.wither + arInf.wither;
     const addSP = arStr.spellPower + arAgi.spellPower + arRad.spellPower + arInf.spellPower;
+    const scalar = twoHanding ? 1.17 * AR.twoHandBonus : 1.0;
     // create DamageSplits from base+additional; considering wieldability
-    const physical = makeDamageSplit(baseDamage.physical, addPhysical, wieldable);
-    const holy = makeDamageSplit(baseDamage.holy, addHoly, wieldable);
-    const fire = makeDamageSplit(baseDamage.fire, addFire, wieldable);
-    const wither = makeDamageSplit(baseDamage.wither, addWither, wieldable);
-    const spellPower = makeDamageSplit(baseDamage.spellPower, addSP, wieldable);
+    const physical = makeDamageSplit(baseDamage.physical, addPhysical, wieldable, scalar);
+    const holy = makeDamageSplit(baseDamage.holy, addHoly, wieldable, scalar);
+    const fire = makeDamageSplit(baseDamage.fire, addFire, wieldable, scalar);
+    const wither = makeDamageSplit(baseDamage.wither, addWither, wieldable, scalar);
+    const spellPower = makeDamageSplit(baseDamage.spellPower, addSP, wieldable, 1.0);
     // stat scaling values/grades
     const strVal = contribsStr.weaponScalingStatCoef;
     const agiVal = contribsAgi.weaponScalingStatCoef;
@@ -225,9 +228,11 @@ export function calculateAR(AR, upgLevel, playerStats, wieldable, gradeRanges) {
     };
     return { calcAR, calcScaling };
 }
-export function calculateExtras(wde, upgLevel) {
-    const poiseDamage = getValue(wde.dmgPoise, upgLevel);
-    const staggerDamage = getValue(wde.dmgStagger, upgLevel);
+export function calculateExtras(wde, upgLevel, twoHanding) {
+    // 2-handing gives roughly 40% more poise and stagger. Not sure about stamina damage.
+    const scalar = twoHanding ? 1.4 : 1.0;
+    const poiseDamage = getValue(wde.dmgPoise, upgLevel) * scalar;
+    const staggerDamage = getValue(wde.dmgStagger, upgLevel) * scalar;
     const staminaDamage = getValue(wde.dmgStamina, upgLevel);
     const pvpMultiplier = wde.pvpMultiplier;
     const spellSlots = wde.spellSlots;
@@ -248,11 +253,11 @@ export function calculateStatus(wds, upgLevel) {
     const frost = getValue(wds.dmgStatusFrost, upgLevel);
     return { bleed, burn, poison, smite, ignite, frost };
 }
-export function calculateOffense(wo, upgLevel, playerStats, wieldability, gradeRanges) {
-    const calcAR = calculateAR(wo.damageAR, upgLevel, playerStats, wieldability.wieldable, gradeRanges);
+export function calculateOffense(wo, upgLevel, playerStats, wieldability, twoHanding, gradeRanges) {
+    const calcAR = calculateAR(wo.damageAR, upgLevel, playerStats, wieldability.wieldable, twoHanding, gradeRanges);
     const AR = calcAR.calcAR;
     const scaling = calcAR.calcScaling;
-    const extras = calculateExtras(wo.damageExtras, upgLevel);
+    const extras = calculateExtras(wo.damageExtras, upgLevel, twoHanding);
     const status = calculateStatus(wo.damageStatus, upgLevel);
     return { ar: AR, extras, status, scaling };
 }
@@ -271,10 +276,10 @@ export function calculateDefense(wd, upgLevel, wieldable) {
     }
     return { physical, holy, fire, wither, stability };
 }
-export function calculateStats(weapon, upgLevel, playerStats, gradeRanges, pinnedWeapons) {
+export function calculateStats(weapon, upgLevel, playerStats, twoHanding, gradeRanges, pinnedWeapons) {
     upgLevel = Math.max(0, Math.min(weapon.maxUpgLevel, upgLevel));
     const wieldability = canWield(playerStats, weapon.wieldReqs);
-    const offense = calculateOffense(weapon.offense, upgLevel, playerStats, wieldability, gradeRanges);
+    const offense = calculateOffense(weapon.offense, upgLevel, playerStats, wieldability, twoHanding, gradeRanges);
     const defense = calculateDefense(weapon.defense, upgLevel, wieldability.wieldable);
     const runeSockets = getRunes(weapon.runeSockets, upgLevel);
     const pinned = pinnedWeapons.has(weapon.key);
@@ -302,5 +307,13 @@ export function calculatePlayerStats(playerStats, curves) {
     const wgtCurve = getCurve('MaxEquipLoad_VitalityEndurance');
     const weight = interpolate(wgtCurve, playerStats.vitality + playerStats.endurance);
     return { total, hp, mana, stamina, weight };
+}
+/**
+ * Returns the scalar applied to incoming damage to determine damage inflicted
+ * @param defense_value
+ * @returns
+ */
+export function getDefenseScalar(defense_value) {
+    return 600 / (600 + defense_value);
 }
 //# sourceMappingURL=calc.js.map

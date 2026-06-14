@@ -103,6 +103,18 @@ export function isBuffTarget(v: unknown): v is BuffTarget {
     return BUFF_TARGETS.includes(v as BuffTarget);
 }
 
+const ARMOR_SLOTS = ['Head', 'Torso', 'Arms', 'Legs'] as const;
+export type ArmorSlot = (typeof ARMOR_SLOTS)[number];
+export function isArmorSlot(v: unknown): v is ScalingType {
+    return ARMOR_SLOTS.includes(v as ArmorSlot);
+}
+
+const ARMOR_WEIGHT_CLASSES = ['Light', 'Medium', 'Heavy'] as const;
+export type ArmorWeightClass = (typeof ARMOR_WEIGHT_CLASSES)[number];
+export function isArmorWeightClass(v: unknown): v is ArmorWeightClass {
+    return ARMOR_WEIGHT_CLASSES.includes(v as ArmorWeightClass);
+}
+
 export interface Curve {
     readonly key: string;
     readonly interpMode: InterpMode;
@@ -157,6 +169,7 @@ export interface WeaponDamageAR {
     readonly scaledAgi: StatScaledDamage;
     readonly scaledRad: StatScaledDamage;
     readonly scaledInf: StatScaledDamage;
+    readonly twoHandBonus: number;
 }
 
 export interface WeaponDamageExtras {
@@ -172,8 +185,8 @@ export interface WeaponDamageStatus {
     readonly dmgStatusBurn: LeveledValue;
     readonly dmgStatusPoison: LeveledValue;
     readonly dmgStatusSmite: LeveledValue;
-    readonly dmgStatusFrost: LeveledValue;
     readonly dmgStatusIgnite: LeveledValue;
+    readonly dmgStatusFrost: LeveledValue;
 }
 
 export interface WeaponOffense {
@@ -221,6 +234,32 @@ export interface Rune {
     readonly weaponBuffTarget: BuffTarget;
     readonly armorBuff: Buff;
     readonly armorBuffTarget: BuffTarget;
+}
+
+export interface ArmorStats {
+    readonly weight: number;
+    readonly defPhysical: number;
+    readonly defFire: number;
+    readonly defHoly: number;
+    readonly defWither: number;
+    readonly resBleed: number;
+    readonly resBurn: number;
+    readonly resPoison: number;
+    readonly resSmite: number;
+    readonly resIgnite: number;
+    readonly resFrost: number;
+    readonly poise: number;
+    readonly kickMult: number;
+}
+
+export interface Armor {
+    readonly key: string;
+    readonly name: string;
+    readonly icon: string;
+    readonly slot: ArmorSlot;
+    readonly weightClass: ArmorWeightClass;
+    readonly set: string;
+    readonly stats: ArmorStats;
 }
 
 // calculated Weapon values

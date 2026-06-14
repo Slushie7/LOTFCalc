@@ -83,8 +83,8 @@ export function getWeaponsHtml(weaponRows, weaponFadeIn) {
         row.cells.forEach((cell, idx) => {
             if (idx === 0) {
                 // first column - show 'pin weapon' button and link weapon text to FextraLife Wiki
-                const action = row.pinned ? 'Unpin' : 'Pin';
-                const pinBtn = `<button class="lock${row.pinned ? ' pinned' : ''}" data-weapon="${escapeHtml(row.weaponKey)}" aria-label="${action} ${escapeHtml(row.weaponName)}" title="${action} weapon">${row.pinned ? LOCKED_SVG : UNLOCKED_SVG}</button>`;
+                const action = row.pinned ? 'Unpin weapon' : 'Pin weapon to top of list';
+                const pinBtn = `<button class="lock${row.pinned ? ' pinned' : ''}" data-weapon="${escapeHtml(row.weaponKey)}" aria-label="${action} ${escapeHtml(row.weaponName)}" title="${action}">${row.pinned ? LOCKED_SVG : UNLOCKED_SVG}</button>`;
                 const url = `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(row.weaponName)}`;
                 rowParts.push(`<td class="${cell.cls}">${pinBtn}<a class="${cell.cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cell.text)}</a></td>`);
             }

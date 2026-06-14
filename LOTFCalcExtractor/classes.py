@@ -1,5 +1,6 @@
 import bisect
 import math
+import re
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any, Literal, Self
@@ -7,6 +8,30 @@ from typing import Any, Literal, Self
 STAT = Literal['S', 'A', 'R', 'I']
 RUNE_TYPE = Literal['S', 'A', 'R', 'I', '*']
 SCALING_TYPE = Literal['Additive', 'Multiplicative']
+
+WEAP_CLASS_MAP: dict[str, str] = {
+    # maps the game's internal weapon classes to user-displayed classes
+    'CrossBows': 'Crossbows',
+    'FistWeapons': 'Fists',
+    'GreatAxes': 'Grand Axes',
+    'GreatHammers': 'Grand Hammers',
+    'GreatSwords': 'Long Swords',
+    'Magic': 'Catalysts',
+    'ShortSwords': 'Short Swords',
+    'UltraGreatSwords': 'Grand Swords',
+    'crossbows': 'Crossbows',
+}
+
+RUNE_SHAPE_MAP: dict[str, RUNE_TYPE] = {'Circle': 'S', 'Triangle': 'A', 'Square': 'R', 'Star': 'I', 'Meta': '*'}
+ARMOR_SLOT = Literal['Torso', 'Arms', 'Head', 'Legs']
+ARMOR_SLOT_MAP: dict[str, ARMOR_SLOT] = {
+    'Body': 'Torso',
+    'Arms': 'Arms',
+    'Head': 'Head',
+    'Legs': 'Legs',
+}
+ARMOR_WEIGHT_CLASSES = Literal['Light', 'Medium', 'Heavy']
+ARMOR_INFO_PAT = re.compile(r'Inventory\.Category\.Equipment\.Armor\.(.*?)\.(.*?)\.(.*)')
 
 
 def epsilon_floor(x: float) -> int:
@@ -28,7 +53,7 @@ class Curve:
     def __post_init__(self) -> None:
         object.__setattr__(self, '_x_coords', tuple(x for x, _ in self._points))
 
-    @lru_cache(maxsize=1024)
+    # @lru_cache(maxsize=1024)
     def interpolate(self, input_val: int | float) -> float:
         if self._interp_mode != 'RCIM_Linear':
             raise ValueError(f'Unhandled interpolation mode: {self._interp_mode}')
@@ -65,7 +90,7 @@ class LeveledValue:
     curve: Curve | None
     scaling_type: SCALING_TYPE
 
-    @lru_cache(maxsize=1024)
+    # @lru_cache(maxsize=1024)
     def get_value(self, level: int | float) -> float:
         if self.curve is None:
             return self.base
@@ -107,7 +132,7 @@ class BaseDamage:
         if not self.key:
             object.__setattr__(self, 'key', str(id(self)))
 
-    @lru_cache(maxsize=1024)
+    # @lru_cache(maxsize=1024)
     def calculate(self, upgrade_level: int) -> 'AttackRating':
         """Calculate the base damage of the weapon, given the upgrade level."""
 
@@ -164,7 +189,7 @@ class StatScaledDamage:
     stat_scaling: LeveledValue
     stat_curve: Curve | None
 
-    @lru_cache(maxsize=1024)
+    # @lru_cache(maxsize=1024)
     def calculate_damage_contribution(
         self, upgrade_level: int, player_stat_level: int
     ) -> tuple['AttackRating', float]:
@@ -312,6 +337,92 @@ class Rune:
         )
 
 
+@dataclass(frozen=True)
+class ArmorStats:
+    weight: float
+    def_physical: float
+    def_fire: float
+    def_holy: float
+    def_wither: float
+    res_bleed: float
+    res_burn: float
+    res_poison: float
+    res_smite: float
+    res_ignite: float
+    res_frost: float
+    poise: float
+    kick_mult: float
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'weight': self.weight,
+            'def_physical': self.def_physical,
+            'def_fire': self.def_fire,
+            'def_holy': self.def_holy,
+            'def_wither': self.def_wither,
+            'res_bleed': self.res_bleed,
+            'res_burn': self.res_burn,
+            'res_poison': self.res_poison,
+            'res_smite': self.res_smite,
+            'res_ignite': self.res_ignite,
+            'res_frost': self.res_frost,
+            'poise': self.poise,
+            'kick_mult': self.kick_mult,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> Self:
+        return cls(
+            d['weight'],
+            d['def_physical'],
+            d['def_fire'],
+            d['def_holy'],
+            d['def_wither'],
+            d['res_bleed'],
+            d['res_burn'],
+            d['res_poison'],
+            d['res_smite'],
+            d['res_ignite'],
+            d['res_frost'],
+            d['poise'],
+            d['kick_mult'],
+        )
+
+
+@dataclass(frozen=True)
+class Armor:
+    key: str
+    name: str
+    icon: str
+    slot: ARMOR_SLOT
+    weight_class: ARMOR_WEIGHT_CLASSES
+    set: str
+    stats: ArmorStats
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'key': self.key,
+            'name': self.name,
+            'icon': self.icon,
+            'slot': self.slot,
+            'weight_class': self.weight_class,
+            'set': self.set,
+            'stats': self.stats.to_dict(),
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> Self:
+        return cls(
+            d['key'],
+            d['name'],
+            d['icon'],
+            d['slot'],
+            d['weight_class'],
+            d['set'],
+            ArmorStats.from_dict(d['stats']),
+        )
+
+
 # ================================
 # Ephemeral Primitives
 # ================================
@@ -331,11 +442,12 @@ class DamageSplit:
     base: int
     from_stats: int
     _wieldable: bool
+    _scalar: float
     total: int = field(init=False, compare=False)
 
     def __post_init__(self) -> None:
-        base = self.base
-        from_stats = self.from_stats
+        base = self.base * self._scalar
+        from_stats = self.from_stats * self._scalar
         if not self._wieldable:
             # apply a -80% penalty to all damage
             base //= 5
@@ -350,7 +462,7 @@ class WeaponRuneSockets:
     rune_sockets: tuple[RUNE_TYPE, ...]
     num_by_level: Curve | None
 
-    @lru_cache(maxsize=1024)
+    # @lru_cache(maxsize=1024)
     def get_sockets(self, upgrade_level: int) -> tuple[RUNE_TYPE, ...]:
         if not self.num_by_level:
             return ()
@@ -373,13 +485,15 @@ class WeaponDamageAR:
     scaled_agi: StatScaledDamage
     scaled_rad: StatScaledDamage
     scaled_inf: StatScaledDamage
+    two_hand_bonus: float
 
-    @lru_cache(maxsize=1024)
+    # @lru_cache(maxsize=1024)
     def calculate(
         self,
         upgrade_level: int,
         player_stats: PlayerStats,
         weapon_reqs: PlayerStats,
+        two_handing: bool,
         stat_grade_ranges: tuple[StatScalarGradeRange, ...],
     ) -> tuple['CalculatedWeaponAR', 'CalculatedWeaponScaling', bool]:
         """Calculate the attack rating for the four damage types, and spell power."""
@@ -401,11 +515,12 @@ class WeaponDamageAR:
         add_ar_wither = add_ar_str.wither + add_ar_agi.wither + add_ar_rad.wither + add_ar_inf.wither
         add_spellpower = add_ar_str.spellpower + add_ar_agi.spellpower + add_ar_rad.spellpower + add_ar_inf.spellpower
 
-        physical = DamageSplit(epsilon_floor(base_damage.physical), epsilon_floor(add_ar_physical), wieldable)
-        holy = DamageSplit(epsilon_floor(base_damage.holy), epsilon_floor(add_ar_holy), wieldable)
-        fire = DamageSplit(epsilon_floor(base_damage.fire), epsilon_floor(add_ar_fire), wieldable)
-        wither = DamageSplit(epsilon_floor(base_damage.wither), epsilon_floor(add_ar_wither), wieldable)
-        spellpower = DamageSplit(epsilon_floor(base_damage.spellpower), epsilon_floor(add_spellpower), wieldable)
+        scalar = (1.17 * self.two_hand_bonus) if two_handing else 1.0
+        physical = DamageSplit(epsilon_floor(base_damage.physical), epsilon_floor(add_ar_physical), wieldable, scalar)
+        holy = DamageSplit(epsilon_floor(base_damage.holy), epsilon_floor(add_ar_holy), wieldable, scalar)
+        fire = DamageSplit(epsilon_floor(base_damage.fire), epsilon_floor(add_ar_fire), wieldable, scalar)
+        wither = DamageSplit(epsilon_floor(base_damage.wither), epsilon_floor(add_ar_wither), wieldable, scalar)
+        spellpower = DamageSplit(epsilon_floor(base_damage.spellpower), epsilon_floor(add_spellpower), wieldable, 1.0)
 
         return (
             CalculatedWeaponAR(physical, holy, fire, wither, spellpower),
@@ -420,6 +535,7 @@ class WeaponDamageAR:
             'scaled_agi': self.scaled_agi.to_dict(),
             'scaled_rad': self.scaled_rad.to_dict(),
             'scaled_inf': self.scaled_inf.to_dict(),
+            'two_hand_bonus': self.two_hand_bonus,
         }
 
     @classmethod
@@ -429,8 +545,9 @@ class WeaponDamageAR:
         agility = StatScaledDamage.from_dict(d['scaled_agi'], curves_d, base_damages_d)
         radiance = StatScaledDamage.from_dict(d['scaled_rad'], curves_d, base_damages_d)
         inferno = StatScaledDamage.from_dict(d['scaled_inf'], curves_d, base_damages_d)
+        two_hand_bonus = d['two_hand_bonus']
 
-        return cls(base_damage, strength, agility, radiance, inferno)
+        return cls(base_damage, strength, agility, radiance, inferno, two_hand_bonus)
 
 
 @dataclass(frozen=True)
@@ -441,12 +558,13 @@ class WeaponDamageExtras:
     pvp_multiplier: float
     spell_slots: int
 
-    @lru_cache(maxsize=1024)
-    def calculate(self, upgrade_level: int) -> 'CalculatedWeaponExtras':
+    # @lru_cache(maxsize=1024)
+    def calculate(self, upgrade_level: int, two_handing: bool) -> 'CalculatedWeaponExtras':
         """Calculate the strength of weapon 'extras' at the given upgrade level."""
 
-        poise = self.dmg_poise.get_value(upgrade_level)
-        stagger = self.dmg_stagger.get_value(upgrade_level)
+        scalar = 1.4 if two_handing else 1.0
+        poise = self.dmg_poise.get_value(upgrade_level) * scalar
+        stagger = self.dmg_stagger.get_value(upgrade_level) * scalar
         stamina = self.dmg_stamina.get_value(upgrade_level)
 
         return CalculatedWeaponExtras(poise, stagger, stamina, self.pvp_multiplier, self.spell_slots)
@@ -474,44 +592,44 @@ class WeaponDamageExtras:
 @dataclass(frozen=True)
 class WeaponDamageStatus:
     dmg_status_bleed: LeveledValue
-    dmg_status_poison: LeveledValue
-    dmg_status_frost: LeveledValue
-    dmg_status_smite: LeveledValue
     dmg_status_burn: LeveledValue
+    dmg_status_poison: LeveledValue
+    dmg_status_smite: LeveledValue
     dmg_status_ignite: LeveledValue
+    dmg_status_frost: LeveledValue
 
-    @lru_cache(maxsize=1024)
+    # @lru_cache(maxsize=1024)
     def calculate(self, upgrade_level: int) -> 'CalculatedWeaponStatus':
         """Calculate the strength of status effects applied by the weapon at the given upgrade level."""
 
         bleed = self.dmg_status_bleed.get_value(upgrade_level)
-        poison = self.dmg_status_poison.get_value(upgrade_level)
-        frost = self.dmg_status_frost.get_value(upgrade_level)
-        smite = self.dmg_status_smite.get_value(upgrade_level)
         burn = self.dmg_status_burn.get_value(upgrade_level)
+        poison = self.dmg_status_poison.get_value(upgrade_level)
+        smite = self.dmg_status_smite.get_value(upgrade_level)
         ignite = self.dmg_status_ignite.get_value(upgrade_level)
+        frost = self.dmg_status_frost.get_value(upgrade_level)
 
-        return CalculatedWeaponStatus(bleed, poison, frost, smite, burn, ignite)
+        return CalculatedWeaponStatus(bleed, burn, poison, smite, ignite, frost)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             'dmg_status_bleed': self.dmg_status_bleed.to_dict(),
-            'dmg_status_poison': self.dmg_status_poison.to_dict(),
-            'dmg_status_frost': self.dmg_status_frost.to_dict(),
-            'dmg_status_smite': self.dmg_status_smite.to_dict(),
             'dmg_status_burn': self.dmg_status_burn.to_dict(),
+            'dmg_status_poison': self.dmg_status_poison.to_dict(),
+            'dmg_status_smite': self.dmg_status_smite.to_dict(),
             'dmg_status_ignite': self.dmg_status_ignite.to_dict(),
+            'dmg_status_frost': self.dmg_status_frost.to_dict(),
         }
 
     @classmethod
     def from_dict(cls, d: dict[str, Any], curves_d: dict[str, Curve]) -> Self:
         return cls(
             LeveledValue.from_dict(d['dmg_status_bleed'], curves_d),
-            LeveledValue.from_dict(d['dmg_status_poison'], curves_d),
-            LeveledValue.from_dict(d['dmg_status_frost'], curves_d),
-            LeveledValue.from_dict(d['dmg_status_smite'], curves_d),
             LeveledValue.from_dict(d['dmg_status_burn'], curves_d),
+            LeveledValue.from_dict(d['dmg_status_poison'], curves_d),
+            LeveledValue.from_dict(d['dmg_status_smite'], curves_d),
             LeveledValue.from_dict(d['dmg_status_ignite'], curves_d),
+            LeveledValue.from_dict(d['dmg_status_frost'], curves_d),
         )
 
 
@@ -521,18 +639,19 @@ class WeaponOffense:
     damage_extras: WeaponDamageExtras
     damage_status: WeaponDamageStatus
 
-    @lru_cache(maxsize=1024)
+    # @lru_cache(maxsize=1024)
     def calculate(
         self,
         upgrade_level: int,
         player_stats: PlayerStats,
         wield_reqs: PlayerStats,
+        two_handing: bool,
         stat_grade_ranges: tuple[StatScalarGradeRange, ...],
     ) -> 'CalculatedWeaponOffense':
         attack_rating, scaling, wieldable = self.damage_ar.calculate(
-            upgrade_level, player_stats, wield_reqs, stat_grade_ranges
+            upgrade_level, player_stats, wield_reqs, two_handing, stat_grade_ranges
         )
-        extras = self.damage_extras.calculate(upgrade_level)
+        extras = self.damage_extras.calculate(upgrade_level, two_handing)
         status = self.damage_status.calculate(upgrade_level)
 
         return CalculatedWeaponOffense(attack_rating, extras, status, scaling, wieldable)
@@ -561,7 +680,7 @@ class WeaponDefense:
     def_wither: LeveledValue
     stability: LeveledValue
 
-    @lru_cache(maxsize=1024)
+    # @lru_cache(maxsize=1024)
     def calculate(self, upgrade_level: int) -> 'CalculatedWeaponDefense':
         physical = self.def_physical.get_value(upgrade_level)
         holy = self.def_holy.get_value(upgrade_level)
@@ -604,10 +723,14 @@ class Weapon:
     defense: WeaponDefense
     _stat_grade_ranges: tuple[StatScalarGradeRange, ...] = field(repr=False)
 
-    @lru_cache(maxsize=1024)
-    def calculate_stats(self, upgrade_level: int, player_stats: PlayerStats) -> 'CalculatedWeaponStats':
+    # @lru_cache(maxsize=1024)
+    def calculate_stats(
+        self, upgrade_level: int, player_stats: PlayerStats, two_handing: bool
+    ) -> 'CalculatedWeaponStats':
         upgrade_level = min(upgrade_level, self.max_upg_level)  # clamp upgrade level <= max upgrade level
-        offense_values = self.offense.calculate(upgrade_level, player_stats, self.wield_reqs, self._stat_grade_ranges)
+        offense_values = self.offense.calculate(
+            upgrade_level, player_stats, self.wield_reqs, two_handing, self._stat_grade_ranges
+        )
         defense_values = self.defense.calculate(upgrade_level)
         rune_sockets = self.rune_sockets.get_sockets(upgrade_level)
 
@@ -680,11 +803,11 @@ class CalculatedWeaponExtras:
 @dataclass(frozen=True)
 class CalculatedWeaponStatus:
     bleed: float
-    poison: float
-    frost: float
-    smite: float
     burn: float
+    poison: float
+    smite: float
     ignite: float
+    frost: float
 
 
 @dataclass(frozen=True)
@@ -706,7 +829,7 @@ class CalculatedWeaponScaling:
         object.__setattr__(self, 'rad_grade', self.get_grade(self.rad_val))
         object.__setattr__(self, 'inf_grade', self.get_grade(self.inf_val))
 
-    @lru_cache(maxsize=1024)
+    # @lru_cache(maxsize=1024)
     def get_grade(self, scaling_val: float) -> str:
         if scaling_val < 0.0:
             raise ValueError('Scaling factor must be >= 0')

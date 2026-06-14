@@ -44,4 +44,12 @@ const BUFF_TARGETS = ['Character', 'Equipment'];
 export function isBuffTarget(v) {
     return BUFF_TARGETS.includes(v);
 }
+const ARMOR_SLOTS = ['Head', 'Torso', 'Arms', 'Legs'];
+export function isArmorSlot(v) {
+    return ARMOR_SLOTS.includes(v);
+}
+const ARMOR_WEIGHT_CLASSES = ['Light', 'Medium', 'Heavy'];
+export function isArmorWeightClass(v) {
+    return ARMOR_WEIGHT_CLASSES.includes(v);
+}
 //# sourceMappingURL=model.js.map
