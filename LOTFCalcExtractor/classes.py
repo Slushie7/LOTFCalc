@@ -2,7 +2,6 @@ import bisect
 import math
 import re
 from dataclasses import dataclass, field
-from functools import lru_cache
 from typing import Any, Literal, Self
 
 STAT = Literal['S', 'A', 'R', 'I']
@@ -31,7 +30,7 @@ ARMOR_SLOT_MAP: dict[str, ARMOR_SLOT] = {
     'Legs': 'Legs',
 }
 ARMOR_WEIGHT_CLASSES = Literal['Light', 'Medium', 'Heavy']
-ARMOR_INFO_PAT = re.compile(r'Inventory\.Category\.Equipment\.Armor\.(.*?)\.(.*?)\.(.*)')
+ARMOR_INFO_PAT = re.compile(r'Inventory\.Category\.Equipment\.Armor\.(.*?)\.(.*?)\..*')
 
 
 def epsilon_floor(x: float) -> int:
@@ -421,6 +420,15 @@ class Armor:
             d['set'],
             ArmorStats.from_dict(d['stats']),
         )
+
+
+@dataclass(frozen=True)
+class ArmorSet:
+    name: str
+    head: Armor | None
+    torso: Armor | None
+    arms: Armor | None
+    legs: Armor | None
 
 
 # ================================

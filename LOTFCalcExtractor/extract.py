@@ -26,7 +26,6 @@ from .classes import (
     WEAP_CLASS_MAP,
     ARMOR_SLOT_MAP,
     ARMOR_INFO_PAT,
-    ARMOR_SLOT,
     ARMOR_WEIGHT_CLASSES,
     Armor,
     ArmorStats,
@@ -502,25 +501,34 @@ class LOTFExtractor:
 
                 key = d['StatsRow']['RowName']
                 name = local_names[d['ItemName']['Key']]
-                # get the path to the armor's thumbnail and clean it up
+
+                def prune(name: str, prefix: str) -> str:
+                    if not name.startswith(prefix):
+                        raise ValueError(f'{name} doesnt start with {prefix}')
+                    return name[len(prefix) :]
+
+                def swap_pre(name: str, prefix: str, repl: str) -> str:
+                    if name.startswith(prefix):
+                        return repl + name[len(prefix) :]
+                    return name
+
+                # get the path to the armor's thumbnail and clean the path up
                 icon = Path(d['ItemIcon']['ObjectPath']).name
-                if not icon.startswith('thumb_ItemImg_ARM_'):
-                    raise ValueError(f'Unhandled thumbnail path prefix for "{icon}"')
-                icon = icon[len('thumb_ItemImg_ARM_') :]
-                if icon.startswith('PLA_'):
-                    icon = 'Armor_' + icon[len('PLA_') :]
-                if not icon.startswith('Armor_'):
-                    raise ValueError(f'Inconsistent thumbnail prefix for "{icon}"')
-                icon = icon[len('Armor_') :]
+                icon = prune(icon, 'thumb_ItemImg_ARM_')
+                icon = swap_pre(icon, 'PLA_', 'Armor_')
+                icon = prune(icon, 'Armor_')
                 if not icon.endswith('.0'):
                     raise ValueError(f'Unhandled thumbnail suffix for "{icon}"')
                 icon = icon[:-2] + '.png'
-                # extract slot, weight class, and set name from armor's TagName
+
+                # extract slot and weight class from armor's TagName
                 _info_str = d['itemCategory']['TagName']
                 m = ARMOR_INFO_PAT.match(_info_str)
                 if m is None:
                     raise ValueError(f'Failed to parse armor info string for {key}')
-                slot, weight_class, armor_set = m.groups()
+                slot, weight_class = m.groups()
+                armor_set = ''
+
                 stats_d = master_stats_d[key]
 
                 stats = ArmorStats(
@@ -587,7 +595,7 @@ class LOTFExtractor:
         }
 
         with open(out_path, 'w', encoding='utf-8') as f:
-            json.dump(output, f)
+            json.dump(output, f, indent=2)
 
         print(f'Exported weapons data to {out_path}!')
 
