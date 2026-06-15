@@ -35,6 +35,15 @@ export function epsilonFloor(x: number): number {
 }
 
 /**
+ * Floor and clamp the given number to the range [0, 99]
+ * @param val
+ * @returns
+ */
+export function clampStat(val: number): number {
+    return Math.max(0, Math.min(Math.floor(val), 99));
+}
+
+/**
  * Interpolates the y-value for the given x-coord in the Curve
  * @param curve
  * @param x

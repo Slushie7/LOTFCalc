@@ -207,4 +207,4 @@ export async function loadJSONData() {
     const armor = data.armor.map((arm) => toArmor(arm));
     return { weapons, gradeRanges, curves, runes, armor };
 }
-//# sourceMappingURL=load.js.map
+//# sourceMappingURL=loadJSONData.js.map
