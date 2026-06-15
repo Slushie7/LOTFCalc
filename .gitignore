@@ -6,3 +6,6 @@ __pycache__/
 *.tsbuildinfo
 .vscode
 mynotes.md
+ffmpeg-downscale-image.txt
+img-src/
+lotf_damage_formulas.py

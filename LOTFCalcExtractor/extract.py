@@ -66,7 +66,7 @@ class LOTFExtractor:
             ranged_ammo = self._extract_ranged_ammo()
             weapons, base_damages = self._extract_weapons(local_names, curves, stat_grade_ranges, ranged_ammo, buffs)
             armor = self._extract_armor(local_names)
-            self.export_json(curves, stat_grade_ranges, weapons, base_damages, buffs, runes, armor)
+            self._export_json(curves, stat_grade_ranges, weapons, base_damages, buffs, runes, armor)
 
         elif mode == 'runes-test':
             print('LOTFCalcExtractor: Runes Test')
@@ -519,7 +519,7 @@ class LOTFExtractor:
                 icon = prune(icon, 'Armor_')
                 if not icon.endswith('.0'):
                     raise ValueError(f'Unhandled thumbnail suffix for "{icon}"')
-                icon = icon[:-2] + '.png'
+                icon = icon[:-2]
 
                 # extract slot and weight class from armor's TagName
                 _info_str = d['itemCategory']['TagName']
@@ -555,7 +555,7 @@ class LOTFExtractor:
         print(f'Extracted data for {len(armor)} armor pieces')
         return tuple(armor)
 
-    def export_json(
+    def _export_json(
         self,
         curves: dict[str, Curve],
         stat_grade_ranges: tuple[StatScalarGradeRange, ...],
@@ -566,7 +566,7 @@ class LOTFExtractor:
         armor: tuple[Armor, ...],
         verify=True,
     ) -> None:
-        out_path = (Path(__file__).parent / '../data/weapons.json').resolve()
+        out_path = (Path(__file__).parent / '../data/data.json').resolve()
 
         print(f'Exporting weapons data to {out_path}')
 

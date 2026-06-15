@@ -15,7 +15,7 @@ import { calculateStats, calculatePlayerStats } from './calc.js';
 
 // for localStorage
 const STORAGE_KEY = 'lotfcalc.settings';
-const STORAGE_VER = 2;
+const STORAGE_VER = 3;
 
 // main app variables
 const { weapons, gradeRanges, curves, runes, armor } = await loadJSONData();
@@ -73,6 +73,7 @@ function init(): void {
     loadState();
     initSettingsDisplay();
     wireInputs();
+    renderDerivedStats();
     renderClasses();
     renderHeader();
     renderWeapons();
@@ -120,7 +121,7 @@ function wireInputs(): void {
     mustGet('hamburger').addEventListener('click', toggleSidebar);
 
     // weapon class toggles
-    mustGet('weapon-classes').addEventListener('change', setClass);
+    mustGet('sidebar-content').addEventListener('change', setClass);
 
     // player stats inputs
     for (const elStat of document.getElementsByClassName('stat-input')) {
@@ -290,7 +291,7 @@ function saveState(): void {
 // =========================================
 
 function renderClasses(): void {
-    const elClasses = document.getElementById('weapon-classes');
+    const elClasses = document.getElementById('sidebar-content');
     if (elClasses) elClasses.innerHTML = getClassesHtml(loadedWeaponClasses, state.selectedClasses);
 }
 
@@ -302,7 +303,7 @@ function renderHeader(): void {
     }
 }
 
-function renderWeapons(weaponFadeIn: string | null = null): void {
+function renderDerivedStats(): void {
     // update the player's derived stats
     const derivedStats = calculatePlayerStats(state.playerStats, curves);
     for (const el of document.getElementsByClassName('derived-val')) {
@@ -313,7 +314,9 @@ function renderWeapons(weaponFadeIn: string | null = null): void {
             else if (typeof val === 'number') el.textContent = String(val);
         }
     }
+}
 
+function renderWeapons(weaponFadeIn: string | null = null): void {
     // update the weapons table
     const elBody = document.getElementById('weapons-body');
     if (elBody) {
@@ -382,6 +385,7 @@ function setPlayerStat(el: HTMLInputElement): void {
     state.playerStats = { ...state.playerStats, [field]: value };
 
     saveState();
+    renderDerivedStats();
     renderWeapons();
 }
 

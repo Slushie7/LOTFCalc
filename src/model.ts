@@ -105,7 +105,7 @@ export function isBuffTarget(v: unknown): v is BuffTarget {
 
 const ARMOR_SLOTS = ['Head', 'Torso', 'Arms', 'Legs'] as const;
 export type ArmorSlot = (typeof ARMOR_SLOTS)[number];
-export function isArmorSlot(v: unknown): v is ScalingType {
+export function isArmorSlot(v: unknown): v is ArmorSlot {
     return ARMOR_SLOTS.includes(v as ArmorSlot);
 }
 
@@ -353,9 +353,19 @@ export interface CalculatedWeaponStats {
 }
 
 export interface CalculatedPlayerStats {
-    readonly total: number;
+    readonly level: number;
     readonly hp: number;
     readonly mana: number;
     readonly stamina: number;
     readonly weight: number;
+    readonly defPhysical: number;
+    readonly defFire: number;
+    readonly defHoly: number;
+    readonly defWither: number;
+    readonly resBleed: number;
+    readonly resBurn: number;
+    readonly resPoison: number;
+    readonly resSmite: number;
+    readonly resIgnite: number;
+    readonly resFrost: number;
 }

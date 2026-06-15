@@ -30,7 +30,7 @@ python -m http.server
 You can then use a web browser to navigate to the localhost address provided by Python and use LOTFCalc.
 
 ## Updating Weapons Data
-The calculator's weapon data all resides in a file, **weapons.json**, located in the **data** folder.
+The calculator's weapon data all resides in a file, **data.json**, located in the **data** folder.
 
 LOTFCalc's weapon data is current as of game version 2.5. As this was supposedly the final major update, it is unlikely that LOTFCalc's data will need to be updated. Regardless, the Python script used to prepare the data for LOTFCalc has been provided in the **LOTFCalcExtractor** directory.
 

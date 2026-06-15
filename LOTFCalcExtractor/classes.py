@@ -422,15 +422,6 @@ class Armor:
         )
 
 
-@dataclass(frozen=True)
-class ArmorSet:
-    name: str
-    head: Armor | None
-    torso: Armor | None
-    arms: Armor | None
-    legs: Armor | None
-
-
 # ================================
 # Ephemeral Primitives
 # ================================

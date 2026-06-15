@@ -292,21 +292,48 @@ export function calculatePlayerStats(playerStats, curves) {
             throw new Error(`Failed to retrieve Curve with key: ${key}`);
         return curve;
     }
-    const total = playerStats.strength +
-        playerStats.agility +
-        playerStats.endurance +
-        playerStats.vitality +
-        playerStats.radiance +
-        playerStats.inferno;
+    const str = playerStats.strength;
+    const agi = playerStats.agility;
+    const end = playerStats.endurance;
+    const vit = playerStats.vitality;
+    const rad = playerStats.radiance;
+    const inf = playerStats.inferno;
+    const level = str + agi + end + vit + rad + inf;
     const hpCurve = getCurve('MaxHealth_Vitality');
-    const hp = interpolate(hpCurve, playerStats.vitality);
+    const hp = interpolate(hpCurve, vit);
     const manaCurve = getCurve('MaxMana_FaithChaos');
-    const mana = interpolate(manaCurve, playerStats.radiance + playerStats.inferno);
+    const mana = interpolate(manaCurve, rad + inf);
     const stamCurve = getCurve('MaxStamina_Endurance');
-    const stamina = interpolate(stamCurve, playerStats.endurance) + 10; // base max weight, minus all stats, is 10
+    const stamina = interpolate(stamCurve, end);
     const wgtCurve = getCurve('MaxEquipLoad_VitalityEndurance');
-    const weight = interpolate(wgtCurve, playerStats.vitality + playerStats.endurance);
-    return { total, hp, mana, stamina, weight };
+    const weight = interpolate(wgtCurve, vit + end) + 10; // base max weight, minus all stats, is 10
+    const defPhysical = str * 3 + agi + end + vit + rad + inf;
+    const defFire = str + agi + end + vit + rad + inf * 3;
+    const defHoly = str + agi + end + vit + rad * 3 + inf;
+    const defWither = str + agi + end + vit + rad * 3 + inf;
+    const resBleed = 100 + Math.floor(level / 2);
+    const resBurn = resBleed;
+    const resPoison = resBleed;
+    const resSmite = resBleed;
+    const resIgnite = resBleed;
+    const resFrost = resBleed;
+    return {
+        level: level,
+        hp,
+        mana,
+        stamina,
+        weight,
+        defPhysical,
+        defFire,
+        defHoly,
+        defWither,
+        resBleed,
+        resBurn,
+        resPoison,
+        resSmite,
+        resIgnite,
+        resFrost,
+    };
 }
 /**
  * Returns the scalar applied to incoming damage to determine damage inflicted

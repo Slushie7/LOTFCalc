@@ -5,7 +5,7 @@ import { getClassesHtml, getHeaderHtml, getWeaponRow, getWeaponsHtml, sortCalcul
 import { calculateStats, calculatePlayerStats } from './calc.js';
 // for localStorage
 const STORAGE_KEY = 'lotfcalc.settings';
-const STORAGE_VER = 2;
+const STORAGE_VER = 3;
 // main app variables
 const { weapons, gradeRanges, curves, runes, armor } = await loadJSONData();
 const loadedWeaponClasses = [...new Set(weapons.map((w) => w.className))].sort();
@@ -31,6 +31,7 @@ function init() {
     loadState();
     initSettingsDisplay();
     wireInputs();
+    renderDerivedStats();
     renderClasses();
     renderHeader();
     renderWeapons();
@@ -77,7 +78,7 @@ function wireInputs() {
     // hamburger button
     mustGet('hamburger').addEventListener('click', toggleSidebar);
     // weapon class toggles
-    mustGet('weapon-classes').addEventListener('change', setClass);
+    mustGet('sidebar-content').addEventListener('change', setClass);
     // player stats inputs
     for (const elStat of document.getElementsByClassName('stat-input')) {
         if (elStat instanceof HTMLInputElement)
@@ -253,7 +254,7 @@ function saveState() {
 // RENDERING - GENERATE/UPDATE HTML
 // =========================================
 function renderClasses() {
-    const elClasses = document.getElementById('weapon-classes');
+    const elClasses = document.getElementById('sidebar-content');
     if (elClasses)
         elClasses.innerHTML = getClassesHtml(loadedWeaponClasses, state.selectedClasses);
 }
@@ -264,7 +265,7 @@ function renderHeader() {
         elHeader.innerHTML = getHeaderHtml(groups, state.sortKey, state.ascending);
     }
 }
-function renderWeapons(weaponFadeIn = null) {
+function renderDerivedStats() {
     // update the player's derived stats
     const derivedStats = calculatePlayerStats(state.playerStats, curves);
     for (const el of document.getElementsByClassName('derived-val')) {
@@ -277,6 +278,8 @@ function renderWeapons(weaponFadeIn = null) {
                 el.textContent = String(val);
         }
     }
+}
+function renderWeapons(weaponFadeIn = null) {
     // update the weapons table
     const elBody = document.getElementById('weapons-body');
     if (elBody) {
@@ -330,6 +333,7 @@ function setPlayerStat(el) {
     const field = el.dataset.stat;
     state.playerStats = { ...state.playerStats, [field]: value };
     saveState();
+    renderDerivedStats();
     renderWeapons();
 }
 function setUpgLevel(el) {

@@ -298,12 +298,12 @@ td:first-child {
     color: var(--pico-form-element-invalid-active-border-color);
     text-decoration-color: var(--pico-form-element-invalid-active-border-color);
 }
-#weapon-classes,
+#sidebar-content,
 #app table {
     font-size: 0.8em;
     margin-bottom: 0;
 }
-#weapon-classes label {
+#sidebar-content label {
     display: block;
     margin-bottom: 0.25rem;
 }

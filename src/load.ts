@@ -161,8 +161,8 @@ interface RawArmor {
     stats: RawArmorStats;
 }
 
-// weapons.json data interface
-interface RawWeaponsJSONData {
+// data.json data interface
+interface RawDataJSON {
     curves: readonly RawCurve[];
     base_damages: readonly RawBaseDamage[];
     stat_grade_ranges: readonly RawStatScalarGradeRange[];
@@ -380,7 +380,7 @@ function toArmor(r: RawArmor): Armor {
 }
 
 /**
- * weapons.json data loader
+ * data.json data loader
  * @returns
  */
 export async function loadJSONData(): Promise<{
@@ -390,9 +390,9 @@ export async function loadJSONData(): Promise<{
     runes: Rune[];
     armor: Armor[];
 }> {
-    const res = await fetch('data/weapons.json');
-    if (!res.ok) throw new Error(`Failed to load weapons.json: ${res.status}`);
-    const data = (await res.json()) as RawWeaponsJSONData;
+    const res = await fetch('data/data.json');
+    if (!res.ok) throw new Error(`Failed to load data.json: ${res.status}`);
+    const data = (await res.json()) as RawDataJSON;
 
     const curves = new Map<string, Curve>();
     for (const rawCurve of data.curves) {

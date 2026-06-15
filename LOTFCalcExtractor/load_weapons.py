@@ -12,7 +12,7 @@ def load_json_data(
     if path is not None:
         json_path = Path(path).resolve()
     else:
-        json_path = (Path(__file__).parent / '../data/weapons.json').resolve()
+        json_path = (Path(__file__).parent / '../data/data.json').resolve()
 
     with open(json_path, encoding='utf-8') as f:
         data_d = json.load(f)

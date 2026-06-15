@@ -178,13 +178,13 @@ function toArmor(r) {
     return { key: r.key, name: r.name, icon: r.icon, slot, weightClass, set: r.set, stats };
 }
 /**
- * weapons.json data loader
+ * data.json data loader
  * @returns
  */
 export async function loadJSONData() {
-    const res = await fetch('data/weapons.json');
+    const res = await fetch('data/data.json');
     if (!res.ok)
-        throw new Error(`Failed to load weapons.json: ${res.status}`);
+        throw new Error(`Failed to load data.json: ${res.status}`);
     const data = (await res.json());
     const curves = new Map();
     for (const rawCurve of data.curves) {
