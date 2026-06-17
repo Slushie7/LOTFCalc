@@ -1,4 +1,5 @@
-import { epsilonFloor } from '../calc/calc.js';
+import { epsilonFloor } from '../calc/sharedCalc.js';
+import { colDivider, colFirst, colStarter, escapeHtml, getHeaderHtml, getPinButton, getTableBodyHtml, headerStatusImagePaths, } from './sharedRender.js';
 const WEAPONS_HEADER_KEYS = [
     // basic
     'WEAP',
@@ -151,21 +152,6 @@ export const WEAPONS_HEADER_GROUPS = [
         ],
     },
 ];
-const LOCKED_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14.2" height="10" rx="2"/><path d="M 8 11 V 6 a 4 4 0 0 1 8 0 v 5"/><circle cx="12.1" cy="15.2" r="1.2" fill="currentColor" stroke="none"/><line x1="12.1" y1="16.1" x2="12.1" y2="17.6" stroke="currentColor" stroke-width="1.5"/></svg>`;
-const UNLOCKED_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14.2" height="10" rx="2"/><path d="M 8 11 V 5 a 4 4 0 0 1 7.9 -0.9"/><circle cx="12.1" cy="15.2" r="1.2" fill="currentColor" stroke="none"/><line x1="12.1" y1="16.1" x2="12.1" y2="17.6" stroke="currentColor" stroke-width="1.5"/></svg>`;
-/**
- * Replaces all special characters '&', '<', '>', '"', and "'" with HTML-safe sequences
- * @param s
- * @returns
- */
-export function escapeHtml(s) {
-    return s
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#x27;');
-}
 /**
  * Generates the HTML to display the available weapon classes. Classes in checkedClasses will
  * be displayed in a checked state.
@@ -173,82 +159,20 @@ export function escapeHtml(s) {
  * @param checkedClasses
  * @returns
  */
-export function getClassesHtml(weaponClasses, checkedClasses) {
+export function getWeaponsClassesHtml(weaponClasses, checkedClasses) {
     const parts = [];
     for (const wc of weaponClasses) {
-        const checked = checkedClasses.has(wc) ? 'checked' : '';
-        parts.push(`<label><input type="checkbox" ${checked} data-class="${escapeHtml(wc)}">${escapeHtml(wc)}</label>`);
+        const checked = checkedClasses.has(wc) ? ' checked' : '';
+        parts.push(`<label><input type="checkbox"${checked} data-class="${escapeHtml(wc)}">${escapeHtml(wc)}</label>`);
     }
     return parts.join('');
 }
-const headerImagePaths = {
-    BLE: './img/Header/Bleed.webp',
-    BRN: './img/Header/Burn.webp',
-    PSN: './img/Header/Poison.webp',
-    SMI: './img/Header/Smite.webp',
-    IGN: './img/Header/Ignite.webp',
-    FRO: './img/Header/Frostbite.webp',
-};
-/**
- * Given the currently visible HeaderGroups, generates the HTML to display the grouping header and
- * main table header. The column with sortKey is decorated with an arrow indicating sort direction.
- * @param groups
- * @param sortKey
- * @param ascending
- * @returns
- */
-export function getHeaderHtml(groups, sortKey, ascending) {
-    const superParts = [];
-    const headerParts = [];
-    groups.forEach((group, superIdx) => {
-        const superCls = superIdx === 0 ? 'col-first col-divider' : 'col-starter col-divider';
-        superParts.push(`<th class="${superCls}" colspan="${group.columns.length}">${escapeHtml(group.superText)}</th>`);
-        group.columns.forEach((col, idx) => {
-            let text = col.text;
-            if (col.key === sortKey)
-                // add ▲ / ▼ to identify sorting column
-                text += ascending ? ' \u25b2' : ' \u25bc';
-            // calculate HTML classes for the header cell
-            const classes = ['sortable'];
-            if (idx === 0)
-                classes.push(superIdx === 0 ? 'col-first-header' : 'col-starter'); // col-first-header instead of col-starter so first header cell gets some extra padding
-            if (idx === group.columns.length - 1)
-                classes.push('col-divider');
-            const cls = classes.join(' ');
-            // determine content - image or text
-            let content = '';
-            const imagePath = headerImagePaths[col.key];
-            if (imagePath)
-                // image exists for this HeaderKey
-                content = `<img class="header-image" src="${escapeHtml(imagePath)}" alt="${escapeHtml(text)}" width="24" height="24">`;
-            else
-                content = `${escapeHtml(text)}`;
-            headerParts.push(`<th class="${cls}" data-col-key="${col.key}" title="${escapeHtml(col.hover)}">${content}</th>`);
-        });
-    });
-    return `<tr>${superParts.join('')}</tr><tr>${headerParts.join('')}</tr>`;
+export function getWeaponsHeaderHtml(groups, sortKey, ascending) {
+    return getHeaderHtml(groups, sortKey, ascending, headerStatusImagePaths);
 }
 export function getWeaponsHtml(weaponRows, weaponFadeIn) {
-    const tableParts = [];
-    for (const row of weaponRows) {
-        const rowParts = [];
-        row.cells.forEach((cell, idx) => {
-            if (idx === 0) {
-                // first column - show 'pin weapon' button and link weapon text to FextraLife Wiki
-                const action = row.pinned ? 'Unpin weapon' : 'Pin weapon to top of list';
-                const pinBtn = `<button class="lock${row.pinned ? ' pinned' : ''}" data-weapon="${escapeHtml(row.weaponKey)}" aria-label="${action} ${escapeHtml(row.weaponName)}" title="${action}">${row.pinned ? LOCKED_SVG : UNLOCKED_SVG}</button>`;
-                const url = `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(row.weaponName)}`;
-                rowParts.push(`<td class="${cell.cls}">${pinBtn}<a class="${cell.cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cell.text)}</a></td>`);
-            }
-            else {
-                rowParts.push(`<td class="${cell.cls}">${escapeHtml(cell.text)}</td>`);
-            }
-        });
-        const trClasses = `${row.pinned ? 'pinned' : ''} ${row.weaponKey === weaponFadeIn ? 'fade-size-in' : ''}`.trim();
-        const clsStr = trClasses ? ` class="${trClasses}"` : '';
-        tableParts.push(`<tr${clsStr}>${rowParts.join('')}</tr>`);
-    }
-    return tableParts.join('');
+    const firstColUrl = (row) => `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(row.itemName)}`;
+    return getTableBodyHtml(weaponRows, firstColUrl, weaponFadeIn);
 }
 function formatDmg(dmg, showSplit) {
     if (!dmg.total)
@@ -286,11 +210,9 @@ export function getWeaponRow(cws, showColGroups, showSplit) {
     const cells = [];
     const wieldable = cws.wieldability.wieldable;
     const wieldCls = wieldable ? '' : 'unwieldable';
-    const colStarter = 'col-starter';
-    const colDivider = 'col-divider';
     // INFO fields: 'WEAP', 'CLS'
     if (showColGroups.has('INFO')) {
-        pushCell(`${cws.weapon.name} +${cws.upgLevel}`, ['col-first', wieldCls]);
+        pushCell(`${cws.weapon.name} +${cws.upgLevel}`, [colFirst, wieldCls]);
         pushCell(cws.weapon.className, colDivider);
     }
     // AR fields: 'ARP', 'ARH', 'ARF', 'ARW', 'TOT', 'SP'
@@ -307,7 +229,7 @@ export function getWeaponRow(cws, showColGroups, showSplit) {
         pushCell(formatDmg(cws.offense.ar.spellPower, showSplit), [colStarter, wieldCls]);
         pushCell(formatIntOpt(cws.offense.extras.spellSlots), colDivider);
     }
-    // STATUS fields: 'BLE', 'BRN', 'PSN', 'SMI', 'IGN', 'FRO'
+    // STATUS fields: 'SMI', 'BLE', 'BRN', 'FRO', 'IGN', 'PSN'
     if (showColGroups.has('STATUS')) {
         const status = cws.offense.status;
         pushCell(formatIntOpt(status.smite), colStarter);
@@ -356,7 +278,7 @@ export function getWeaponRow(cws, showColGroups, showSplit) {
         pushCell(formatIntOpt(reqs.radiance), wield.radiance ? '' : wieldCls);
         pushCell(formatIntOpt(reqs.inferno), wield.inferno ? colDivider : [wieldCls, colDivider]);
     }
-    return { weaponName: cws.weapon.name, weaponKey: cws.weapon.key, wieldable, pinned: cws.pinned, cells };
+    return { itemName: cws.weapon.name, itemKey: cws.weapon.key, wieldable, pinned: cws.pinned, cells };
 }
 const sortFunctions = {
     // INFO
@@ -411,9 +333,10 @@ const sortFunctions = {
  * @param ascending
  * @returns
  */
-export function sortCalculated(calculated, sortKey, ascending) {
+export function sortCalculatedWeapons(calculated, sortKey, ascending) {
     const pinned = [];
     const unpinned = [];
+    // separate pinned weapons from unpinned weapons
     calculated.map((cws) => (cws.pinned ? pinned.push(cws) : unpinned.push(cws)));
     const fn = sortFunctions[sortKey];
     if (fn !== undefined) {

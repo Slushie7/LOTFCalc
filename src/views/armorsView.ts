@@ -1,6 +1,20 @@
 import type { ViewContext } from './view.js';
-import { getElem, View } from './view.js';
+import { addClassListeners, addElemListener, getElem, getTypedElem, View } from './view.js';
 import type { ArmorsState } from '../state.js';
+import { syncSidebarContent } from '../sharedDOM.js';
+import {
+    ARMORS_HEADER_GROUPS,
+    getArmorRow,
+    getArmorsClassesHtml,
+    getArmorsHeaderHtml,
+    getArmorsHtml,
+    isArmorsHeaderKey,
+    isArmorsSuperheaderKey,
+    sortCalculatedArmors,
+    type ArmorsSuperheaderKey,
+} from '../render/armorsRender.js';
+import { isArmorSlot, isArmorWeightClass, type Armor } from '../model.js';
+import { calculateArmorStats } from '../calc/armorsCalc.js';
 
 export function createArmorsView(state: ArmorsState, ctx: ViewContext) {
     return new ArmorsView(state, ctx);
@@ -17,12 +31,20 @@ class ArmorsView extends View {
     }
 
     mount(): void {
-        void this.state;
-        void this.ctx;
+        // armor class toggles
+        addElemListener('sidebar-content', 'change', (e) => this.onSetSidebarToggle(e));
+        // header group toggles
+        addClassListeners('armors-group-toggle', HTMLInputElement, 'change', (e) => this.onSetColGroup(e));
+        // table header sorting
+        addElemListener('armors-header', 'click', (e) => this.onTableHeaderClick(e));
+        addElemListener('armors-body', 'click', (e) => this.onTableBodyClick(e));
     }
 
     show(): void {
         getElem('view-armors').hidden = false;
+        this.updateSidebar();
+        this.hideUpgInput();
+        this.syncToggles();
         this.refresh();
     }
 
@@ -30,5 +52,138 @@ class ArmorsView extends View {
         getElem('view-armors').hidden = true;
     }
 
-    refresh(): void {}
+    refresh(): void {
+        this.renderHeader();
+        this.renderArmors();
+    }
+
+    // =========================================
+    // EVENT HANDLERS
+    // =========================================
+
+    private onSetSidebarToggle(e: Event): void {
+        if (!this.isActiveMode()) return;
+        if (!(e.target instanceof HTMLInputElement)) return;
+
+        const el = e.target;
+        if (el.dataset.slot && isArmorSlot(el.dataset.slot)) {
+            const slot = el.dataset.slot;
+            if (el.checked) this.state.selectedSlots.add(slot);
+            else this.state.selectedSlots.delete(slot);
+        } else if (el.dataset.weightClass && isArmorWeightClass(el.dataset.weightClass)) {
+            const wc = el.dataset.weightClass;
+            if (el.checked) this.state.selectedWeights.add(wc);
+            else this.state.selectedWeights.delete(wc);
+        }
+
+        this.renderArmors();
+        this.ctx.save();
+    }
+
+    private onSetColGroup(e: Event): void {
+        if (!this.isActiveMode()) return;
+        if (!(e.target instanceof HTMLInputElement)) return;
+
+        const el = e.target;
+        if (!isArmorsSuperheaderKey(el.dataset.group)) return;
+        const superKey = el.dataset.group;
+        if (el.checked) this.state.showColGroups.add(superKey);
+        else this.state.showColGroups.delete(superKey);
+
+        this.renderHeader();
+        this.renderArmors();
+        this.ctx.save();
+    }
+
+    private onTableHeaderClick(e: Event): void {
+        if (!this.isActiveMode()) return;
+        if (!(e instanceof MouseEvent)) return;
+        if (!(e.target instanceof Element)) return;
+
+        const el = e.target.closest<HTMLElement>('th.sortable');
+        if (!el) return;
+        if (!isArmorsHeaderKey(el.dataset.colKey)) return;
+
+        const colKey = el.dataset.colKey;
+
+        if (colKey === this.state.sortKey) this.state.ascending = !this.state.ascending;
+        else {
+            this.state.sortKey = colKey;
+            if (colKey === 'ARMR' || colKey === 'SLOT' || colKey === 'WGT' || colKey === 'WGTC')
+                // these columns default to ascending
+                this.state.ascending = true;
+            else this.state.ascending = false;
+        }
+
+        this.refresh();
+        this.ctx.save();
+    }
+
+    private onTableBodyClick(e: Event): void {
+        if (!this.isActiveMode()) return;
+        if (!(e instanceof MouseEvent)) return;
+        if (!(e.target instanceof Element)) return;
+
+        const el = e.target.closest<HTMLButtonElement>('button.lock');
+        if (!el) return;
+        if (!(typeof el.dataset.item === 'string')) return;
+        const armorKey = el.dataset.item;
+
+        if (this.state.pinnedArmors.has(armorKey)) this.state.pinnedArmors.delete(armorKey);
+        else this.state.pinnedArmors.add(armorKey);
+
+        this.renderArmors(armorKey); // render armors with the pinned/unpinned armor transitioning into view
+        this.ctx.save();
+    }
+
+    // =========================================
+    // RENDERING - GENERATE/UPDATE HTML
+    // =========================================
+
+    private updateSidebar(): void {
+        if (!this.isActiveMode()) return;
+
+        syncSidebarContent('Armor Slots', getArmorsClassesHtml(this.state.selectedSlots, this.state.selectedWeights));
+    }
+
+    private hideUpgInput(): void {
+        if (!this.isActiveMode()) return;
+        getTypedElem('weapon-level', HTMLSelectElement).hidden = true;
+    }
+
+    private syncToggles(): void {
+        if (!this.isActiveMode()) return;
+
+        for (const el of document.getElementsByClassName('armors-group-toggle')) {
+            if (el instanceof HTMLInputElement)
+                el.checked = this.state.showColGroups.has(el.dataset.group as ArmorsSuperheaderKey);
+        }
+    }
+
+    private renderHeader(): void {
+        if (!this.isActiveMode()) return;
+
+        const elHeader = getElem('armors-header');
+        const groups = ARMORS_HEADER_GROUPS.filter((group) => this.state.showColGroups.has(group.superKey));
+        elHeader.innerHTML = getArmorsHeaderHtml(groups, this.state.sortKey, this.state.ascending);
+    }
+
+    private renderArmors(armorFadeIn: string | null = null): void {
+        if (!this.isActiveMode()) return;
+
+        // update the armors table
+        const elBody = getElem('armors-body');
+        const showArmors: Armor[] = this.ctx.data.armors.filter(
+            (arm) =>
+                (this.state.selectedSlots.has(arm.slot) && this.state.selectedWeights.has(arm.weightClass)) ||
+                this.state.pinnedArmors.has(arm.key)
+        );
+        let calcStats = showArmors.map((arm) => calculateArmorStats(arm, this.state.pinnedArmors));
+        // sort calculated armor stats by current sortKey
+        const { pinned, unpinned } = sortCalculatedArmors(calcStats, this.state.sortKey, this.state.ascending);
+        calcStats = [...pinned, ...unpinned]; // pinned armors go at front of list
+        // display the armor rows
+        const rows = calcStats.map((cs) => getArmorRow(cs, this.state.showColGroups));
+        elBody.innerHTML = getArmorsHtml(rows, armorFadeIn);
+    }
 }

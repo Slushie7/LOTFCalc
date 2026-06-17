@@ -4,11 +4,11 @@ import {
     WEAPONS_HEADER_GROUPS,
     isWeaponsHeaderKey,
     isWeaponsSuperheaderKey,
-    getClassesHtml,
-    getHeaderHtml,
+    getWeaponsClassesHtml,
+    getWeaponsHeaderHtml,
     getWeaponRow,
     getWeaponsHtml,
-    sortCalculated,
+    sortCalculatedWeapons,
 } from '../render/weaponsRender.js';
 import type { WeaponsSuperheaderKey } from '../render/weaponsRender.js';
 import { type Weapon, type WeaponClass, isWeaponClass } from '../model.js';
@@ -16,6 +16,7 @@ import { calculateWeaponStats } from '../calc/weaponsCalc.js';
 
 import type { ViewContext } from './view.js';
 import { View, addElemListener, addTypedElemListener, addClassListeners, getTypedElem, getElem } from './view.js';
+import { syncSidebarContent } from '../sharedDOM.js';
 
 // =========================================
 // SMART TOGGLES
@@ -71,7 +72,7 @@ class WeaponsView extends View {
         // setting toggles
         addClassListeners('weapons-setting-toggle', HTMLInputElement, 'change', (e) => this.onSetWeaponsSetting(e));
         // header group toggles
-        addClassListeners('group-toggle', HTMLInputElement, 'change', (e) => this.onSetColGroup(e));
+        addClassListeners('weapons-group-toggle', HTMLInputElement, 'change', (e) => this.onSetColGroup(e));
         // table header sorting
         addElemListener('weapons-header', 'click', (e) => this.onTableHeaderClick(e));
         addElemListener('weapons-body', 'click', (e) => this.onTableBodyClick(e));
@@ -79,10 +80,9 @@ class WeaponsView extends View {
 
     show(): void {
         getElem('view-weapons').hidden = false;
-        getElem('sidebar-title').textContent = 'Weapon Classes'; // add this line
+        this.updateSidebar();
         this.syncUpgInput();
         this.syncToggles();
-        this.renderWeaponClasses();
         this.refresh();
     }
 
@@ -122,6 +122,8 @@ class WeaponsView extends View {
         // update the currently selected header column groups
         for (const col of toRemove) this.state.showColGroups.delete(col);
         for (const col of toAdd) this.state.showColGroups.add(col);
+
+        this.syncToggles(); // update the group toggles
     }
 
     // =========================================
@@ -130,22 +132,20 @@ class WeaponsView extends View {
 
     private onSetClass(e: Event): void {
         if (!this.isActiveMode()) return;
+        if (!(e.target instanceof HTMLInputElement)) return;
 
         const el = e.target;
-        if (el instanceof HTMLInputElement) {
-            if (!isWeaponClass(el.dataset.class)) return;
+        if (!isWeaponClass(el.dataset.class)) return;
 
-            // add/remove the class name from selectedClasses
-            const className = el.dataset.class;
-            if (el.checked) this.state.selectedClasses.add(className);
-            else this.state.selectedClasses.delete(className);
+        // add/remove the class name from selectedClasses
+        const className = el.dataset.class;
+        if (el.checked) this.state.selectedClasses.add(className);
+        else this.state.selectedClasses.delete(className);
 
-            this.applySmartToggles();
-            this.syncToggles();
-            this.renderHeader();
-            this.renderWeapons();
-            this.ctx.save();
-        }
+        this.applySmartToggles();
+        this.renderHeader();
+        this.renderWeapons();
+        this.ctx.save();
     }
 
     private onSetUpgLevel(e: Event): void {
@@ -223,8 +223,8 @@ class WeaponsView extends View {
 
         const el = e.target.closest<HTMLButtonElement>('button.lock');
         if (!el) return;
-        if (!(typeof el.dataset.weapon === 'string')) return;
-        const weaponKey = el.dataset.weapon;
+        if (!(typeof el.dataset.item === 'string')) return;
+        const weaponKey = el.dataset.item;
 
         if (this.state.pinnedWeapons.has(weaponKey)) this.state.pinnedWeapons.delete(weaponKey);
         else this.state.pinnedWeapons.add(weaponKey);
@@ -236,6 +236,13 @@ class WeaponsView extends View {
     // =========================================
     // RENDERING - GENERATE/UPDATE HTML
     // =========================================
+
+    private updateSidebar(): void {
+        if (!this.isActiveMode()) return;
+
+        const classesHtml = getWeaponsClassesHtml(this.loadedWeaponClasses, this.state.selectedClasses);
+        syncSidebarContent('Weapon Classes', classesHtml);
+    }
 
     private syncToggles(): void {
         if (!this.isActiveMode()) return;
@@ -252,7 +259,7 @@ class WeaponsView extends View {
                 if (typeof settingValue === 'boolean') el.checked = settingValue;
             }
         }
-        for (const el of document.getElementsByClassName('group-toggle')) {
+        for (const el of document.getElementsByClassName('weapons-group-toggle')) {
             if (el instanceof HTMLInputElement)
                 el.checked = this.state.showColGroups.has(el.dataset.group as WeaponsSuperheaderKey);
         }
@@ -262,15 +269,9 @@ class WeaponsView extends View {
         if (!this.isActiveMode()) return;
 
         // initialize weapon upgrade <select> element value
-        const upgEl = getTypedElem('weapon-level', HTMLSelectElement);
-        upgEl.value = `+${this.state.upgLevel}`;
-    }
-
-    private renderWeaponClasses(): void {
-        if (!this.isActiveMode()) return;
-
-        const elClasses = getElem('sidebar-content');
-        elClasses.innerHTML = getClassesHtml(this.loadedWeaponClasses, this.state.selectedClasses);
+        const elUpg = getTypedElem('weapon-level', HTMLSelectElement);
+        elUpg.hidden = false;
+        elUpg.value = `+${this.state.upgLevel}`;
     }
 
     private renderHeader(): void {
@@ -278,7 +279,7 @@ class WeaponsView extends View {
 
         const elHeader = getElem('weapons-header');
         const groups = WEAPONS_HEADER_GROUPS.filter((group) => this.state.showColGroups.has(group.superKey));
-        elHeader.innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending);
+        elHeader.innerHTML = getWeaponsHeaderHtml(groups, this.state.sortKey, this.state.ascending);
     }
 
     private renderWeapons(weaponFadeIn: string | null = null): void {
@@ -303,7 +304,7 @@ class WeaponsView extends View {
             // remove any unwieldable weapons
             calcStats = calcStats.filter((ws) => ws.wieldability.wieldable);
         // sort calculated weapon stats by current sortKey
-        const { pinned, unpinned } = sortCalculated(calcStats, this.state.sortKey, this.state.ascending);
+        const { pinned, unpinned } = sortCalculatedWeapons(calcStats, this.state.sortKey, this.state.ascending);
         calcStats = [...pinned, ...unpinned]; // pinned weapons go at front of list
         // display the weapon rows
         const rows = calcStats.map((cs) => getWeaponRow(cs, this.state.showColGroups, this.state.showSplit));

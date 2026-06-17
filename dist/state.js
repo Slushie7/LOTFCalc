@@ -1,6 +1,7 @@
 import { isArmorSlot, isArmorWeightClass, isWeaponClass } from './model.js';
-import { clampStat } from './calc/calc.js';
+import { clampStat } from './calc/sharedCalc.js';
 import { isWeaponsHeaderKey, isWeaponsSuperheaderKey } from './render/weaponsRender.js';
+import { isArmorsHeaderKey, isArmorsSuperheaderKey, } from './render/armorsRender.js';
 // =========================================
 // MODES
 // =========================================
@@ -42,6 +43,10 @@ function getDefaultState() {
     const armors = {
         selectedSlots: new Set(['Head', 'Torso', 'Arms', 'Legs']),
         selectedWeights: new Set(['Light', 'Medium', 'Heavy']),
+        sortKey: 'ARMR',
+        ascending: true,
+        showColGroups: new Set(['INFO', 'DEF', 'STATUS']),
+        pinnedArmors: new Set(),
     };
     return { shared, weapons, armors };
 }
@@ -129,6 +134,18 @@ export function loadAppState() {
             return false;
         if (!d.selectedWeights.every((v) => isArmorWeightClass(v)))
             return false;
+        if (!isArmorsHeaderKey(d.sortKey))
+            return false;
+        if (typeof d.ascending !== 'boolean')
+            return false;
+        if (!Array.isArray(d.showColGroups))
+            return false;
+        if (!d.showColGroups.every((v) => isArmorsSuperheaderKey(v)))
+            return false;
+        if (!Array.isArray(d.pinnedArmors))
+            return false;
+        if (!d.pinnedArmors.every((v) => typeof v === 'string'))
+            return false;
         return true;
     }
     function validateAppState(d) {
@@ -200,7 +217,16 @@ export function loadAppState() {
     // parse ArmorsState
     const selectedSlots = new Set(state.armors.selectedSlots);
     const selectedWeights = new Set(state.armors.selectedWeights);
-    const armors = { selectedSlots, selectedWeights };
+    const showColGroupsArmor = new Set(state.armors.showColGroups);
+    const pinnedArmors = new Set(state.armors.pinnedArmors);
+    const armors = {
+        selectedSlots,
+        selectedWeights,
+        sortKey: state.armors.sortKey,
+        ascending: state.armors.ascending,
+        showColGroups: showColGroupsArmor,
+        pinnedArmors,
+    };
     return { shared, weapons, armors };
 }
 /**
@@ -229,6 +255,10 @@ export function saveAppState(state) {
         const armors = {
             selectedSlots: [...state.armors.selectedSlots],
             selectedWeights: [...state.armors.selectedWeights],
+            sortKey: state.armors.sortKey,
+            ascending: state.armors.ascending,
+            showColGroups: [...state.armors.showColGroups],
+            pinnedArmors: [...state.armors.pinnedArmors],
         };
         data = {
             v: STORAGE_VER,
@@ -238,7 +268,7 @@ export function saveAppState(state) {
         };
     }
     else {
-        // user doesn't want to cache their settings
+        // user doesn't want to store their settings
         data = false;
     }
     try {

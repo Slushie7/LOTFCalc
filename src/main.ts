@@ -1,17 +1,10 @@
-import { clampStat } from './calc/calc.js';
-import { calculatePlayerStats } from './calc/weaponsCalc.js';
+import { clampStat } from './calc/sharedCalc.js';
+import { calculatePlayerStats } from './calc/sharedCalc.js';
 import { loadAppData } from './loadJSONData.js';
 import type { CalculatedPlayerStats, PlayerStats } from './model.js';
 import { isMode, isSharedToggleKey, loadAppState, saveAppState, type AppState, type Mode } from './state.js';
 import { createArmorsView } from './views/armorsView.js';
-import {
-    addClassListeners,
-    addElemListener,
-    getTypedElem,
-    View,
-    type GameData,
-    type ViewContext,
-} from './views/view.js';
+import { addClassListeners, addElemListener, View, type GameData, type ViewContext } from './views/view.js';
 import { createWeaponsView } from './views/weaponsView.js';
 
 // ===================================

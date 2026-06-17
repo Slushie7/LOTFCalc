@@ -345,10 +345,10 @@ body.sidebar-hidden .sidebar {
 }
 
 /* weapons table body: bold values + pin (lock) buttons */
-#weapons-body td {
+.calc-table td {
     font-weight: 600;
 }
-#weapons-body button.lock {
+.calc-table button.lock {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -363,17 +363,17 @@ body.sidebar-hidden .sidebar {
     cursor: pointer;
     transition: color var(--pico-transition);
 }
-#weapons-body button.lock:hover,
-#weapons-body button.lock:focus-visible {
+.calc-table button.lock:hover,
+.calc-table button.lock:focus-visible {
     color: var(--pico-primary);
 }
-#weapons-body button.lock.pinned {
+.calc-table button.lock.pinned {
     color: var(--pico-primary);
 }
-#weapons-body button.lock.pinned:hover {
+.calc-table button.lock.pinned:hover {
     color: var(--pico-primary-hover);
 }
-#weapons-body button.lock svg {
+.calc-table button.lock svg {
     width: 16px;
     height: 16px;
     display: block;

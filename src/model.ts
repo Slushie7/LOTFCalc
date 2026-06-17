@@ -52,13 +52,13 @@ export function isBuffTarget(v: unknown): v is BuffTarget {
     return BUFF_TARGETS.includes(v as BuffTarget);
 }
 
-const ARMOR_SLOTS = ['Head', 'Torso', 'Arms', 'Legs'] as const;
+export const ARMOR_SLOTS = ['Head', 'Torso', 'Arms', 'Legs'] as const;
 export type ArmorSlot = (typeof ARMOR_SLOTS)[number];
 export function isArmorSlot(v: unknown): v is ArmorSlot {
     return ARMOR_SLOTS.includes(v as ArmorSlot);
 }
 
-const ARMOR_WEIGHT_CLASSES = ['Light', 'Medium', 'Heavy'] as const;
+export const ARMOR_WEIGHT_CLASSES = ['Light', 'Medium', 'Heavy'] as const;
 export type ArmorWeightClass = (typeof ARMOR_WEIGHT_CLASSES)[number];
 export function isArmorWeightClass(v: unknown): v is ArmorWeightClass {
     return ARMOR_WEIGHT_CLASSES.includes(v as ArmorWeightClass);
@@ -105,7 +105,7 @@ export type PlayerStats = {
     readonly vitality: number;
     readonly radiance: number;
     readonly inferno: number;
-}
+};
 
 export interface WeaponRuneSockets {
     readonly runeSockets: RuneType[];
@@ -317,4 +317,27 @@ export interface CalculatedPlayerStats {
     readonly resSmite: number;
     readonly resIgnite: number;
     readonly resFrost: number;
+}
+
+export interface CalculatedArmorStats {
+    readonly armor: Armor;
+    readonly defTotal: number;
+    readonly resTotal: number;
+    readonly pinned: boolean;
+}
+
+export interface CalculatedPlayerDefenses {
+    readonly weight: number;
+    readonly poise: number;
+    readonly physical: number;
+    readonly fire: number;
+    readonly holy: number;
+    readonly wither: number;
+    readonly bleed: number;
+    readonly burn: number;
+    readonly poison: number;
+    readonly smite: number;
+    readonly ignite: number;
+    readonly frost: number;
+    readonly kickMult: number;
 }

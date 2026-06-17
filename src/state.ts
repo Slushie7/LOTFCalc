@@ -1,8 +1,15 @@
 import type { ArmorSlot, ArmorWeightClass, PlayerStats, WeaponClass } from './model.js';
 import { isArmorSlot, isArmorWeightClass, isWeaponClass } from './model.js';
-import { clampStat } from './calc/calc.js';
+import { clampStat } from './calc/sharedCalc.js';
 import type { WeaponsHeaderKey, WeaponsSuperheaderKey } from './render/weaponsRender.js';
 import { isWeaponsHeaderKey, isWeaponsSuperheaderKey } from './render/weaponsRender.js';
+import {
+    isArmorsHeaderKey,
+    isArmorsSuperheaderKey,
+    type ArmorsHeaderGroup,
+    type ArmorsHeaderKey,
+    type ArmorsSuperheaderKey,
+} from './render/armorsRender.js';
 
 type BooleanKeys<T> = {
     [K in keyof T]-?: T[K] extends boolean ? K : never;
@@ -59,6 +66,10 @@ export function isWeaponsToggleKey(k: string): k is WeaponsToggleKey {
 export type ArmorsState = {
     selectedSlots: Set<ArmorSlot>;
     selectedWeights: Set<ArmorWeightClass>;
+    sortKey: ArmorsHeaderKey;
+    ascending: boolean;
+    showColGroups: Set<ArmorsSuperheaderKey>;
+    pinnedArmors: Set<string>;
 };
 
 export type AppState = {
@@ -90,6 +101,10 @@ function getDefaultState(): AppState {
     const armors: ArmorsState = {
         selectedSlots: new Set(['Head', 'Torso', 'Arms', 'Legs']),
         selectedWeights: new Set(['Light', 'Medium', 'Heavy']),
+        sortKey: 'ARMR',
+        ascending: true,
+        showColGroups: new Set(['INFO', 'DEF', 'STATUS']),
+        pinnedArmors: new Set(),
     };
 
     return { shared, weapons, armors };
@@ -110,19 +125,23 @@ type ExportedSharedState = {
 };
 type ExportedWeaponsState = {
     readonly upgLevel: number;
-    readonly selectedClasses: WeaponClass[];
+    readonly selectedClasses: readonly WeaponClass[];
     readonly sortKey: WeaponsHeaderKey;
     readonly ascending: boolean;
-    readonly showColGroups: WeaponsSuperheaderKey[];
+    readonly showColGroups: readonly WeaponsSuperheaderKey[];
     readonly showTwoHanding: boolean;
     readonly showUnwieldable: boolean;
     readonly showSplit: boolean;
-    readonly pinnedWeapons: string[];
+    readonly pinnedWeapons: readonly string[];
     readonly showRawScaling: boolean;
 };
 type ExportedArmorsState = {
     readonly selectedSlots: ArmorSlot[];
-    readonly selectedWeights: ArmorWeightClass[];
+    readonly selectedWeights: readonly ArmorWeightClass[];
+    readonly sortKey: ArmorsHeaderKey;
+    readonly ascending: boolean;
+    readonly showColGroups: readonly ArmorsSuperheaderKey[];
+    readonly pinnedArmors: readonly string[];
 };
 type ExportedAppState = {
     readonly v: number;
@@ -189,6 +208,13 @@ export function loadAppState(): AppState {
         if (!d.selectedSlots.every((v) => isArmorSlot(v))) return false;
         if (!Array.isArray(d.selectedWeights)) return false;
         if (!d.selectedWeights.every((v) => isArmorWeightClass(v))) return false;
+        if (!isArmorsHeaderKey(d.sortKey)) return false;
+        if (typeof d.ascending !== 'boolean') return false;
+        if (!Array.isArray(d.showColGroups)) return false;
+        if (!d.showColGroups.every((v) => isArmorsSuperheaderKey(v))) return false;
+        if (!Array.isArray(d.pinnedArmors)) return false;
+        if (!d.pinnedArmors.every((v) => typeof v === 'string')) return false;
+
         return true;
     }
     function validateAppState(d: Record<string, unknown>): d is ExportedAppState {
@@ -263,8 +289,17 @@ export function loadAppState(): AppState {
     // parse ArmorsState
     const selectedSlots = new Set(state.armors.selectedSlots);
     const selectedWeights = new Set(state.armors.selectedWeights);
+    const showColGroupsArmor = new Set(state.armors.showColGroups);
+    const pinnedArmors = new Set(state.armors.pinnedArmors);
 
-    const armors: ArmorsState = { selectedSlots, selectedWeights };
+    const armors: ArmorsState = {
+        selectedSlots,
+        selectedWeights,
+        sortKey: state.armors.sortKey,
+        ascending: state.armors.ascending,
+        showColGroups: showColGroupsArmor,
+        pinnedArmors,
+    };
 
     return { shared, weapons, armors };
 }
@@ -295,6 +330,10 @@ export function saveAppState(state: AppState): void {
         const armors: ExportedArmorsState = {
             selectedSlots: [...state.armors.selectedSlots],
             selectedWeights: [...state.armors.selectedWeights],
+            sortKey: state.armors.sortKey,
+            ascending: state.armors.ascending,
+            showColGroups: [...state.armors.showColGroups],
+            pinnedArmors: [...state.armors.pinnedArmors],
         };
         data = {
             v: STORAGE_VER,
@@ -303,7 +342,7 @@ export function saveAppState(state: AppState): void {
             armors,
         };
     } else {
-        // user doesn't want to cache their settings
+        // user doesn't want to store their settings
         data = false;
     }
 

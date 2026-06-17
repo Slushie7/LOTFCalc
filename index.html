@@ -189,7 +189,7 @@
         </header>
 
         <!-- ================= SIDEBAR (shared; active view fills it) ================= -->
-        <aside class="sidebar">
+        <aside id="sidebar" class="sidebar">
             <h2 id="sidebar-title">Weapon Classes</h2>
             <nav class="sidebar-content" id="sidebar-content"></nav>
         </aside>
@@ -197,7 +197,7 @@
         <!-- ================= MAIN CONTENT ================= -->
         <main class="content">
             <section id="view-weapons" class="view">
-                <div id="option-toggles" class="toggles">
+                <div class="toggles">
                     <label title="Show effective stats from two-handing a weapon"
                         ><input type="checkbox" class="weapons-setting-toggle" data-setting="showTwoHanding" />
                         Two-Handing</label
@@ -246,6 +246,17 @@
             </section>
 
             <section id="view-armors" class="view" hidden>
+                <div class="toggles">
+                    <label title="Armor defenses"
+                        ><input type="checkbox" class="armors-group-toggle" data-group="DEF" /> Defense</label
+                    >
+                    <label title="Show armor resistances"
+                        ><input type="checkbox" class="armors-group-toggle" data-group="STATUS" /> Resistances</label
+                    >
+                    <label title="Show armor weight class and kick-damage multiplier"
+                        ><input type="checkbox" class="armors-group-toggle" data-group="MISC" /> Misc</label
+                    >
+                </div>
                 <div class="table-wrap">
                     <table class="calc-table">
                         <thead id="armors-header"></thead>

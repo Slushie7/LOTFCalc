@@ -500,17 +500,17 @@ class LOTFExtractor:
                     d = json.load(f)[0]['Properties']
 
                 key = d['StatsRow']['RowName']
-                name = local_names[d['ItemName']['Key']]
+                name = local_names[d['ItemName']['Key']].strip()
 
-                def prune(name: str, prefix: str) -> str:
-                    if not name.startswith(prefix):
-                        raise ValueError(f'{name} doesnt start with {prefix}')
-                    return name[len(prefix) :]
+                def prune(text: str, prefix: str) -> str:
+                    if not text.startswith(prefix):
+                        raise ValueError(f'{text} doesnt start with {prefix}')
+                    return text[len(prefix) :]
 
-                def swap_pre(name: str, prefix: str, repl: str) -> str:
-                    if name.startswith(prefix):
-                        return repl + name[len(prefix) :]
-                    return name
+                def swap_pre(text: str, prefix: str, repl: str) -> str:
+                    if text.startswith(prefix):
+                        return repl + text[len(prefix) :]
+                    return text
 
                 # get the path to the armor's thumbnail and clean the path up
                 icon = Path(d['ItemIcon']['ObjectPath']).name

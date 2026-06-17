@@ -1,9 +1,9 @@
-import { clampStat } from './calc/calc.js';
-import { calculatePlayerStats } from './calc/weaponsCalc.js';
+import { clampStat } from './calc/sharedCalc.js';
+import { calculatePlayerStats } from './calc/sharedCalc.js';
 import { loadAppData } from './loadJSONData.js';
 import { isMode, isSharedToggleKey, loadAppState, saveAppState } from './state.js';
 import { createArmorsView } from './views/armorsView.js';
-import { addClassListeners, addElemListener, getTypedElem, View, } from './views/view.js';
+import { addClassListeners, addElemListener, View } from './views/view.js';
 import { createWeaponsView } from './views/weaponsView.js';
 // ===================================
 // BOOTSTRAP
