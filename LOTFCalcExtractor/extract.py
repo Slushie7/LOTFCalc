@@ -33,6 +33,32 @@ from .classes import (
 from .load_weapons import load_json_data
 
 
+def prune(text: str, prefix: str) -> str:
+    if not text.startswith(prefix):
+        raise ValueError(f'{text} doesnt start with {prefix}')
+    return text[len(prefix) :]
+
+
+def swap_pre(text: str, prefix: str, repl: str) -> str:
+    if text.startswith(prefix):
+        return repl + text[len(prefix) :]
+    return text
+
+
+def clean_weapon_icon(icon_path: Path) -> str:
+    cleaned = swap_pre(icon_path.name, 'thumb_', 'Thumb_')
+    cleaned = swap_pre(cleaned, 'Thumb_', '')
+    cleaned = prune(cleaned, 'ItemImg_WPN_PLA_')
+    return cleaned
+
+
+def clean_armor_icon(icon_path: Path) -> str:
+    cleaned = prune(icon_path.name, 'thumb_ItemImg_ARM_')
+    cleaned = swap_pre(cleaned, 'PLA_', 'Armor_')
+    cleaned = prune(cleaned, 'Armor_')
+    return cleaned
+
+
 class LOTFExtractor:
     def __init__(self, lotf2_dir: str | Path, mode: str, *args) -> None:
         lotf2_dir = Path(lotf2_dir)
@@ -55,6 +81,7 @@ class LOTFExtractor:
         self.SC_CURVE_LIB_PATH = self.STATS_DIR / 'DT_ScalingCurveLibrary.json'
         self.WEAPON_STATS_PATH = self.STATS_DIR / 'DT_WeaponStats.json'
         self.GAME_LOC_PATH = localization_dir / 'Game.json'
+        self.ITEM_ART_PATH = content_dir / 'Art/UI/Items'
 
         if not mode:
             print('LOTFCalcExtractor: Export Mode')
@@ -77,6 +104,9 @@ class LOTFExtractor:
 
         elif mode == 'compare':
             self._compare_json(*args)
+            
+        elif mode =='images':
+            self._extract_images()
 
         else:
             print(f'Unknown mode: "{mode}"')
@@ -342,6 +372,13 @@ class LOTFExtractor:
                     print(f'Failed to retrieve localized name for weapon {weapon_key} - skipping')
                     continue
                 weapon_name = local_names[loc_key]
+
+                # get the path to the armor's thumbnail and clean the path up
+                icon = clean_weapon_icon(Path(defd['ItemIcon']['ObjectPath']))
+                if not icon.endswith('.0'):
+                    raise ValueError(f'Unhandled thumbnail suffix for "{icon}"')
+                icon = icon[:-2]
+
                 # check for StanceBattleEffects
                 two_hand_bonus: float = 1.0
                 if stance_data := defd.get('StanceMovesetData'):
@@ -454,6 +491,7 @@ class LOTFExtractor:
                 weapon = Weapon(
                     weapon_key,
                     weapon_name,
+                    icon,
                     weapon_class,
                     weight,
                     max_upg_level,
@@ -502,21 +540,8 @@ class LOTFExtractor:
                 key = d['StatsRow']['RowName']
                 name = local_names[d['ItemName']['Key']].strip()
 
-                def prune(text: str, prefix: str) -> str:
-                    if not text.startswith(prefix):
-                        raise ValueError(f'{text} doesnt start with {prefix}')
-                    return text[len(prefix) :]
-
-                def swap_pre(text: str, prefix: str, repl: str) -> str:
-                    if text.startswith(prefix):
-                        return repl + text[len(prefix) :]
-                    return text
-
                 # get the path to the armor's thumbnail and clean the path up
-                icon = Path(d['ItemIcon']['ObjectPath']).name
-                icon = prune(icon, 'thumb_ItemImg_ARM_')
-                icon = swap_pre(icon, 'PLA_', 'Armor_')
-                icon = prune(icon, 'Armor_')
+                icon = clean_armor_icon(Path(d['ItemIcon']['ObjectPath']))
                 if not icon.endswith('.0'):
                     raise ValueError(f'Unhandled thumbnail suffix for "{icon}"')
                 icon = icon[:-2]
@@ -705,3 +730,6 @@ class LOTFExtractor:
         armor_d2 = {armor.key: armor for armor in armor2}
         checked_armor: set[str] = set()
         compare_dicts(armor_d1, armor_d2, name1, name2, checked_armor, 'Armor')
+
+    def _extract_images(self)->None:
+        pass # TODO

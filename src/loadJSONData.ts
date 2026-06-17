@@ -110,6 +110,7 @@ interface RawWeaponDefense {
 interface RawWeapon {
     key: string;
     name: string;
+    icon: string;
     class_name: string;
     weight: number;
     max_upg_level: number;
@@ -316,6 +317,7 @@ function toWeapon(r: RawWeapon, curves: Map<string, Curve>, baseDamages: Map<str
     return {
         key: r.key,
         name: r.name,
+        icon: r.icon,
         className,
         weight: r.weight,
         maxUpgLevel: r.max_upg_level,

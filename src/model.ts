@@ -155,6 +155,7 @@ export interface WeaponDefense {
 export interface Weapon {
     readonly key: string;
     readonly name: string;
+    readonly icon: string; 
     readonly className: WeaponClass;
     readonly weight: number;
     readonly maxUpgLevel: number;

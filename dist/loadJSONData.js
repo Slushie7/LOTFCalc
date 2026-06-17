@@ -118,6 +118,7 @@ function toWeapon(r, curves, baseDamages) {
     return {
         key: r.key,
         name: r.name,
+        icon: r.icon,
         className,
         weight: r.weight,
         maxUpgLevel: r.max_upg_level,

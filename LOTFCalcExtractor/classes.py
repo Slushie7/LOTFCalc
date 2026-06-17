@@ -713,6 +713,7 @@ class WeaponDefense:
 class Weapon:
     key: str
     name: str
+    icon: str
     class_name: str
     weight: float
     max_upg_level: int
@@ -739,6 +740,7 @@ class Weapon:
         return {
             'key': self.key,
             'name': self.name,
+            'icon': self.icon,
             'class_name': self.class_name,
             'weight': self.weight,
             'max_upg_level': self.max_upg_level,
@@ -759,6 +761,7 @@ class Weapon:
         return cls(
             d['key'],
             d['name'],
+            d['icon'],
             d['class_name'],
             d['weight'],
             d['max_upg_level'],
