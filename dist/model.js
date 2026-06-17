@@ -6,10 +6,6 @@ const RUNE_TYPES = [...STAT_KEYS, '*'];
 export function isRuneType(v) {
     return RUNE_TYPES.includes(v);
 }
-const SUPERHEADER_KEYS = ['INFO', 'AR', 'MAGIC', 'STATUS', 'MISC', 'RUNES', 'DEF', 'SCALING', 'REQS'];
-export function isSuperheaderKey(v) {
-    return SUPERHEADER_KEYS.includes(v);
-}
 const WEAPON_CLASSES = [
     'Axes',
     'Bows',

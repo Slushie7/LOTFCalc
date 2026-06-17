@@ -1,88 +1,11 @@
-/**
- * Truncates a float, accounting for floating-point representation issues (e.g. 2.999999999997 -> 3; 4.72 -> 4)
- * @param x
- * @returns
- */
-export function epsilonFloor(x) {
-    return Math.floor(x + 1e-9);
-}
-/**
- * Floor and clamp the given number to the range [0, 99]
- * @param val
- * @returns
- */
-export function clampStat(val) {
-    return Math.max(0, Math.min(Math.floor(val), 99));
-}
-/**
- * Interpolates the y-value for the given x-coord in the Curve
- * @param curve
- * @param x
- * @returns
- */
-export function interpolate(curve, x) {
-    const pts = curve.points;
-    if (!pts.length)
-        throw new Error('Cannot interpolate Curve with no points');
-    // fast track for dense curves (like upgrade levels)
-    if (pts[x] !== undefined && pts[x][0] === x)
-        // exact match for x-coord
-        return pts[x][1];
-    // pts are ordered - binary search to find highest point whose x-coord < x
-    let lo = 0;
-    let hi = pts.length - 1;
-    while (lo <= hi) {
-        const mid = Math.floor((lo + hi) / 2);
-        const midPt = pts[mid];
-        if (midPt[0] === x)
-            return midPt[1];
-        if (x < midPt[0]) {
-            hi = mid - 1;
-        }
-        else {
-            lo = mid + 1;
-        }
-    }
-    // hi points to the closest point with x-coord < x
-    if (hi < 0)
-        // clamp to lowest possible value (shouldn't happen with valid dataset)
-        return pts[0][1];
-    else if (hi + 1 >= pts.length)
-        // clamp to highest possible value (shouldn't happen with valid dataset)
-        return pts[pts.length - 1][1];
-    // interpolate (lerp)
-    const [x1, y1] = pts[hi];
-    const [x2, y2] = pts[hi + 1];
-    const t = (x - x1) / (x2 - x1);
-    return y1 + t * (y2 - y1);
-}
-/**
- * Calculates the value of a LeveledValue for a given input by applying its Curve value to its base value
- * @param lv
- * @param level
- * @returns
- */
-export function getValue(lv, level) {
-    if (lv.curve === null)
-        return lv.base;
-    const curveVal = interpolate(lv.curve, level);
-    if (lv.scalingType === 'Multiplicative') {
-        return lv.base * (curveVal + 1);
-    }
-    else if (lv.scalingType === 'Additive') {
-        return lv.base + curveVal;
-    }
-    else {
-        throw new Error(`Unhandled LeveledValue scalingType: ${lv.scalingType}`);
-    }
-}
+import { epsilonFloor, interpolate, getValue } from './calc.js';
 /**
  * Returns an Array of the rune sockets available for the weapon's given upgrade level
  * @param weaponRuneSockets
  * @param upg_level
  * @returns
  */
-export function getRunes(weaponRuneSockets, upg_level) {
+function getRunes(weaponRuneSockets, upg_level) {
     if (weaponRuneSockets.numByLevel === null)
         return [];
     const numRunes = epsilonFloor(interpolate(weaponRuneSockets.numByLevel, upg_level));
@@ -96,7 +19,7 @@ export function getRunes(weaponRuneSockets, upg_level) {
  * @param scalingVal
  * @returns
  */
-export function getGrade(gradeRanges, scalingVal) {
+function getGrade(gradeRanges, scalingVal) {
     if (!gradeRanges.length)
         throw new Error('Failed to get stat scaling grade: gradeRanges is empty');
     if (scalingVal < 0)
@@ -123,7 +46,7 @@ export function getGrade(gradeRanges, scalingVal) {
  * @param baseDamage
  * @param upgLevel
  */
-export function calculateBaseDamage(baseDamage, upgLevel) {
+function calculateBaseDamage(baseDamage, upgLevel) {
     const physical = getValue(baseDamage.dmgPhysical, upgLevel);
     const holy = getValue(baseDamage.dmgHoly, upgLevel);
     const fire = getValue(baseDamage.dmgFire, upgLevel);
@@ -138,7 +61,7 @@ export function calculateBaseDamage(baseDamage, upgLevel) {
  * @param statLevel
  * @returns
  */
-export function calculateContribution(statScaledDmg, upgLevel, statLevel) {
+function calculateContribution(statScaledDmg, upgLevel, statLevel) {
     const weaponScalingStat = getValue(statScaledDmg.statScaling, upgLevel);
     const gameStatScalar = statScaledDmg.statCurve !== null ? interpolate(statScaledDmg.statCurve, statLevel) : 0.0;
     const factor = (weaponScalingStat / 100) * (gameStatScalar / 100);
@@ -162,7 +85,7 @@ export function calculateContribution(statScaledDmg, upgLevel, statLevel) {
     const ar = { physical, holy, fire, wither, spellPower };
     return { ar, weaponScalingStatCoef: weaponScalingStat };
 }
-export function makeDamageSplit(base, fromStats, wieldable, scalar) {
+function makeDamageSplit(base, fromStats, wieldable, scalar) {
     base *= scalar;
     fromStats *= scalar;
     if (!wieldable) {
@@ -175,7 +98,7 @@ export function makeDamageSplit(base, fromStats, wieldable, scalar) {
     fromStats = epsilonFloor(fromStats);
     return { base, fromStats, total };
 }
-export function canWield(playerStats, wieldReqs) {
+function canWield(playerStats, wieldReqs) {
     const strength = playerStats.strength >= wieldReqs.strength;
     const agility = playerStats.agility >= wieldReqs.agility;
     const radiance = playerStats.radiance >= wieldReqs.radiance;
@@ -183,7 +106,7 @@ export function canWield(playerStats, wieldReqs) {
     const wieldable = strength && agility && radiance && inferno;
     return { strength, agility, radiance, inferno, wieldable };
 }
-export function calculateAR(AR, upgLevel, playerStats, wieldable, twoHanding, gradeRanges) {
+function calculateAR(AR, upgLevel, playerStats, wieldable, twoHanding, gradeRanges) {
     const baseDamage = calculateBaseDamage(AR.baseDamage, upgLevel);
     // calculate contributions to AR (physical, holy, fire, wither, and spellpower) from stats
     const contribsStr = calculateContribution(AR.scaledStr, upgLevel, playerStats.strength);
@@ -236,7 +159,7 @@ export function calculateAR(AR, upgLevel, playerStats, wieldable, twoHanding, gr
     };
     return { calcAR, calcScaling };
 }
-export function calculateExtras(wde, upgLevel, twoHanding) {
+function calculateExtras(wde, upgLevel, twoHanding) {
     // 2-handing gives roughly 40% more poise and stagger. Not sure about stamina damage.
     const scalar = twoHanding ? 1.4 : 1.0;
     const poiseDamage = getValue(wde.dmgPoise, upgLevel) * scalar;
@@ -252,7 +175,7 @@ export function calculateExtras(wde, upgLevel, twoHanding) {
         spellSlots,
     };
 }
-export function calculateStatus(wds, upgLevel) {
+function calculateStatus(wds, upgLevel) {
     const bleed = getValue(wds.dmgStatusBleed, upgLevel);
     const burn = getValue(wds.dmgStatusBurn, upgLevel);
     const poison = getValue(wds.dmgStatusPoison, upgLevel);
@@ -261,7 +184,7 @@ export function calculateStatus(wds, upgLevel) {
     const frost = getValue(wds.dmgStatusFrost, upgLevel);
     return { bleed, burn, poison, smite, ignite, frost };
 }
-export function calculateOffense(wo, upgLevel, playerStats, wieldability, twoHanding, gradeRanges) {
+function calculateOffense(wo, upgLevel, playerStats, wieldability, twoHanding, gradeRanges) {
     const calcAR = calculateAR(wo.damageAR, upgLevel, playerStats, wieldability.wieldable, twoHanding, gradeRanges);
     const AR = calcAR.calcAR;
     const scaling = calcAR.calcScaling;
@@ -269,7 +192,7 @@ export function calculateOffense(wo, upgLevel, playerStats, wieldability, twoHan
     const status = calculateStatus(wo.damageStatus, upgLevel);
     return { ar: AR, extras, status, scaling };
 }
-export function calculateDefense(wd, upgLevel, wieldable) {
+function calculateDefense(wd, upgLevel, wieldable) {
     let physical = getValue(wd.defPhysical, upgLevel);
     let holy = getValue(wd.defHoly, upgLevel);
     let fire = getValue(wd.defFire, upgLevel);
@@ -284,7 +207,7 @@ export function calculateDefense(wd, upgLevel, wieldable) {
     }
     return { physical, holy, fire, wither, stability };
 }
-export function calculateStats(weapon, upgLevel, playerStats, twoHanding, gradeRanges, pinnedWeapons) {
+export function calculateWeaponStats(weapon, upgLevel, playerStats, twoHanding, gradeRanges, pinnedWeapons) {
     upgLevel = Math.max(0, Math.min(weapon.maxUpgLevel, upgLevel));
     const wieldability = canWield(playerStats, weapon.wieldReqs);
     const offense = calculateOffense(weapon.offense, upgLevel, playerStats, wieldability, twoHanding, gradeRanges);
@@ -343,12 +266,4 @@ export function calculatePlayerStats(playerStats, curves) {
         resFrost,
     };
 }
-/**
- * Returns the scalar applied to incoming damage to determine damage inflicted
- * @param defense_value
- * @returns
- */
-export function getDefenseScalar(defense_value) {
-    return 600 / (600 + defense_value);
-}
-//# sourceMappingURL=calc.js.map
+//# sourceMappingURL=weaponsCalc.js.map

@@ -1,19 +1,42 @@
+/* ============================================================
+   TOKENS
+   ============================================================ */
 :root {
     --sidebar-w: 215px;
 }
+
+/* ============================================================
+   BASE / RESET
+   ============================================================ */
 * {
     box-sizing: border-box;
 }
 
+/* table cell alignment (both calc tables) */
+th,
+td {
+    text-align: center;
+}
+th:first-child,
+td:first-child {
+    text-align: left;
+}
+
+/* ============================================================
+   PAGE LAYOUT
+   appbar spans the top row; sidebar is a full-height left column
+   spanning the stats + content rows; player-stats and content
+   stack in the right column.
+   ============================================================ */
 body {
     margin: 0;
     min-height: 100vh;
     display: grid;
     grid-template-columns: var(--sidebar-w) 1fr;
-    grid-template-rows: auto auto 1fr; /* appbar | topbar | content */
+    grid-template-rows: auto auto 1fr; /* appbar | player-stats | content */
     grid-template-areas:
         'appbar  appbar'
-        'sidebar topbar'
+        'sidebar player-stats'
         'sidebar content';
 }
 body.sidebar-hidden {
@@ -23,41 +46,14 @@ body.sidebar-hidden .sidebar {
     display: none;
 }
 
-th {
-    text-align: center;
-}
-th:first-child {
-    text-align: left;
-}
-td {
-    text-align: center;
-}
-td:first-child {
-    text-align: left;
-}
+/* .view intentionally has no `display` rule: that keeps the native
+   `hidden` attribute working on the inactive view (an author display
+   rule would override it). Each view is a plain block — its toggles
+   row and table stack naturally. */
 
-.tip {
-    position: relative;
-}
-.tip:hover::after {
-    content: attr(data-tip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-bottom: 0.4rem;
-    padding: 0.3rem 0.55rem;
-    white-space: nowrap;
-    background: var(--pico-contrast-background, #111);
-    color: var(--pico-contrast, #fff);
-    border: 1px solid var(--pico-muted-border-color);
-    border-radius: 0.3rem;
-    font-size: 0.8rem;
-    font-weight: normal;
-    pointer-events: none; /* tooltip never eats the mouse */
-    z-index: 10;
-}
-
+/* ============================================================
+   APP BAR (hamburger, title, mode switch, settings, github)
+   ============================================================ */
 .appbar {
     grid-area: appbar;
     display: flex;
@@ -71,7 +67,6 @@ td:first-child {
     font-size: 1.1rem;
     color: var(--pico-primary);
 }
-
 .appbar .iconbtn {
     display: flex;
     align-items: center;
@@ -84,6 +79,9 @@ td:first-child {
     color: var(--pico-color);
     cursor: pointer;
 }
+.appbar .iconbtn:hover {
+    color: var(--pico-primary);
+}
 .appbar .hamburger {
     font-size: 1.35rem;
 }
@@ -91,26 +89,16 @@ td:first-child {
     display: flex;
     align-items: center;
     gap: 0.35rem;
-    margin: 0 0 0 auto;
-    font-size: 0.85rem;
+    margin: 0 0 0 auto; /* pushes settings + github to the right */
+    font-size: 0.8rem;
     cursor: pointer;
     white-space: nowrap;
 }
 .appbar .appbar-setting input {
     margin: 0;
 }
-.appbar .appbar-setting {
-    font-size: 0.8rem;
-}
 .appbar .github {
     font-size: 0.85rem;
-}
-.appbar .iconbtn:hover {
-    color: var(--pico-primary);
-}
-#github-btn a {
-    all: inherit;
-    padding: 0;
 }
 .appbar .github svg,
 .appbar .github img {
@@ -119,18 +107,48 @@ td:first-child {
     display: block;
     fill: currentColor; /* SVG inherits the button's color */
 }
+#github-btn a {
+    all: inherit;
+    padding: 0;
+}
 
-.topbar {
-    grid-area: topbar;
+/* mode switch (Weapons / Armors) */
+.mode-switch {
+    display: flex;
+    gap: 0.35rem;
+}
+.mode-switch .mode-btn {
+    width: auto;
+    margin: 0;
+    padding: 0.2rem 0.7rem;
+    background: none;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 0.3rem;
+    color: var(--pico-color);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.mode-switch .mode-btn:hover,
+.mode-switch .mode-btn.active {
+    color: var(--pico-primary);
+    border-color: var(--pico-primary);
+}
+
+/* ============================================================
+   PLAYER STATS HEADER (stat inputs, weapon level, derived stats)
+   ============================================================ */
+.player-stats {
+    grid-area: player-stats;
     display: flex;
     flex-direction: column;
     gap: 0.85rem;
-    padding: 0.85rem 1.25rem;
-    border-bottom: 1px solid var(--pico-muted-border-color);
+    padding: 0.85rem 0.85rem 0 0.85rem;
+    /* padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--pico-muted-border-color); */
 }
-.topbar label,
-.topbar input,
-.topbar select {
+.player-stats label,
+.player-stats input,
+.player-stats select {
     margin-bottom: 0;
 }
 .player-row {
@@ -149,6 +167,8 @@ td:first-child {
     padding: 1.05rem 0.6rem 0.3rem;
     font-size: 0.9rem;
 }
+
+/* floating caption inside each stat input */
 .field {
     position: relative;
     display: inline-block;
@@ -162,6 +182,8 @@ td:first-child {
     color: var(--pico-muted-color);
     pointer-events: none;
 }
+
+/* weapon upgrade-level dropdown */
 .weapon-level {
     margin-left: 1rem;
 }
@@ -175,6 +197,8 @@ td:first-child {
     );
     background-position-y: calc(50% + 0.375rem);
 }
+
+/* derived stats (Level / HP / Mana / Stamina / Weight) */
 .derived-stats {
     align-self: stretch;
     display: flex;
@@ -185,7 +209,7 @@ td:first-child {
 }
 .derived-row {
     display: flex;
-    flex-wrap: wrap; /* HP/Mana/Stamina/Weight wrap gracefully if cramped */
+    flex-wrap: wrap; /* wrap gracefully if cramped */
     gap: 0.25rem 1.5rem;
 }
 .derived-item {
@@ -193,6 +217,10 @@ td:first-child {
 }
 .derived-key {
     font-weight: 600;
+}
+.derived-key::after {
+    content: ': ';
+    font-weight: 400;
 }
 #hp-key {
     color: var(--pico-del-color);
@@ -206,21 +234,10 @@ td:first-child {
 #weight-key {
     color: var(--pico-code-color);
 }
-.derived-key::after {
-    content: ': ';
-    font-weight: 400;
-}
 
-.toggles {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.4rem 1rem;
-}
-.toggles label {
-    font-size: 0.8rem;
-}
-
+/* ============================================================
+   SIDEBAR (shared; the active view fills #sidebar-content)
+   ============================================================ */
 .sidebar {
     grid-area: sidebar;
     padding: 1rem 1.25rem;
@@ -230,83 +247,104 @@ td:first-child {
     margin-bottom: 0.75rem;
     font-size: 1rem;
 }
+.sidebar-content {
+    font-size: 0.8em;
+}
+.sidebar-content label {
+    display: block;
+    margin-bottom: 0.25rem;
+}
 
+/* ============================================================
+   CONTENT (holds the active view: toggles row + table)
+   ============================================================ */
 .content {
     grid-area: content;
     padding-block: 0;
-    min-width: 0;
+    min-width: 0; /* allow the table column to shrink and scroll */
 }
+
+/* column / display toggles row */
+.toggles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 1rem;
+    margin-bottom: 0.5rem;
+    padding-inline: 0.85rem;
+}
+.toggles label {
+    font-size: 0.8rem;
+}
+.view {
+    margin-top: 0.85rem;
+    margin-bottom: 0;
+}
+
+/* ============================================================
+   CALC TABLE (weapons / armors data tables)
+   ============================================================ */
 .table-wrap {
-    overflow-x: auto;
-} /* table keeps its width; scrolls sideways */
-
-.attribution {
-    text-align: center;
-    padding: 1rem 1.25rem;
-    border-top: 1px solid var(--pico-muted-border-color);
-    font-size: 0.7rem;
-    color: var(--pico-muted-color);
+    min-width: 0;
+    overflow-x: auto; /* the table scrolls sideways, not the page */
 }
-.attribution p {
-    margin: 0 0 0.35rem;
+.calc-table {
+    font-size: 0.8em;
+    margin-bottom: 0;
 }
-.attribution .trademark {
-    font-size: 0.6rem;
-}
-
-#app th,
-#app td {
+.calc-table th,
+.calc-table td {
     padding: 0.25rem 0.4rem;
 }
-#app thead tr:first-child th {
+.calc-table thead tr:first-child th {
+    border-top: 1px solid var(--pico-muted-border-color);
     border-bottom: 0;
 }
-#app thead th.sortable {
+.calc-table thead th.sortable {
     cursor: pointer;
 }
-#app thead th.sortable:hover {
+.calc-table thead th.sortable:hover {
     background: color-mix(in srgb, var(--pico-background-color), white 12%);
     color: var(--pico-primary);
 }
-#app thead .header-image {
+.calc-table thead .header-image {
     width: 24px;
     height: 24px;
     max-width: none;
 }
-/* body rows lighter than the header, alternating */
-#app tbody td {
+
+/* body rows: lighter than the header, alternating */
+.calc-table tbody td {
     background: color-mix(in srgb, var(--pico-background-color), white 5%);
 }
-#app tbody tr:nth-child(even) td {
+.calc-table tbody tr:nth-child(even) td {
     background: color-mix(in srgb, var(--pico-background-color), white 10%);
 }
-#app tbody tr:hover td {
+.calc-table tbody tr:hover td {
     background: color-mix(in srgb, var(--pico-background-color), white 17%);
 }
-#app .col-first {
-    padding-left: 0.2rem;
-    min-width: 10rem;
-}
-#app .col-starter {
+
+/* column structure */
+.calc-table .col-starter {
     padding-left: 0.8rem;
 }
-#app .col-divider {
+.calc-table .col-divider {
     border-right: 2px solid var(--pico-muted-border-color);
     padding-right: 0.8rem;
 }
-#app .unwieldable:not(.empty) {
+.calc-table .col-first {
+    padding-left: 0.2rem;
+    min-width: 10rem;
+}
+.calc-table .col-first-header {
+    padding-left: 0.5rem;
+}
+.calc-table .unwieldable:not(.empty) {
     color: var(--pico-form-element-invalid-active-border-color);
     text-decoration-color: var(--pico-form-element-invalid-active-border-color);
 }
-#sidebar-content,
-#app table {
-    font-size: 0.8em;
-    margin-bottom: 0;
-}
-#sidebar-content label {
-    display: block;
-    margin-bottom: 0.25rem;
-}
+
+/* weapons table body: bold values + pin (lock) buttons */
 #weapons-body td {
     font-weight: 600;
 }
@@ -341,6 +379,26 @@ td:first-child {
     display: block;
 }
 
+/* ============================================================
+   FOOTER (attribution)
+   ============================================================ */
+.attribution {
+    text-align: center;
+    padding: 1rem 1.25rem;
+    border-top: 1px solid var(--pico-muted-border-color);
+    font-size: 0.7rem;
+    color: var(--pico-muted-color);
+}
+.attribution p {
+    margin: 0 0 0.35rem;
+}
+.attribution .trademark {
+    font-size: 0.6rem;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
 @keyframes fadeAndScale {
     from {
         opacity: 0;
@@ -354,4 +412,31 @@ td:first-child {
 }
 .fade-size-out {
     animation: fadeAndScale 0.4s ease-out backwards;
+}
+
+/* ============================================================
+   TOOLTIP (.tip / data-tip)
+   Appears unused in the current markup — safe to delete if you
+   aren't using data-tip tooltips anywhere.
+   ============================================================ */
+.tip {
+    position: relative;
+}
+.tip:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 0.4rem;
+    padding: 0.3rem 0.55rem;
+    white-space: nowrap;
+    background: var(--pico-contrast-background, #111);
+    color: var(--pico-contrast, #fff);
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: normal;
+    pointer-events: none; /* tooltip never eats the mouse */
+    z-index: 10;
 }

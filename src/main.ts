@@ -1,208 +1,73 @@
-import { loadJSONData } from './loadJSONData.js';
-import type { AppState } from './state.js';
-import { loadState, saveState } from './state.js';
-import { HEADER_GROUPS } from './header.js';
+import { clampStat } from './calc/calc.js';
+import { calculatePlayerStats } from './calc/weaponsCalc.js';
+import { loadAppData } from './loadJSONData.js';
+import type { CalculatedPlayerStats, PlayerStats } from './model.js';
+import { isMode, isSharedToggleKey, loadAppState, saveAppState, type AppState, type Mode } from './state.js';
+import { createArmorsView } from './views/armorsView.js';
 import {
-    type Weapon,
-    type HeaderKey,
-    type SuperheaderKey,
-    type PlayerStats,
-    type WeaponClass,
-    type CalculatedPlayerStats,
-    isWeaponClass,
-    isSuperheaderKey,
-} from './model.js';
-import { getClassesHtml, getHeaderHtml, getWeaponRow, getWeaponsHtml, sortCalculated } from './render.js';
-import { calculateStats, calculatePlayerStats, clampStat } from './calc.js';
+    addClassListeners,
+    addElemListener,
+    getTypedElem,
+    View,
+    type GameData,
+    type ViewContext,
+} from './views/view.js';
+import { createWeaponsView } from './views/weaponsView.js';
 
-// main app variables
-const { weapons, gradeRanges, curves, runes, armor } = await loadJSONData();
-const loadedWeaponClasses: string[] = [...new Set(weapons.map((w) => w.className))].sort();
+// ===================================
+// BOOTSTRAP
+// ===================================
 
-let state: AppState = {
-    // defaults
-    playerStats: { strength: 30, agility: 30, endurance: 30, vitality: 30, radiance: 30, inferno: 30 },
-    upgLevel: 10,
-    selectedClasses: new Set(['Axes']),
-    sortKey: 'WEAP',
-    ascending: true,
-    showColGroups: new Set(['INFO', 'AR', 'STATUS', 'SCALING', 'REQS']),
-    showTwoHanding: false,
-    showUnwieldable: true,
-    showSplit: false,
-    saveSettings: true,
-    pinnedWeapons: new Set(),
-    showRawScaling: false,
+const data: GameData = await loadAppData();
+const state: AppState = loadAppState();
+const ctx: ViewContext = {
+    shared: state.shared,
+    data,
+    save: () => saveAppState(state),
+};
+const views: Record<Mode, View> = {
+    weapons: createWeaponsView(state.weapons, ctx),
+    armors: createArmorsView(state.armors, ctx),
 };
 
-// =========================================
-// UI INITIALIZATION
-// =========================================
+// ===================================
+// SHARED EVENT HANDLERS
+// ===================================
 
-function init(): void {
-    loadState(state);
-    initSettingsDisplay();
-    wireInputs();
-    renderDerivedStats();
-    renderClasses();
-    renderHeader();
-    renderWeapons();
-}
-
-function initSettingsDisplay(): void {
-    // initialize player stat entries
-    for (const el of document.getElementsByClassName('stat-input')) {
-        if (el instanceof HTMLInputElement && typeof el.dataset.stat === 'string') {
-            const stat = el.dataset.stat as keyof PlayerStats;
-            if (state.playerStats[stat] !== undefined) el.value = String(state.playerStats[stat]);
-        }
-    }
-
-    // initialize weapon upgrade level
-    const el = document.getElementById('weapon-level');
-    if (el instanceof HTMLSelectElement) el.value = `+${state.upgLevel}`;
-
-    // initialize settings toggles
-    updateSettingsToggles();
-}
-
-function updateSettingsToggles(): void {
-    for (const el of document.getElementsByClassName('setting-toggle')) {
-        if (el instanceof HTMLInputElement && typeof el.dataset.setting === 'string') {
-            // map element's 'data-setting' value to relevant current AppState value
-            const settingValue = state[el.dataset.setting as keyof AppState];
-            if (typeof settingValue === 'boolean') el.checked = settingValue;
-        }
-    }
-    for (const el of document.getElementsByClassName('group-toggle')) {
-        if (el instanceof HTMLInputElement) el.checked = state.showColGroups.has(el.dataset.group as SuperheaderKey);
-    }
-}
-
-function wireInputs(): void {
-    function mustGet(id: string): HTMLElement {
-        const el = document.getElementById(id);
-        if (el === null) throw new Error(`Missing element: ${id}`);
-        if (!(el instanceof HTMLElement)) throw new Error();
-        return el;
-    }
-
-    // hamburger button
-    mustGet('hamburger').addEventListener('click', toggleSidebar);
-
-    // weapon class toggles
-    mustGet('sidebar-content').addEventListener('change', setClass);
-
-    // player stats inputs
-    for (const elStat of document.getElementsByClassName('stat-input')) {
-        if (elStat instanceof HTMLInputElement) elStat.addEventListener('change', () => setPlayerStat(elStat));
-    }
-
-    // weapon upgrade level dropdown
-    const elUpg = mustGet('weapon-level') as HTMLSelectElement;
-    elUpg.addEventListener('change', () => setUpgLevel(elUpg));
-
-    // setting toggles
-    for (const elSetting of document.getElementsByClassName('setting-toggle')) {
-        if (elSetting instanceof HTMLInputElement) elSetting.addEventListener('change', () => setSetting(elSetting));
-    }
-
-    // header group toggles
-    for (const elGroup of document.getElementsByClassName('group-toggle')) {
-        if (elGroup instanceof HTMLInputElement) elGroup.addEventListener('change', () => setColGroup(elGroup));
-    }
-
-    // table header sorting
-    mustGet('weapons-header').addEventListener('click', tableHeaderClick);
-    mustGet('weapons-body').addEventListener('click', tableBodyClick);
-}
-
-// =========================================
-// RENDERING - GENERATE/UPDATE HTML
-// =========================================
-
-function renderClasses(): void {
-    const elClasses = document.getElementById('sidebar-content');
-    if (elClasses) elClasses.innerHTML = getClassesHtml(loadedWeaponClasses, state.selectedClasses);
-}
-
-function renderHeader(): void {
-    const elHeader = document.getElementById('weapons-header');
-    if (elHeader) {
-        const groups = HEADER_GROUPS.filter((group) => state.showColGroups.has(group.superKey));
-        elHeader.innerHTML = getHeaderHtml(groups, state.sortKey, state.ascending);
-    }
-}
-
-function renderDerivedStats(): void {
-    // update the player's derived stats
-    const derivedStats = calculatePlayerStats(state.playerStats, curves);
-    for (const el of document.getElementsByClassName('derived-val')) {
-        if (el instanceof HTMLSpanElement && typeof el.dataset.stat === 'string') {
-            const stat = el.dataset.stat as keyof CalculatedPlayerStats;
-            const val = derivedStats[stat];
-            if (typeof val === 'string') el.textContent = val;
-            else if (typeof val === 'number') el.textContent = String(val);
-        }
-    }
-}
-
-function renderWeapons(weaponFadeIn: string | null = null): void {
-    // update the weapons table
-    const elBody = document.getElementById('weapons-body');
-    if (elBody) {
-        const showWeaps: Weapon[] = weapons.filter(
-            (weap) => state.selectedClasses.has(weap.className) || state.pinnedWeapons.has(weap.key)
-        );
-        let calcStats = showWeaps.map((weap) =>
-            calculateStats(
-                weap,
-                state.upgLevel,
-                state.playerStats,
-                state.showTwoHanding,
-                gradeRanges,
-                state.pinnedWeapons
-            )
-        );
-        if (!state.showUnwieldable)
-            // remove any unwieldable weapons
-            calcStats = calcStats.filter((ws) => ws.wieldability.wieldable);
-        // sort calculated weapon stats by current sortKey
-        const { pinned, unpinned } = sortCalculated(calcStats, state.sortKey, state.ascending);
-        calcStats = [...pinned, ...unpinned]; // pinned weapons go at front of list
-        // display the weapon rows
-        const rows = calcStats.map((cs) => getWeaponRow(cs, state.showColGroups, state.showSplit));
-        elBody.innerHTML = getWeaponsHtml(rows, weaponFadeIn);
-    }
-}
-
-// =========================================
-// EVENT HANDLERS
-// =========================================
-
-function toggleSidebar(): void {
+function onToggleSidebar(e?: Event): void {
     document.body.classList.toggle('sidebar-hidden');
 }
 
-function setClass(e: Event): void {
+function onSwitchMode(e: Event): void {
     const el = e.target;
-    if (el instanceof HTMLInputElement) {
-        if (el.dataset.class === undefined) return;
+    if (!(el instanceof HTMLButtonElement) || !isMode(el.dataset.mode)) return;
+    const next: Mode = el.dataset.mode;
 
-        // add/remove the class name from selectedClasses
-        const className = el.dataset.class as WeaponClass;
-        if (el.checked) state.selectedClasses.add(className);
-        else state.selectedClasses.delete(className);
-
-        smartToggles();
-        saveState(state);
-        updateSettingsToggles();
-        renderHeader();
-        renderWeapons();
-    }
+    if (next === state.shared.activeMode) return;
+    views[state.shared.activeMode].hide();
+    state.shared.activeMode = next;
+    views[next].show();
+    syncModeButtons();
+    saveAppState(state);
 }
 
-function setPlayerStat(el: HTMLInputElement): void {
+function onSetSharedSetting(e: Event): void {
+    if (!(e.target instanceof HTMLInputElement)) return;
+
+    const el = e.target;
+    const setting = el.dataset.setting;
+    if (typeof setting !== 'string' || !isSharedToggleKey(setting)) return;
+
+    state.shared[setting] = el.checked;
+
+    views[state.shared.activeMode].refresh();
+    ctx.save();
+}
+
+function onSetPlayerStat(e: Event): void {
+    if (!(e.target instanceof HTMLInputElement)) return;
+
+    const el = e.target;
     const input = el.valueAsNumber;
     if (Number.isNaN(input)) return;
     const value = clampStat(input);
@@ -213,141 +78,98 @@ function setPlayerStat(el: HTMLInputElement): void {
 
     // update the stat
     const field = el.dataset.stat as keyof PlayerStats;
-    state.playerStats = { ...state.playerStats, [field]: value };
+    ctx.shared.playerStats = { ...ctx.shared.playerStats, [field]: value };
 
-    saveState(state);
-    renderDerivedStats();
-    renderWeapons();
+    updateDerivedStats();
+    views[ctx.shared.activeMode].refresh();
+    ctx.save();
 }
 
-function setUpgLevel(el: HTMLSelectElement): void {
-    const val = el.value.slice(1);
-    const num = Number.parseInt(val, 10);
-    if (!Number.isNaN(num)) {
-        state.upgLevel = num;
+// ===================================
+// SHARED RENDERING
+// ===================================
 
-        saveState(state);
-        renderWeapons();
+function syncModeButtons(): void {
+    for (const el of document.getElementsByClassName('mode-btn')) {
+        if (el instanceof HTMLButtonElement) {
+            const isActive = el.dataset.mode === state.shared.activeMode;
+            el.classList.toggle('active', isActive);
+        }
     }
 }
 
-function setColGroup(el: HTMLInputElement): void {
-    const superKey = el.dataset.group as SuperheaderKey;
-    if (el.checked) state.showColGroups.add(superKey);
-    else state.showColGroups.delete(superKey);
-
-    saveState(state);
-    renderHeader();
-    renderWeapons();
-}
-
-function setSetting(el: HTMLInputElement): void {
-    const setting = el.dataset.setting;
-    if (setting && typeof setting === 'string' && Object.hasOwn(state, setting)) {
-        const key = setting as keyof AppState;
-        if (typeof state[key] === 'boolean') (state as Record<string, unknown>)[key] = el.checked;
+function syncSharedElements(): void {
+    // sync shared settings toggles
+    for (const el of document.getElementsByClassName('shared-setting-toggle')) {
+        if (
+            el instanceof HTMLInputElement &&
+            typeof el.dataset.setting === 'string' &&
+            isSharedToggleKey(el.dataset.setting)
+        ) {
+            // map element's 'data-setting' value to relevant current AppState value
+            const setting = el.dataset.setting;
+            const settingValue = state.shared[setting];
+            if (typeof settingValue === 'boolean') el.checked = settingValue;
+        }
     }
 
-    saveState(state);
-    renderWeapons();
+    // initialize player stat <input> element values
+    for (const el of document.getElementsByClassName('stat-input')) {
+        if (el instanceof HTMLInputElement && typeof el.dataset.stat === 'string') {
+            const ps = ctx.shared.playerStats;
+            if (Object.hasOwn(ps, el.dataset.stat)) {
+                const stat = el.dataset.stat as keyof PlayerStats;
+                if (typeof ps[stat] !== 'number')
+                    throw new Error(
+                        `Tried to set player-stat input element's value to "${ps[stat]}", but value is not a number (key="${stat}")`
+                    );
+                el.value = String(ps[stat]);
+            }
+        }
+    }
 }
 
-function setSorting(colKey: HeaderKey): void {
-    if (colKey === state.sortKey) state.ascending = !state.ascending;
-    else {
-        state.sortKey = colKey;
-        if (colKey === 'WEAP' || colKey === 'CLS')
-            // weapon name and weapon class columns default to ascending
-            state.ascending = true;
-        else state.ascending = false;
+function updateDerivedStats(): void {
+    // update the player's derived stats
+    const derivedStats = calculatePlayerStats(ctx.shared.playerStats, ctx.data.curves);
+    for (const el of document.getElementsByClassName('derived-val')) {
+        if (el instanceof HTMLSpanElement && typeof el.dataset.stat === 'string') {
+            const stat = el.dataset.stat as keyof CalculatedPlayerStats;
+            const val = derivedStats[stat];
+            if (typeof val === 'string') el.textContent = val;
+            else if (typeof val === 'number') el.textContent = String(val);
+        }
+    }
+}
+
+// ===================================
+// WIRING AND INIT
+// ===================================
+
+function wireShared(): void {
+    // hamburger button
+    addElemListener('hamburger', 'click', onToggleSidebar);
+    // mode toggles
+    addClassListeners('mode-btn', HTMLButtonElement, 'click', onSwitchMode);
+    // shared settings toggles
+    addClassListeners('shared-setting-toggle', HTMLInputElement, 'change', onSetSharedSetting);
+    // player stats inputs
+    addClassListeners('stat-input', HTMLInputElement, 'change', onSetPlayerStat);
+}
+
+function init(): void {
+    for (const view of Object.values(views)) view.mount();
+
+    wireShared();
+    syncSharedElements();
+    updateDerivedStats();
+
+    for (const view of Object.values(views)) {
+        if (state.shared.activeMode === view.mode) view.show();
+        else view.hide();
     }
 
-    saveState(state);
-    renderHeader();
-    renderWeapons();
-}
-
-function setPinned(weaponKey: string): void {
-    if (state.pinnedWeapons.has(weaponKey)) state.pinnedWeapons.delete(weaponKey);
-    else state.pinnedWeapons.add(weaponKey);
-
-    saveState(state);
-    renderWeapons(weaponKey); // render weapons with the pinned/unpinned weapon transitioning into view
-}
-
-function tableHeaderClick(e: MouseEvent): void {
-    if (!(e.target instanceof Element)) return;
-    const el = e.target.closest<HTMLElement>('th.sortable');
-    if (el !== null && el.dataset.colKey) setSorting(el.dataset.colKey as HeaderKey);
-}
-
-function tableBodyClick(e: MouseEvent): void {
-    if (!(e.target instanceof Element)) return;
-    const el = e.target.closest<HTMLButtonElement>('button.lock');
-    if (el !== null && el.dataset.weapon) setPinned(el.dataset.weapon);
-}
-
-// =========================================
-// SMART TOGGLES
-// =========================================
-
-interface SmartToggleColGroup {
-    add: SuperheaderKey[];
-    remove: SuperheaderKey[];
-    indiff: SuperheaderKey[];
-}
-function createSmartToggles(): Record<WeaponClass, SmartToggleColGroup> {
-    const melee: SmartToggleColGroup = { add: ['AR'], remove: ['MAGIC'], indiff: ['STATUS', 'DEF'] };
-    const ranged: SmartToggleColGroup = { add: ['AR'], remove: ['MAGIC', 'DEF'], indiff: ['STATUS'] };
-
-    return {
-        Axes: melee,
-        Daggers: melee,
-        Fists: melee,
-        Flails: melee,
-        'Grand Axes': melee,
-        'Grand Hammers': melee,
-        'Grand Swords': melee,
-        Hammers: melee,
-        'Long Swords': melee,
-        Polearms: melee,
-        'Short Swords': melee,
-        Spears: melee,
-        Catalysts: { add: ['MAGIC'], remove: ['AR', 'STATUS', 'DEF'], indiff: [] },
-        Shields: { add: ['DEF'], remove: ['AR', 'MAGIC', 'STATUS'], indiff: [] },
-        Bows: ranged,
-        Crossbows: ranged,
-    };
-}
-
-const SMART_TOGGLES = createSmartToggles();
-/**
- * Automatically selects and deselects displayed column groups based on the selected weapon classes
- */
-function smartToggles(): void {
-    // toAdd: will be added; can't be removed (users want to see these col groups for some weapon classes)
-    const toAdd: Set<SuperheaderKey> = new Set();
-    // toRemove: won't be added; might be removed (user may want to see these col groups for some weapon classes)
-    const toRemove: Set<SuperheaderKey> = new Set();
-    // indifferent: can be added; won't be removed (user may want to see these col groups for some weapon classes)
-    const indifferent: Set<SuperheaderKey> = new Set();
-
-    const classes = [...state.selectedClasses];
-    const smarts = classes.map((c) => SMART_TOGGLES[c]);
-    for (const smart of smarts) {
-        // determine col groups to be added, and cache indifferent col groups
-        for (const add of smart.add) toAdd.add(add);
-        for (const indiff of smart.indiff) indifferent.add(indiff);
-    }
-
-    // delete col groups to remove - only col groups not in either toAdd or indifferent
-    for (const smart of smarts) {
-        for (const remove of smart.remove) if (!toAdd.has(remove) && !indifferent.has(remove)) toRemove.add(remove);
-    }
-
-    // update the currently selected header column groups
-    for (const col of toRemove) state.showColGroups.delete(col);
-    for (const col of toAdd) state.showColGroups.add(col);
+    syncModeButtons();
 }
 
 init();

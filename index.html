@@ -33,20 +33,25 @@
     </head>
 
     <body>
-        <!-- ================= TOP BAR ================= -->
+        <!-- ================= APP BAR ================= -->
         <header class="appbar">
             <button
                 id="hamburger"
                 class="iconbtn hamburger"
                 aria-label="Toggle sidebar"
-                title="Show/hide the 'Weapon Classes' pane">
+                title="Show/hide the side pane">
                 &#9776;
             </button>
             <strong class="appname">LOTF Weapons Calculator</strong>
+            <nav class="mode-switch" aria-label="Calculator mode">
+                <button type="button" class="mode-btn" data-mode="weapons">Weapons</button>
+                <button type="button" class="mode-btn" data-mode="armors">Armors</button>
+            </nav>
             <label
                 class="appbar-setting"
                 title="LOTFCalc will automatically reload your previous settings when opened. Uncheck this to disable this feature"
-                ><input type="checkbox" class="setting-toggle" data-setting="saveSettings" /> Remember Settings</label
+                ><input type="checkbox" class="shared-setting-toggle" data-setting="saveSettings" /> Remember
+                Settings</label
             >
             <button
                 id="github-btn"
@@ -65,8 +70,9 @@
                 </a>
             </button>
         </header>
-        <header class="topbar">
-            <!-- Stats -->
+
+        <!-- ================= PLAYER STATS ================= -->
+        <header class="player-stats">
             <div class="player-row">
                 <div class="stats-inputs">
                     <label class="field">
@@ -159,7 +165,7 @@
                     <div class="derived-row">
                         <span class="derived-item"
                             ><span class="derived-key">Level</span
-                            ><span class="derived-val" data-stat="total">-</span></span
+                            ><span class="derived-val" data-stat="level">-</span></span
                         >
                         <span class="derived-item"
                             ><span id="hp-key" class="derived-key">HP</span
@@ -180,61 +186,73 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Column / display toggles -->
-            <div id="option-toggles" class="toggles">
-                <label title="Show effective stats from two-handing a weapon"
-                    ><input type="checkbox" class="setting-toggle" data-setting="showTwoHanding" /> Two-Handing</label
-                >
-                <label title="Show weapons you lack the stats to wield"
-                    ><input type="checkbox" class="setting-toggle" data-setting="showUnwieldable" /> Unwieldable</label
-                >
-                <label title="Show damage values as (weapon's base damage)+(damage from scaling)"
-                    ><input type="checkbox" class="setting-toggle" data-setting="showSplit" /> Split Damage</label
-                >
-                <label title="Show attack rating for physical, holy, fire, and wither"
-                    ><input type="checkbox" class="group-toggle" data-group="AR" /> Attack</label
-                >
-                <label title="Show spell power and number of spell slots for catalysts"
-                    ><input type="checkbox" class="group-toggle" data-group="MAGIC" /> Magic</label
-                >
-                <label title="Show status effects applied by weapons"
-                    ><input type="checkbox" class="group-toggle" data-group="STATUS" /> Status</label
-                >
-                <label
-                    title="Show weight, poise damage, posture damage, stamina damage multiplier, and pvp damage multiplier"
-                    ><input type="checkbox" class="group-toggle" data-group="MISC" /> Misc</label
-                >
-                <label
-                    title="Show rune sockets available at weapon's upgrade level. S=Str, A=Agi, R=Rad, I=Inf; *=Meta (any rune)"
-                    ><input type="checkbox" class="group-toggle" data-group="RUNES" /> Runes</label
-                >
-                <label title="Show defensive stats for weapons"
-                    ><input type="checkbox" class="group-toggle" data-group="DEF" /> Defenses</label
-                >
-                <label title="Show stat scaling strength"
-                    ><input type="checkbox" class="group-toggle" data-group="SCALING" /> Scaling</label
-                >
-                <label title="Show the stats required to effectively wield weapons"
-                    ><input type="checkbox" class="group-toggle" data-group="REQS" /> Wield Reqs</label
-                >
-            </div>
         </header>
 
-        <!-- ================= SIDEBAR ================= -->
+        <!-- ================= SIDEBAR (shared; active view fills it) ================= -->
         <aside class="sidebar">
             <h2 id="sidebar-title">Weapon Classes</h2>
-            <nav id="sidebar-content"></nav>
+            <nav class="sidebar-content" id="sidebar-content"></nav>
         </aside>
 
         <!-- ================= MAIN CONTENT ================= -->
         <main class="content">
-            <div id="app" class="table-wrap">
-                <table>
-                    <thead id="weapons-header"></thead>
-                    <tbody id="weapons-body"></tbody>
-                </table>
-            </div>
+            <section id="view-weapons" class="view">
+                <div id="option-toggles" class="toggles">
+                    <label title="Show effective stats from two-handing a weapon"
+                        ><input type="checkbox" class="weapons-setting-toggle" data-setting="showTwoHanding" />
+                        Two-Handing</label
+                    >
+                    <label title="Show weapons you lack the stats to wield"
+                        ><input type="checkbox" class="weapons-setting-toggle" data-setting="showUnwieldable" />
+                        Unwieldable</label
+                    >
+                    <label title="Show damage values as (weapon's base damage)+(damage from scaling)"
+                        ><input type="checkbox" class="weapons-setting-toggle" data-setting="showSplit" /> Split
+                        Damage</label
+                    >
+                    <label title="Show attack rating for physical, holy, fire, and wither"
+                        ><input type="checkbox" class="group-toggle" data-group="AR" /> Attack</label
+                    >
+                    <label title="Show spell power and number of spell slots for catalysts"
+                        ><input type="checkbox" class="group-toggle" data-group="MAGIC" /> Magic</label
+                    >
+                    <label title="Show status effects applied by weapons"
+                        ><input type="checkbox" class="group-toggle" data-group="STATUS" /> Status</label
+                    >
+                    <label
+                        title="Show weight, poise damage, posture damage, stamina damage multiplier, and pvp damage multiplier"
+                        ><input type="checkbox" class="group-toggle" data-group="MISC" /> Misc</label
+                    >
+                    <label
+                        title="Show rune sockets available at weapon's upgrade level. S=Str, A=Agi, R=Rad, I=Inf; *=Meta (any rune)"
+                        ><input type="checkbox" class="group-toggle" data-group="RUNES" /> Runes</label
+                    >
+                    <label title="Show defensive stats for weapons"
+                        ><input type="checkbox" class="group-toggle" data-group="DEF" /> Defenses</label
+                    >
+                    <label title="Show stat scaling strength"
+                        ><input type="checkbox" class="group-toggle" data-group="SCALING" /> Scaling</label
+                    >
+                    <label title="Show the stats required to effectively wield weapons"
+                        ><input type="checkbox" class="group-toggle" data-group="REQS" /> Wield Reqs</label
+                    >
+                </div>
+                <div class="table-wrap">
+                    <table class="calc-table">
+                        <thead id="weapons-header"></thead>
+                        <tbody id="weapons-body"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="view-armors" class="view" hidden>
+                <div class="table-wrap">
+                    <table class="calc-table">
+                        <thead id="armors-header"></thead>
+                        <tbody id="armors-body"></tbody>
+                    </table>
+                </div>
+            </section>
 
             <footer class="attribution">
                 <p>

@@ -10,57 +10,6 @@ export function isRuneType(v: unknown): v is RuneType {
     return RUNE_TYPES.includes(v as RuneType);
 }
 
-export type HeaderKey =
-    // basic
-    | 'WEAP'
-    | 'CLS'
-    // AR
-    | 'ARP'
-    | 'ARH'
-    | 'ARF'
-    | 'ARW'
-    | 'TOT'
-    // spell
-    | 'SP'
-    | 'SLOTS'
-    // status
-    | 'BLE'
-    | 'BRN'
-    | 'PSN'
-    | 'SMI'
-    | 'IGN'
-    | 'FRO'
-    // extras
-    | 'WGT'
-    | 'PD'
-    | 'STAG'
-    | 'STAD'
-    | 'PVP'
-    // runes
-    | 'RUN'
-    // defense
-    | 'DP'
-    | 'DH'
-    | 'DF'
-    | 'DW'
-    | 'DS'
-    // scaling
-    | 'SS'
-    | 'SA'
-    | 'SR'
-    | 'SI'
-    // wield reqs
-    | 'RS'
-    | 'RA'
-    | 'RR'
-    | 'RI';
-
-const SUPERHEADER_KEYS = ['INFO', 'AR', 'MAGIC', 'STATUS', 'MISC', 'RUNES', 'DEF', 'SCALING', 'REQS'] as const;
-export type SuperheaderKey = (typeof SUPERHEADER_KEYS)[number];
-export function isSuperheaderKey(v: unknown): v is SuperheaderKey {
-    return SUPERHEADER_KEYS.includes(v as SuperheaderKey);
-}
-
 const WEAPON_CLASSES = [
     'Axes',
     'Bows',
@@ -149,7 +98,7 @@ export interface StatScaledDamage {
     readonly statCurve: Curve | null;
 }
 
-export interface PlayerStats {
+export type PlayerStats = {
     readonly strength: number;
     readonly agility: number;
     readonly endurance: number;

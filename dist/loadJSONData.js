@@ -181,7 +181,7 @@ function toArmor(r) {
  * data.json data loader
  * @returns
  */
-export async function loadJSONData() {
+export async function loadAppData() {
     const res = await fetch('data/data.json');
     if (!res.ok)
         throw new Error(`Failed to load data.json: ${res.status}`);
@@ -205,6 +205,6 @@ export async function loadJSONData() {
     const weapons = data.weapons.map((w) => toWeapon(w, curves, baseDamages));
     const runes = data.runes.map((r) => toRune(r, buffs));
     const armor = data.armor.map((arm) => toArmor(arm));
-    return { weapons, gradeRanges, curves, runes, armor };
+    return { weapons, gradeRanges, curves, runes, armors: armor };
 }
 //# sourceMappingURL=loadJSONData.js.map

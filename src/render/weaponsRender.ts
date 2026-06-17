@@ -1,12 +1,196 @@
-import { epsilonFloor } from './calc.js';
+import { epsilonFloor } from '../calc/calc.js';
+import type { DamageSplit, CalculatedWeaponStats } from '../model.js';
+
+const WEAPONS_HEADER_KEYS = [
+    // basic
+    'WEAP',
+    'CLS',
+    // AR
+    'ARP',
+    'ARH',
+    'ARF',
+    'ARW',
+    'TOT',
+    // spell
+    'SP',
+    'SLOTS',
+    // status
+    'BLE',
+    'BRN',
+    'PSN',
+    'SMI',
+    'IGN',
+    'FRO',
+    // extras
+    'WGT',
+    'PD',
+    'STAG',
+    'STAD',
+    'PVP',
+    // runes
+    'RUN',
+    // defense
+    'DP',
+    'DH',
+    'DF',
+    'DW',
+    'DS',
+    // scaling
+    'SS',
+    'SA',
+    'SR',
+    'SI',
+    // wield reqs
+    'RS',
+    'RA',
+    'RR',
+    'RI',
+] as const;
+export type WeaponsHeaderKey = (typeof WEAPONS_HEADER_KEYS)[number];
+export function isWeaponsHeaderKey(v: unknown): v is WeaponsHeaderKey {
+    return WEAPONS_HEADER_KEYS.includes(v as WeaponsHeaderKey);
+}
+
+const WEAPONS_SUPERHEADER_KEYS = ['INFO', 'AR', 'MAGIC', 'STATUS', 'MISC', 'RUNES', 'DEF', 'SCALING', 'REQS'] as const;
+export type WeaponsSuperheaderKey = (typeof WEAPONS_SUPERHEADER_KEYS)[number];
+export function isWeaponsSuperheaderKey(v: unknown): v is WeaponsSuperheaderKey {
+    return WEAPONS_SUPERHEADER_KEYS.includes(v as WeaponsSuperheaderKey);
+}
+
+export interface WeaponsHeaderColumn {
+    readonly key: WeaponsHeaderKey;
+    readonly text: string;
+    readonly hover: string;
+}
+
+export interface WeaponsHeaderGroup {
+    readonly superKey: WeaponsSuperheaderKey;
+    readonly superText: string;
+    readonly columns: readonly WeaponsHeaderColumn[];
+}
+
+export const WEAPONS_HEADER_GROUPS: readonly WeaponsHeaderGroup[] = [
+    {
+        superKey: 'INFO',
+        superText: '',
+        columns: [
+            { key: 'WEAP', text: 'Weapon', hover: 'Weapon Name' },
+            { key: 'CLS', text: 'Class', hover: 'Class Name' },
+        ],
+    },
+    {
+        superKey: 'AR',
+        superText: 'Attack Rating',
+        columns: [
+            { key: 'ARP', text: 'Phys', hover: 'Physical Attack Rating' },
+            { key: 'ARF', text: 'Fire', hover: 'Fire Attack Rating' },
+            { key: 'ARH', text: 'Holy', hover: 'Holy Attack Rating' },
+            { key: 'ARW', text: 'Wither', hover: 'Wither Attack Rating' },
+            { key: 'TOT', text: 'Total', hover: 'Total Attack Rating' },
+        ],
+    },
+    {
+        superKey: 'MAGIC',
+        superText: 'Magic',
+        columns: [
+            { key: 'SP', text: 'SpellP', hover: 'Spell Power' },
+            { key: 'SLOTS', text: 'Slots', hover: 'Catalyst Spell Slots' },
+        ],
+    },
+    {
+        superKey: 'STATUS',
+        superText: 'Status Effects',
+        columns: [
+            { key: 'SMI', text: 'Smi', hover: 'Smite Status Buildup' },
+            { key: 'BLE', text: 'Ble', hover: 'Bleed Status Buildup' },
+            { key: 'BRN', text: 'Brn', hover: 'Burn Status Buildup' },
+            { key: 'FRO', text: 'Fro', hover: 'Frostbite Status Buildup' },
+            { key: 'IGN', text: 'Ign', hover: 'Ignite Status Buildup' },
+            { key: 'PSN', text: 'Psn', hover: 'Poison Status Buildup' },
+        ],
+    },
+    {
+        superKey: 'MISC',
+        superText: 'Misc Stats',
+        columns: [
+            { key: 'WGT', text: 'Wgt', hover: 'Weight' },
+            {
+                key: 'PD',
+                text: 'PoiseD',
+                hover: 'Poise Damage (Enemy Attack Interruption)',
+            },
+            {
+                key: 'STAG',
+                text: 'PstrD',
+                hover: 'Posture Damage (For Grevious Strikes/Critical Hits)',
+            },
+            { key: 'STAD', text: 'StamD', hover: 'Stamina Damage Multiplier' },
+            { key: 'PVP', text: 'PVP', hover: 'Multiplier For PVP' },
+        ],
+    },
+    {
+        superKey: 'RUNES',
+        superText: 'Rune',
+        columns: [{ key: 'RUN', text: 'Sockets', hover: 'Available Rune Sockets' }],
+    },
+    {
+        superKey: 'DEF',
+        superText: 'Defense',
+        columns: [
+            { key: 'DP', text: 'Phys', hover: 'Physical Defense' },
+            { key: 'DF', text: 'Fire', hover: 'Fire Defense' },
+            { key: 'DH', text: 'Holy', hover: 'Holy Defense' },
+            { key: 'DW', text: 'Wither', hover: 'Wither Defense' },
+            {
+                key: 'DS',
+                text: 'Stab',
+                hover: 'Stability Rating (Stamina To Block)',
+            },
+        ],
+    },
+    {
+        superKey: 'SCALING',
+        superText: 'Attribute Scaling',
+        columns: [
+            { key: 'SS', text: 'Str', hover: 'Strength Scaling' },
+            { key: 'SA', text: 'Agi', hover: 'Agility Scaling' },
+            { key: 'SR', text: 'Rad', hover: 'Radiance Scaling' },
+            { key: 'SI', text: 'Inf', hover: 'Inferno Scaling' },
+        ],
+    },
+    {
+        superKey: 'REQS',
+        superText: 'Wield Reqs',
+        columns: [
+            { key: 'RS', text: 'Str', hover: 'Required Strength' },
+            { key: 'RA', text: 'Agi', hover: 'Required Agility' },
+            { key: 'RR', text: 'Rad', hover: 'Required Radiance' },
+            { key: 'RI', text: 'Inf', hover: 'Required Inferno' },
+        ],
+    },
+] as const;
+
+interface Cell {
+    readonly text: string;
+    readonly cls: string;
+}
+interface WeaponRow {
+    readonly weaponName: string;
+    readonly weaponKey: string;
+    readonly wieldable: boolean;
+    readonly pinned: boolean;
+    readonly cells: Cell[];
+}
+
 const LOCKED_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14.2" height="10" rx="2"/><path d="M 8 11 V 6 a 4 4 0 0 1 8 0 v 5"/><circle cx="12.1" cy="15.2" r="1.2" fill="currentColor" stroke="none"/><line x1="12.1" y1="16.1" x2="12.1" y2="17.6" stroke="currentColor" stroke-width="1.5"/></svg>`;
 const UNLOCKED_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14.2" height="10" rx="2"/><path d="M 8 11 V 5 a 4 4 0 0 1 7.9 -0.9"/><circle cx="12.1" cy="15.2" r="1.2" fill="currentColor" stroke="none"/><line x1="12.1" y1="16.1" x2="12.1" y2="17.6" stroke="currentColor" stroke-width="1.5"/></svg>`;
+
 /**
  * Replaces all special characters '&', '<', '>', '"', and "'" with HTML-safe sequences
  * @param s
  * @returns
  */
-export function escapeHtml(s) {
+export function escapeHtml(s: string): string {
     return s
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -14,6 +198,7 @@ export function escapeHtml(s) {
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#x27;');
 }
+
 /**
  * Generates the HTML to display the available weapon classes. Classes in checkedClasses will
  * be displayed in a checked state.
@@ -21,15 +206,16 @@ export function escapeHtml(s) {
  * @param checkedClasses
  * @returns
  */
-export function getClassesHtml(weaponClasses, checkedClasses) {
-    const parts = [];
+export function getClassesHtml(weaponClasses: readonly string[], checkedClasses: Set<string>): string {
+    const parts: string[] = [];
     for (const wc of weaponClasses) {
         const checked = checkedClasses.has(wc) ? 'checked' : '';
         parts.push(`<label><input type="checkbox" ${checked} data-class="${escapeHtml(wc)}">${escapeHtml(wc)}</label>`);
     }
     return parts.join('');
 }
-const headerImagePaths = {
+
+const headerImagePaths: Partial<Record<WeaponsHeaderKey, string>> = {
     BLE: './img/Header/Bleed.webp',
     BRN: './img/Header/Burn.webp',
     PSN: './img/Header/Poison.webp',
@@ -37,6 +223,7 @@ const headerImagePaths = {
     IGN: './img/Header/Ignite.webp',
     FRO: './img/Header/Frostbite.webp',
 };
+
 /**
  * Given the currently visible HeaderGroups, generates the HTML to display the grouping header and
  * main table header. The column with sortKey is decorated with an arrow indicating sort direction.
@@ -45,12 +232,19 @@ const headerImagePaths = {
  * @param ascending
  * @returns
  */
-export function getHeaderHtml(groups, sortKey, ascending) {
-    const superParts = [];
-    const headerParts = [];
+export function getHeaderHtml(
+    groups: readonly WeaponsHeaderGroup[],
+    sortKey: WeaponsHeaderKey,
+    ascending: boolean
+): string {
+    const superParts: string[] = [];
+    const headerParts: string[] = [];
+
     groups.forEach((group, superIdx) => {
         const superCls = superIdx === 0 ? 'col-first col-divider' : 'col-starter col-divider';
-        superParts.push(`<th class="${superCls}" colspan="${group.columns.length}">${escapeHtml(group.superText)}</th>`);
+        superParts.push(
+            `<th class="${superCls}" colspan="${group.columns.length}">${escapeHtml(group.superText)}</th>`
+        );
         group.columns.forEach((col, idx) => {
             let text = col.text;
             if (col.key === sortKey)
@@ -58,62 +252,66 @@ export function getHeaderHtml(groups, sortKey, ascending) {
                 text += ascending ? ' \u25b2' : ' \u25bc';
             // calculate HTML classes for the header cell
             const classes = ['sortable'];
-            if (idx === 0)
-                classes.push('col-starter');
-            if (idx === group.columns.length - 1)
-                classes.push('col-divider');
+            if (idx === 0) classes.push(superIdx === 0 ? 'col-first-header' : 'col-starter'); // col-first-header instead of col-starter so first header cell gets some extra padding
+            if (idx === group.columns.length - 1) classes.push('col-divider');
             const cls = classes.join(' ');
             // determine content - image or text
-            let content = '';
+            let content: string = '';
             const imagePath = headerImagePaths[col.key];
             if (imagePath)
                 // image exists for this HeaderKey
                 content = `<img class="header-image" src="${escapeHtml(imagePath)}" alt="${escapeHtml(text)}" width="24" height="24">`;
-            else
-                content = `${escapeHtml(text)}`;
-            headerParts.push(`<th class="${cls}" data-col-key="${col.key}" title="${escapeHtml(col.hover)}">${content}</th>`);
+            else content = `${escapeHtml(text)}`;
+            headerParts.push(
+                `<th class="${cls}" data-col-key="${col.key}" title="${escapeHtml(col.hover)}">${content}</th>`
+            );
         });
     });
     return `<tr>${superParts.join('')}</tr><tr>${headerParts.join('')}</tr>`;
 }
-export function getWeaponsHtml(weaponRows, weaponFadeIn) {
-    const tableParts = [];
+
+export function getWeaponsHtml(weaponRows: readonly WeaponRow[], weaponFadeIn: string | null): string {
+    const tableParts: string[] = [];
+
     for (const row of weaponRows) {
-        const rowParts = [];
+        const rowParts: string[] = [];
         row.cells.forEach((cell, idx) => {
             if (idx === 0) {
                 // first column - show 'pin weapon' button and link weapon text to FextraLife Wiki
                 const action = row.pinned ? 'Unpin weapon' : 'Pin weapon to top of list';
                 const pinBtn = `<button class="lock${row.pinned ? ' pinned' : ''}" data-weapon="${escapeHtml(row.weaponKey)}" aria-label="${action} ${escapeHtml(row.weaponName)}" title="${action}">${row.pinned ? LOCKED_SVG : UNLOCKED_SVG}</button>`;
                 const url = `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(row.weaponName)}`;
-                rowParts.push(`<td class="${cell.cls}">${pinBtn}<a class="${cell.cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cell.text)}</a></td>`);
-            }
-            else {
+                rowParts.push(
+                    `<td class="${cell.cls}">${pinBtn}<a class="${cell.cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(cell.text)}</a></td>`
+                );
+            } else {
                 rowParts.push(`<td class="${cell.cls}">${escapeHtml(cell.text)}</td>`);
             }
         });
-        const trClasses = `${row.pinned ? 'pinned' : ''} ${row.weaponKey === weaponFadeIn ? 'fade-size-in' : ''}`.trim();
+        const trClasses =
+            `${row.pinned ? 'pinned' : ''} ${row.weaponKey === weaponFadeIn ? 'fade-size-in' : ''}`.trim();
         const clsStr = trClasses ? ` class="${trClasses}"` : '';
         tableParts.push(`<tr${clsStr}>${rowParts.join('')}</tr>`);
     }
     return tableParts.join('');
 }
-function formatDmg(dmg, showSplit) {
-    if (!dmg.total)
-        return '-';
-    if (showSplit && dmg.fromStats)
-        return `${dmg.base}+${dmg.fromStats}`;
+
+function formatDmg(dmg: DamageSplit, showSplit: boolean): string {
+    if (!dmg.total) return '-';
+    if (showSplit && dmg.fromStats) return `${dmg.base}+${dmg.fromStats}`;
     return String(dmg.total);
 }
-function formatIntOpt(val) {
+
+function formatIntOpt(val: number): string {
     const floored = epsilonFloor(val);
-    if (floored)
-        return String(floored);
+    if (floored) return String(floored);
     return '-';
 }
-function formatPercent(val) {
+
+function formatPercent(val: number): string {
     return `${epsilonFloor(val * 100)}%`;
 }
+
 /**
  *
  * @param cws
@@ -121,26 +319,33 @@ function formatPercent(val) {
  * @param showSplit
  * @returns
  */
-export function getWeaponRow(cws, showColGroups, showSplit) {
-    function pushCell(text, classes) {
-        if (typeof classes === 'string')
-            classes = [classes];
+export function getWeaponRow(
+    cws: CalculatedWeaponStats,
+    showColGroups: Set<WeaponsSuperheaderKey>,
+    showSplit: boolean
+): WeaponRow {
+    function pushCell(text: string, classes: string | string[]): void {
+        if (typeof classes === 'string') classes = [classes];
         if (!text || text === '-') {
             classes = [...classes, 'empty'];
         }
         const cls = classes.filter((s) => s !== '').join(' ');
         cells.push({ text, cls });
     }
-    const cells = [];
+
+    const cells: Cell[] = [];
+
     const wieldable = cws.wieldability.wieldable;
     const wieldCls = wieldable ? '' : 'unwieldable';
     const colStarter = 'col-starter';
     const colDivider = 'col-divider';
+
     // INFO fields: 'WEAP', 'CLS'
     if (showColGroups.has('INFO')) {
         pushCell(`${cws.weapon.name} +${cws.upgLevel}`, ['col-first', wieldCls]);
         pushCell(cws.weapon.className, colDivider);
     }
+
     // AR fields: 'ARP', 'ARH', 'ARF', 'ARW', 'TOT', 'SP'
     if (showColGroups.has('AR')) {
         const ar = cws.offense.ar;
@@ -150,11 +355,13 @@ export function getWeaponRow(cws, showColGroups, showSplit) {
         pushCell(formatDmg(ar.wither, showSplit), wieldCls);
         pushCell(formatIntOpt(ar.totalDamage), [wieldCls, colDivider]);
     }
+
     // MAGIC fields: 'SP', 'SLOTS'
     if (showColGroups.has('MAGIC')) {
         pushCell(formatDmg(cws.offense.ar.spellPower, showSplit), [colStarter, wieldCls]);
         pushCell(formatIntOpt(cws.offense.extras.spellSlots), colDivider);
     }
+
     // STATUS fields: 'BLE', 'BRN', 'PSN', 'SMI', 'IGN', 'FRO'
     if (showColGroups.has('STATUS')) {
         const status = cws.offense.status;
@@ -165,6 +372,7 @@ export function getWeaponRow(cws, showColGroups, showSplit) {
         pushCell(formatIntOpt(status.ignite), '');
         pushCell(formatIntOpt(status.poison), colDivider);
     }
+
     // MISC fields: 'WGT', 'PD', 'STAG', 'STAD', 'PVP'
     if (showColGroups.has('MISC')) {
         const ex = cws.offense.extras;
@@ -174,10 +382,12 @@ export function getWeaponRow(cws, showColGroups, showSplit) {
         pushCell(formatPercent(ex.staminaDamage), '');
         pushCell(formatPercent(ex.pvpMultiplier), colDivider);
     }
+
     // RUNES fields: 'RUN'
     if (showColGroups.has('RUNES')) {
         pushCell(cws.runeSockets.join(',') || '-', [colStarter, colDivider]);
     }
+
     // DEF fields: 'DP', 'DH', 'DF', 'DW', 'DS'
     if (showColGroups.has('DEF')) {
         const def = cws.defense;
@@ -187,6 +397,7 @@ export function getWeaponRow(cws, showColGroups, showSplit) {
         pushCell(formatPercent(def.wither), wieldCls);
         pushCell(formatPercent(def.stability), [wieldCls, colDivider]);
     }
+
     // SCALE fields: 'SS', 'SA', 'SR', 'SI'
     if (showColGroups.has('SCALING')) {
         const sc = cws.offense.scaling;
@@ -195,6 +406,7 @@ export function getWeaponRow(cws, showColGroups, showSplit) {
         pushCell(sc.radGrade, '');
         pushCell(sc.infGrade, colDivider);
     }
+
     // REQS fields: 'RS', 'RA', 'RR', 'RI'
     if (showColGroups.has('REQS')) {
         const reqs = cws.weapon.wieldReqs;
@@ -206,7 +418,9 @@ export function getWeaponRow(cws, showColGroups, showSplit) {
     }
     return { weaponName: cws.weapon.name, weaponKey: cws.weapon.key, wieldable, pinned: cws.pinned, cells };
 }
-const sortFunctions = {
+
+type SortFunction = (cws1: CalculatedWeaponStats, cws2: CalculatedWeaponStats) => number;
+const sortFunctions: Record<WeaponsHeaderKey, SortFunction> = {
     // INFO
     WEAP: (cws1, cws2) => cws1.weapon.name.localeCompare(cws2.weapon.name),
     CLS: (cws1, cws2) => cws1.weapon.className.localeCompare(cws2.weapon.className),
@@ -251,6 +465,7 @@ const sortFunctions = {
     RR: (cws1, cws2) => cws1.weapon.wieldReqs.radiance - cws2.weapon.wieldReqs.radiance,
     RI: (cws1, cws2) => cws1.weapon.wieldReqs.inferno - cws2.weapon.wieldReqs.inferno,
 };
+
 /**
  * Sort the CalculatedWeaponStats by the given sort key. Pinned weapons are separated from unpinned weapons,
  * and then both lists are sorted and returned.
@@ -259,23 +474,25 @@ const sortFunctions = {
  * @param ascending
  * @returns
  */
-export function sortCalculated(calculated, sortKey, ascending) {
-    const pinned = [];
-    const unpinned = [];
+export function sortCalculated(
+    calculated: CalculatedWeaponStats[],
+    sortKey: WeaponsHeaderKey,
+    ascending: boolean
+): { pinned: CalculatedWeaponStats[]; unpinned: CalculatedWeaponStats[] } {
+    const pinned: CalculatedWeaponStats[] = [];
+    const unpinned: CalculatedWeaponStats[] = [];
     calculated.map((cws) => (cws.pinned ? pinned.push(cws) : unpinned.push(cws)));
+
     const fn = sortFunctions[sortKey];
     if (fn !== undefined) {
         if (ascending) {
             pinned.sort(fn);
             unpinned.sort(fn);
-        }
-        else {
+        } else {
             pinned.sort((a, b) => -fn(a, b));
             unpinned.sort((a, b) => -fn(a, b));
         }
-    }
-    else
-        console.log(`Failed to retrieve sort function for sortKey "${sortKey}"`);
+    } else console.log(`Failed to retrieve sort function for sortKey "${sortKey}"`);
+
     return { pinned, unpinned };
 }
-//# sourceMappingURL=render.js.map
