@@ -42,11 +42,11 @@
                 title="Show/hide the side pane">
                 &#9776;
             </button>
-            <strong class="appname">LOTF Weapons Calculator</strong>
             <nav class="mode-switch" aria-label="Calculator mode">
                 <button type="button" class="mode-btn" data-mode="weapons">Weapons</button>
                 <button type="button" class="mode-btn" data-mode="armors">Armors</button>
             </nav>
+            <span class="appname">LOTFCalc</span>
             <label
                 class="appbar-setting"
                 title="LOTFCalc will automatically reload your previous settings when opened. Uncheck this to disable this feature"
@@ -142,7 +142,7 @@
                             max="99"
                     /></label>
                     <!-- Weapon upgrade level -->
-                    <div class="weapon-level">
+                    <div id="weapon-level-div">
                         <label class="field">
                             <span class="cap">Weapon Level</span>
                             <select id="weapon-level">
@@ -189,9 +189,8 @@
         </header>
 
         <!-- ================= SIDEBAR (shared; active view fills it) ================= -->
-        <aside id="sidebar" class="sidebar">
-            <h2 id="sidebar-title">Weapon Classes</h2>
-            <nav class="sidebar-content" id="sidebar-content"></nav>
+        <aside id="sidebar">
+            <nav id="sidebar-content"></nav>
         </aside>
 
         <!-- ================= MAIN CONTENT ================= -->
@@ -211,30 +210,30 @@
                         Damage</label
                     >
                     <label title="Show attack rating for physical, holy, fire, and wither"
-                        ><input type="checkbox" class="group-toggle" data-group="AR" /> Attack</label
+                        ><input type="checkbox" class="weapons-group-toggle" data-col-group="AR" /> Attack</label
                     >
                     <label title="Show spell power and number of spell slots for catalysts"
-                        ><input type="checkbox" class="group-toggle" data-group="MAGIC" /> Magic</label
+                        ><input type="checkbox" class="weapons-group-toggle" data-col-group="MAGIC" /> Magic</label
                     >
                     <label title="Show status effects applied by weapons"
-                        ><input type="checkbox" class="group-toggle" data-group="STATUS" /> Status</label
+                        ><input type="checkbox" class="weapons-group-toggle" data-col-group="STATUS" /> Status</label
                     >
                     <label
                         title="Show weight, poise damage, posture damage, stamina damage multiplier, and pvp damage multiplier"
-                        ><input type="checkbox" class="group-toggle" data-group="MISC" /> Misc</label
+                        ><input type="checkbox" class="weapons-group-toggle" data-col-group="MISC" /> Misc</label
                     >
                     <label
                         title="Show rune sockets available at weapon's upgrade level. S=Str, A=Agi, R=Rad, I=Inf; *=Meta (any rune)"
-                        ><input type="checkbox" class="group-toggle" data-group="RUNES" /> Runes</label
+                        ><input type="checkbox" class="weapons-group-toggle" data-col-group="RUNES" /> Runes</label
                     >
                     <label title="Show defensive stats for weapons"
-                        ><input type="checkbox" class="group-toggle" data-group="DEF" /> Defenses</label
+                        ><input type="checkbox" class="weapons-group-toggle" data-col-group="DEF" /> Defenses</label
                     >
                     <label title="Show stat scaling strength"
-                        ><input type="checkbox" class="group-toggle" data-group="SCALING" /> Scaling</label
+                        ><input type="checkbox" class="weapons-group-toggle" data-col-group="SCALING" /> Scaling</label
                     >
                     <label title="Show the stats required to effectively wield weapons"
-                        ><input type="checkbox" class="group-toggle" data-group="REQS" /> Wield Reqs</label
+                        ><input type="checkbox" class="weapons-group-toggle" data-col-group="REQS" /> Wield Reqs</label
                     >
                 </div>
                 <div class="table-wrap">
@@ -248,13 +247,13 @@
             <section id="view-armors" class="view" hidden>
                 <div class="toggles">
                     <label title="Armor defenses"
-                        ><input type="checkbox" class="armors-group-toggle" data-group="DEF" /> Defense</label
+                        ><input type="checkbox" class="armors-group-toggle" data-col-group="DEF" /> Defense</label
                     >
                     <label title="Show armor resistances"
-                        ><input type="checkbox" class="armors-group-toggle" data-group="STATUS" /> Resistances</label
+                        ><input type="checkbox" class="armors-group-toggle" data-col-group="STATUS" /> Resistances</label
                     >
                     <label title="Show armor weight class and kick-damage multiplier"
-                        ><input type="checkbox" class="armors-group-toggle" data-group="MISC" /> Misc</label
+                        ><input type="checkbox" class="armors-group-toggle" data-col-group="MISC" /> Misc</label
                     >
                 </div>
                 <div class="table-wrap">

@@ -1,5 +1,4 @@
-import { clampStat } from './calc/sharedCalc.js';
-import { calculatePlayerStats } from './calc/sharedCalc.js';
+import { clampStat,calculatePlayerStats } from './calc/sharedCalc.js';
 import { loadAppData } from './loadJSONData.js';
 import type { CalculatedPlayerStats, PlayerStats } from './model.js';
 import { isMode, isSharedToggleKey, loadAppState, saveAppState, type AppState, type Mode } from './state.js';

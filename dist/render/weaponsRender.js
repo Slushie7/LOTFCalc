@@ -1,5 +1,5 @@
 import { epsilonFloor } from '../calc/sharedCalc.js';
-import { colDivider, colFirst, colStarter, escapeHtml, getHeaderHtml, getPinButton, getTableBodyHtml, headerStatusImagePaths, } from './sharedRender.js';
+import { colDivider, colFirst, colStarter, escapeHtml, getHeaderHtml, getPinButton, getTableBodyHtml, headerStatusImagePaths, pushSectionHtml, SELECT_ALL_SVG, SELECT_NONE_SVG, } from './sharedRender.js';
 const WEAPONS_HEADER_KEYS = [
     // basic
     'WEAP',
@@ -159,8 +159,9 @@ export const WEAPONS_HEADER_GROUPS = [
  * @param checkedClasses
  * @returns
  */
-export function getWeaponsClassesHtml(weaponClasses, checkedClasses) {
+export function getWeaponsSidebarHtml(weaponClasses, checkedClasses) {
     const parts = [];
+    pushSectionHtml(parts, 'Weapons', 'weapon-classes');
     for (const wc of weaponClasses) {
         const checked = checkedClasses.has(wc) ? ' checked' : '';
         parts.push(`<label><input type="checkbox"${checked} data-class="${escapeHtml(wc)}">${escapeHtml(wc)}</label>`);

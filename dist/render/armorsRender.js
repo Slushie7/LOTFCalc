@@ -1,6 +1,6 @@
 import { epsilonFloor } from '../calc/sharedCalc.js';
 import { ARMOR_SLOTS, ARMOR_WEIGHT_CLASSES, } from '../model.js';
-import { colDivider, colFirst, colStarter, escapeHtml, getHeaderHtml, getTableBodyHtml, headerStatusImagePaths, } from './sharedRender.js';
+import { colDivider, colFirst, colStarter, escapeHtml, getHeaderHtml, getTableBodyHtml, headerStatusImagePaths, pushSectionHtml, } from './sharedRender.js';
 const ARMORS_HEADER_KEYS = [
     // INFO
     'ARMR',
@@ -83,13 +83,15 @@ export const ARMORS_HEADER_GROUPS = [
  * @param checkedClasses
  * @returns
  */
-export function getArmorsClassesHtml(checkedSlots, checkedWeights) {
+export function getArmorsSidebarHtml(checkedSlots, checkedWeights) {
     const parts = [];
+    pushSectionHtml(parts, 'Armors', 'armor-slots');
     for (const slot of ARMOR_SLOTS) {
         const checked = checkedSlots.has(slot) ? ' checked' : '';
         parts.push(`<label><input type="checkbox"${checked} data-slot="${escapeHtml(slot)}">${escapeHtml(slot)}</label>`);
     }
-    parts.push('<br><h2>Weight Classes</h2>');
+    parts.push('<br>');
+    pushSectionHtml(parts, 'Weights', 'armor-weights');
     for (const wc of ARMOR_WEIGHT_CLASSES) {
         const checked = checkedWeights.has(wc) ? ' checked' : '';
         parts.push(`<label><input type="checkbox"${checked} data-weight-class="${escapeHtml(wc)}">${escapeHtml(wc)}</label>`);

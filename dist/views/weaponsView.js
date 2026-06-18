@@ -1,9 +1,9 @@
 import { isWeaponsToggleKey } from '../state.js';
-import { WEAPONS_HEADER_GROUPS, isWeaponsHeaderKey, isWeaponsSuperheaderKey, getWeaponsClassesHtml, getWeaponsHeaderHtml, getWeaponRow, getWeaponsHtml, sortCalculatedWeapons, } from '../render/weaponsRender.js';
+import { WEAPONS_HEADER_GROUPS, isWeaponsHeaderKey, isWeaponsSuperheaderKey, getWeaponsSidebarHtml, getWeaponsHeaderHtml, getWeaponRow, getWeaponsHtml, sortCalculatedWeapons, } from '../render/weaponsRender.js';
 import { isWeaponClass } from '../model.js';
 import { calculateWeaponStats } from '../calc/weaponsCalc.js';
 import { View, addElemListener, addTypedElemListener, addClassListeners, getTypedElem, getElem } from './view.js';
-import { syncSidebarContent } from '../sharedDOM.js';
+import { handleMetaButtons, syncSidebarContent } from '../sharedDOM.js';
 const _melee = { add: ['AR'], remove: ['MAGIC'], indiff: ['STATUS', 'DEF'] };
 const _ranged = { add: ['AR'], remove: ['MAGIC', 'DEF'], indiff: ['STATUS'] };
 const SMART_TOGGLES = {
@@ -38,6 +38,7 @@ class WeaponsView extends View {
     }
     mount() {
         // weapon class toggles
+        addElemListener('sidebar-content', 'click', (e) => this.onSidebarMetaClick(e));
         addElemListener('sidebar-content', 'change', (e) => this.onSetClass(e));
         // weapon upgrade level dropdown
         addTypedElemListener('weapon-level', HTMLSelectElement, 'change', (e) => this.onSetUpgLevel(e));
@@ -98,6 +99,20 @@ class WeaponsView extends View {
     // =========================================
     // EVENT HANDLERS
     // =========================================
+    onSidebarMetaClick(e) {
+        if (!this.isActiveMode())
+            return;
+        if (!handleMetaButtons(e, 'weapon-classes', () => {
+            this.loadedWeaponClasses.forEach((v) => this.state.selectedClasses.add(v));
+        }, () => {
+            this.state.selectedClasses.clear();
+        }))
+            return;
+        this.syncSidebarToggles();
+        this.applySmartToggles();
+        this.refresh();
+        this.ctx.save();
+    }
     onSetClass(e) {
         if (!this.isActiveMode())
             return;
@@ -113,8 +128,7 @@ class WeaponsView extends View {
         else
             this.state.selectedClasses.delete(className);
         this.applySmartToggles();
-        this.renderHeader();
-        this.renderWeapons();
+        this.refresh();
         this.ctx.save();
     }
     onSetUpgLevel(e) {
@@ -150,15 +164,14 @@ class WeaponsView extends View {
         if (!(e.target instanceof HTMLInputElement))
             return;
         const el = e.target;
-        if (!isWeaponsSuperheaderKey(el.dataset.group))
+        if (!isWeaponsSuperheaderKey(el.dataset.colGroup))
             return;
-        const superKey = el.dataset.group;
+        const superKey = el.dataset.colGroup;
         if (el.checked)
             this.state.showColGroups.add(superKey);
         else
             this.state.showColGroups.delete(superKey);
-        this.renderHeader();
-        this.renderWeapons();
+        this.refresh();
         this.ctx.save();
     }
     onTableHeaderClick(e) {
@@ -210,11 +223,16 @@ class WeaponsView extends View {
     // =========================================
     // RENDERING - GENERATE/UPDATE HTML
     // =========================================
+    syncSidebarToggles() {
+        const sidebar = getElem('sidebar-content');
+        for (const elClass of sidebar.querySelectorAll('[data-class]'))
+            if (elClass instanceof HTMLInputElement && isWeaponClass(elClass.dataset.class))
+                elClass.checked = this.state.selectedClasses.has(elClass.dataset.class);
+    }
     updateSidebar() {
         if (!this.isActiveMode())
             return;
-        const classesHtml = getWeaponsClassesHtml(this.loadedWeaponClasses, this.state.selectedClasses);
-        syncSidebarContent('Weapon Classes', classesHtml);
+        syncSidebarContent(getWeaponsSidebarHtml(this.loadedWeaponClasses, this.state.selectedClasses));
     }
     syncToggles() {
         if (!this.isActiveMode())
@@ -232,16 +250,15 @@ class WeaponsView extends View {
         }
         for (const el of document.getElementsByClassName('weapons-group-toggle')) {
             if (el instanceof HTMLInputElement)
-                el.checked = this.state.showColGroups.has(el.dataset.group);
+                el.checked = this.state.showColGroups.has(el.dataset.colGroup);
         }
     }
     syncUpgInput() {
         if (!this.isActiveMode())
             return;
         // initialize weapon upgrade <select> element value
-        const elUpg = getTypedElem('weapon-level', HTMLSelectElement);
-        elUpg.hidden = false;
-        elUpg.value = `+${this.state.upgLevel}`;
+        getElem('weapon-level-div').hidden = false;
+        getTypedElem('weapon-level', HTMLSelectElement).value = `+${this.state.upgLevel}`;
     }
     renderHeader() {
         if (!this.isActiveMode())

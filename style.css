@@ -42,7 +42,7 @@ body {
 body.sidebar-hidden {
     grid-template-columns: 0 1fr;
 }
-body.sidebar-hidden .sidebar {
+body.sidebar-hidden #sidebar {
     display: none;
 }
 
@@ -55,6 +55,7 @@ body.sidebar-hidden .sidebar {
    APP BAR (hamburger, title, mode switch, settings, github)
    ============================================================ */
 .appbar {
+    position: relative;
     grid-area: appbar;
     display: flex;
     align-items: center;
@@ -63,8 +64,12 @@ body.sidebar-hidden .sidebar {
     border-bottom: 1px solid var(--pico-muted-border-color);
 }
 .appbar .appname {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     margin: 0;
     font-size: 1.1rem;
+    font-weight: 600;
     color: var(--pico-primary);
 }
 .appbar .iconbtn {
@@ -184,10 +189,10 @@ body.sidebar-hidden .sidebar {
 }
 
 /* weapon upgrade-level dropdown */
-.weapon-level {
+#weapon-level-div {
     margin-left: 1rem;
 }
-.weapon-level select {
+#weapon-level {
     margin: 0;
     min-width: 6.5rem;
     padding: 1.05rem 1.8rem 0.3rem 0.6rem;
@@ -238,21 +243,64 @@ body.sidebar-hidden .sidebar {
 /* ============================================================
    SIDEBAR (shared; the active view fills #sidebar-content)
    ============================================================ */
-.sidebar {
+#sidebar {
     grid-area: sidebar;
     padding: 1rem 1.25rem;
     border-right: 1px solid var(--pico-muted-border-color);
-}
-.sidebar h2 {
-    margin-bottom: 0.75rem;
-    font-size: 1rem;
-}
-.sidebar-content {
     font-size: 0.8em;
 }
-.sidebar-content label {
+.sidebar-section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+.sidebar-section-header:not(:first-child) {
+    margin-top: 1rem; /* space between stacked sections; lets you drop the <br> */
+}
+.sidebar-section-header h2 {
+    margin: 0;
+    margin-right: auto; /* this is what shoves the buttons to the far right */
+    font-size: 1rem;
+}
+#sidebar .meta-btn {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center; /* you had align- but not justify-, so the icon wasn't centered */
+    padding: 0.1rem;
+    background: none;
+    border: none;
+    box-shadow: none;
+    border-radius: 0.25rem;
+    /* between primary and muted — tune the 55% to taste */
+    color: color-mix(in srgb, var(--pico-primary) 55%, var(--pico-muted-color));
+    cursor: pointer;
+    transition: color var(--pico-transition);
+    margin: 0;
+}
+#sidebar .meta-btn:hover,
+#sidebar .meta-btn:focus-visible {
+    color: var(--pico-primary);
+}
+#sidebar label {
     display: block;
     margin-bottom: 0.25rem;
+}
+.calc-table button.lock {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+    margin: 0 0.1rem 0 0;
+    padding: 0.1rem;
+    vertical-align: middle;
+    background: none;
+    border: none;
+    box-shadow: none;
+    color: var(--pico-muted-color);
+    cursor: pointer;
+    transition: color var(--pico-transition);
 }
 
 /* ============================================================

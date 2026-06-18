@@ -14,6 +14,7 @@ import {
     getHeaderHtml,
     getTableBodyHtml,
     headerStatusImagePaths,
+    pushSectionHtml,
     type Cell,
     type HeaderColumn,
     type HeaderGroup,
@@ -118,15 +119,17 @@ interface ArmorsRow extends Row {}
  * @param checkedClasses
  * @returns
  */
-export function getArmorsClassesHtml(checkedSlots: Set<ArmorSlot>, checkedWeights: Set<ArmorWeightClass>): string {
+export function getArmorsSidebarHtml(checkedSlots: Set<ArmorSlot>, checkedWeights: Set<ArmorWeightClass>): string {
     const parts: string[] = [];
+    pushSectionHtml(parts, 'Armors', 'armor-slots');
     for (const slot of ARMOR_SLOTS) {
         const checked = checkedSlots.has(slot) ? ' checked' : '';
         parts.push(
             `<label><input type="checkbox"${checked} data-slot="${escapeHtml(slot)}">${escapeHtml(slot)}</label>`
         );
     }
-    parts.push('<br><h2>Weight Classes</h2>');
+    parts.push('<br>');
+    pushSectionHtml(parts, 'Weights', 'armor-weights');
     for (const wc of ARMOR_WEIGHT_CLASSES) {
         const checked = checkedWeights.has(wc) ? ' checked' : '';
         parts.push(

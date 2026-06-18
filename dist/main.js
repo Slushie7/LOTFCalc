@@ -1,5 +1,4 @@
-import { clampStat } from './calc/sharedCalc.js';
-import { calculatePlayerStats } from './calc/sharedCalc.js';
+import { clampStat, calculatePlayerStats } from './calc/sharedCalc.js';
 import { loadAppData } from './loadJSONData.js';
 import { isMode, isSharedToggleKey, loadAppState, saveAppState } from './state.js';
 import { createArmorsView } from './views/armorsView.js';

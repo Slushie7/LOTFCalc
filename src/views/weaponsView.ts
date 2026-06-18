@@ -4,7 +4,7 @@ import {
     WEAPONS_HEADER_GROUPS,
     isWeaponsHeaderKey,
     isWeaponsSuperheaderKey,
-    getWeaponsClassesHtml,
+    getWeaponsSidebarHtml,
     getWeaponsHeaderHtml,
     getWeaponRow,
     getWeaponsHtml,
@@ -16,7 +16,7 @@ import { calculateWeaponStats } from '../calc/weaponsCalc.js';
 
 import type { ViewContext } from './view.js';
 import { View, addElemListener, addTypedElemListener, addClassListeners, getTypedElem, getElem } from './view.js';
-import { syncSidebarContent } from '../sharedDOM.js';
+import { handleMetaButtons, syncSidebarContent } from '../sharedDOM.js';
 
 // =========================================
 // SMART TOGGLES
@@ -66,6 +66,7 @@ class WeaponsView extends View {
 
     mount(): void {
         // weapon class toggles
+        addElemListener('sidebar-content', 'click', (e) => this.onSidebarMetaClick(e));
         addElemListener('sidebar-content', 'change', (e) => this.onSetClass(e));
         // weapon upgrade level dropdown
         addTypedElemListener('weapon-level', HTMLSelectElement, 'change', (e) => this.onSetUpgLevel(e));
@@ -130,8 +131,33 @@ class WeaponsView extends View {
     // EVENT HANDLERS
     // =========================================
 
+    private onSidebarMetaClick(e: Event): void {
+        if (!this.isActiveMode()) return;
+
+        if (
+            !handleMetaButtons(
+                e,
+                'weapon-classes',
+                () => {
+                    this.loadedWeaponClasses.forEach((v) => this.state.selectedClasses.add(v));
+                },
+                () => {
+                    this.state.selectedClasses.clear();
+                }
+            )
+        )
+            return;
+
+        this.syncSidebarToggles();
+        this.applySmartToggles();
+
+        this.refresh();
+        this.ctx.save();
+    }
+
     private onSetClass(e: Event): void {
         if (!this.isActiveMode()) return;
+
         if (!(e.target instanceof HTMLInputElement)) return;
 
         const el = e.target;
@@ -143,8 +169,8 @@ class WeaponsView extends View {
         else this.state.selectedClasses.delete(className);
 
         this.applySmartToggles();
-        this.renderHeader();
-        this.renderWeapons();
+
+        this.refresh();
         this.ctx.save();
     }
 
@@ -179,16 +205,16 @@ class WeaponsView extends View {
 
     private onSetColGroup(e: Event): void {
         if (!this.isActiveMode()) return;
+
         if (!(e.target instanceof HTMLInputElement)) return;
 
         const el = e.target;
-        if (!isWeaponsSuperheaderKey(el.dataset.group)) return;
-        const superKey = el.dataset.group;
+        if (!isWeaponsSuperheaderKey(el.dataset.colGroup)) return;
+        const superKey = el.dataset.colGroup;
         if (el.checked) this.state.showColGroups.add(superKey);
         else this.state.showColGroups.delete(superKey);
 
-        this.renderHeader();
-        this.renderWeapons();
+        this.refresh();
         this.ctx.save();
     }
 
@@ -237,11 +263,17 @@ class WeaponsView extends View {
     // RENDERING - GENERATE/UPDATE HTML
     // =========================================
 
+    private syncSidebarToggles(): void {
+        const sidebar = getElem('sidebar-content');
+        for (const elClass of sidebar.querySelectorAll('[data-class]'))
+            if (elClass instanceof HTMLInputElement && isWeaponClass(elClass.dataset.class))
+                elClass.checked = this.state.selectedClasses.has(elClass.dataset.class);
+    }
+
     private updateSidebar(): void {
         if (!this.isActiveMode()) return;
 
-        const classesHtml = getWeaponsClassesHtml(this.loadedWeaponClasses, this.state.selectedClasses);
-        syncSidebarContent('Weapon Classes', classesHtml);
+        syncSidebarContent(getWeaponsSidebarHtml(this.loadedWeaponClasses, this.state.selectedClasses));
     }
 
     private syncToggles(): void {
@@ -261,7 +293,7 @@ class WeaponsView extends View {
         }
         for (const el of document.getElementsByClassName('weapons-group-toggle')) {
             if (el instanceof HTMLInputElement)
-                el.checked = this.state.showColGroups.has(el.dataset.group as WeaponsSuperheaderKey);
+                el.checked = this.state.showColGroups.has(el.dataset.colGroup as WeaponsSuperheaderKey);
         }
     }
 
@@ -269,9 +301,8 @@ class WeaponsView extends View {
         if (!this.isActiveMode()) return;
 
         // initialize weapon upgrade <select> element value
-        const elUpg = getTypedElem('weapon-level', HTMLSelectElement);
-        elUpg.hidden = false;
-        elUpg.value = `+${this.state.upgLevel}`;
+        getElem('weapon-level-div').hidden = false;
+        getTypedElem('weapon-level', HTMLSelectElement).value = `+${this.state.upgLevel}`;
     }
 
     private renderHeader(): void {

@@ -9,6 +9,9 @@ import {
     getPinButton,
     getTableBodyHtml,
     headerStatusImagePaths,
+    pushSectionHtml,
+    SELECT_ALL_SVG,
+    SELECT_NONE_SVG,
     type Cell,
     type HeaderColumn,
     type HeaderGroup,
@@ -192,8 +195,9 @@ interface WeaponRow extends Row {
  * @param checkedClasses
  * @returns
  */
-export function getWeaponsClassesHtml(weaponClasses: readonly string[], checkedClasses: Set<string>): string {
+export function getWeaponsSidebarHtml(weaponClasses: readonly string[], checkedClasses: Set<string>): string {
     const parts: string[] = [];
+    pushSectionHtml(parts, 'Weapons', 'weapon-classes');
     for (const wc of weaponClasses) {
         const checked = checkedClasses.has(wc) ? ' checked' : '';
         parts.push(`<label><input type="checkbox"${checked} data-class="${escapeHtml(wc)}">${escapeHtml(wc)}</label>`);

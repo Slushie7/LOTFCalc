@@ -33,7 +33,7 @@ export abstract class View {
 export function getTypedElem<T extends HTMLElement>(id: string, elemType: new () => T): T {
     const el = document.getElementById(id);
     if (el === null) throw new Error(`Missing element: ${id}`);
-    if (!(el instanceof elemType)) throw new Error();
+    if (!(el instanceof elemType)) throw new Error(`Element ${id} is not an ${elemType.name}`);
     return el;
 }
 
@@ -61,6 +61,6 @@ export function addClassListeners<T extends HTMLElement>(
     listener: (e: Event) => void
 ): void {
     for (const el of document.getElementsByClassName(classNames)) {
-        if (el instanceof elemT) el.addEventListener(type, (e) => listener(e));
+        if (el instanceof elemT) el.addEventListener(type, listener);
     }
 }

@@ -12,7 +12,7 @@ export function getTypedElem(id, elemType) {
     if (el === null)
         throw new Error(`Missing element: ${id}`);
     if (!(el instanceof elemType))
-        throw new Error();
+        throw new Error(`Element ${id} is not an ${elemType.name}`);
     return el;
 }
 export function getElem(id) {
@@ -27,7 +27,7 @@ export function addElemListener(id, type, listener) {
 export function addClassListeners(classNames, elemT, type, listener) {
     for (const el of document.getElementsByClassName(classNames)) {
         if (el instanceof elemT)
-            el.addEventListener(type, (e) => listener(e));
+            el.addEventListener(type, listener);
     }
 }
 //# sourceMappingURL=view.js.map
