@@ -13,15 +13,6 @@ const SHARED_TOGGLE_KEYS = ['saveSettings'];
 export function isSharedToggleKey(k) {
     return SHARED_TOGGLE_KEYS.includes(k);
 }
-const WEAPONS_TOGGLE_KEYS = [
-    'showTwoHanding',
-    'showUnwieldable',
-    'showSplit',
-    'showRawScaling',
-];
-export function isWeaponsToggleKey(k) {
-    return WEAPONS_TOGGLE_KEYS.includes(k);
-}
 function getDefaultState() {
     const shared = {
         playerStats: { strength: 30, agility: 30, endurance: 30, vitality: 30, radiance: 30, inferno: 30 },

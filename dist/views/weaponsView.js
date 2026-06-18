@@ -1,9 +1,48 @@
-import { isWeaponsToggleKey } from '../state.js';
-import { WEAPONS_HEADER_GROUPS, isWeaponsHeaderKey, isWeaponsSuperheaderKey, getWeaponsSidebarHtml, getWeaponsHeaderHtml, getWeaponRow, getWeaponsHtml, sortCalculatedWeapons, } from '../render/weaponsRender.js';
+import { WEAPONS_HEADER_GROUPS, isWeaponsHeaderKey, getWeaponsSidebarHtml, getWeaponsHeaderHtml, getWeaponRow, getWeaponsHtml, sortCalculatedWeapons, } from '../render/weaponsRender.js';
 import { isWeaponClass } from '../model.js';
 import { calculateWeaponStats } from '../calc/weaponsCalc.js';
-import { View, addElemListener, addTypedElemListener, addClassListeners, getTypedElem, getElem } from './view.js';
-import { handleMetaButtons, syncSidebarContent } from '../sharedDOM.js';
+import { View } from './view.js';
+import { addElemListener, getTypedElem, getElem, handleMetaButtons, setSidebarContent, syncSidebarToggles } from '../sharedDOM.js';
+import { getTogglesHtml } from '../render/sharedRender.js';
+const SettingToggles = {
+    htmlClass: 'weapons-setting-toggle',
+    dataKey: { html: 'setting', js: 'setting' },
+    toggles: {
+        showTwoHanding: { text: 'Two-Handing', hover: 'Show effective stats from two-handing a weapon' },
+        showUnwieldable: { text: 'Unwieldable', hover: 'Show weapons you lack the stats to wield' },
+        showSplit: {
+            text: 'Split Damage',
+            hover: "Show damage values as (weapon's base damage)+(damage from scaling)",
+        },
+        showRawScaling: { text: 'Raw Scaling', hover: 'Show scaling grades as raw numerical values' },
+    },
+};
+function isSettingToggleKey(k) {
+    return typeof k === 'string' && Object.hasOwn(SettingToggles.toggles, k);
+}
+const GroupToggles = {
+    htmlClass: 'weapons-group-toggle',
+    dataKey: { html: 'col-group', js: 'colGroup' },
+    toggles: {
+        AR: { text: 'Attack', hover: 'Show attack rating for physical, holy, fire, and wither' },
+        MAGIC: { text: 'Magic', hover: 'Show spell power and number of spell slots for catalysts' },
+        STATUS: { text: 'Status', hover: 'Show status effects applied by weapons' },
+        MISC: {
+            text: 'Misc',
+            hover: 'Show weight, poise damage, posture damage, stamina damage multiplier, and pvp damage multiplier',
+        },
+        RUNES: {
+            text: 'Runes',
+            hover: "Show rune sockets available at weapon's upgrade level. S=Str, A=Agi, R=Rad, I=Inf; *=Meta (any rune)",
+        },
+        DEF: { text: 'Defenses', hover: 'Show defensive stats for weapons' },
+        SCALING: { text: 'Scaling', hover: 'Show stat scaling strength' },
+        REQS: { text: 'Wield Reqs', hover: 'Show the stats required to effectively wield weapons' },
+    },
+};
+function isGroupToggleKey(k) {
+    return typeof k === 'string' && Object.hasOwn(GroupToggles.toggles, k);
+}
 const _melee = { add: ['AR'], remove: ['MAGIC'], indiff: ['STATUS', 'DEF'] };
 const _ranged = { add: ['AR'], remove: ['MAGIC', 'DEF'], indiff: ['STATUS'] };
 const SMART_TOGGLES = {
@@ -30,6 +69,7 @@ export function createWeaponsView(state, ctx) {
 class WeaponsView extends View {
     state;
     mode = 'weapons';
+    modeBtnText = 'Weapons';
     loadedWeaponClasses;
     constructor(state, ctx) {
         super(ctx);
@@ -41,18 +81,16 @@ class WeaponsView extends View {
         addElemListener('sidebar-content', 'click', (e) => this.onSidebarMetaClick(e));
         addElemListener('sidebar-content', 'change', (e) => this.onSetClass(e));
         // weapon upgrade level dropdown
-        addTypedElemListener('weapon-level', HTMLSelectElement, 'change', (e) => this.onSetUpgLevel(e));
-        // setting toggles
-        addClassListeners('weapons-setting-toggle', HTMLInputElement, 'change', (e) => this.onSetWeaponsSetting(e));
-        // header group toggles
-        addClassListeners('weapons-group-toggle', HTMLInputElement, 'change', (e) => this.onSetColGroup(e));
+        addElemListener('weapon-level', 'change', (e) => this.onSetUpgLevel(e));
+        // setting/groups toggles
+        addElemListener('view-toggles', 'change', (e) => this.onSettingToggle(e));
         // table header sorting
         addElemListener('weapons-header', 'click', (e) => this.onTableHeaderClick(e));
         addElemListener('weapons-body', 'click', (e) => this.onTableBodyClick(e));
     }
     show() {
         getElem('view-weapons').hidden = false;
-        this.updateSidebar();
+        this.renderWeaponsModeElements();
         this.syncUpgInput();
         this.syncToggles();
         this.refresh();
@@ -108,7 +146,7 @@ class WeaponsView extends View {
             this.state.selectedClasses.clear();
         }))
             return;
-        this.syncSidebarToggles();
+        syncSidebarToggles('class', this.state.selectedClasses, isWeaponClass);
         this.applySmartToggles();
         this.refresh();
         this.ctx.save();
@@ -145,33 +183,31 @@ class WeaponsView extends View {
             this.ctx.save();
         }
     }
-    onSetWeaponsSetting(e) {
+    onSettingToggle(e) {
         if (!this.isActiveMode())
             return;
         if (!(e.target instanceof HTMLInputElement))
             return;
         const el = e.target;
-        const setting = el.dataset.setting;
-        if (typeof setting !== 'string' || !isWeaponsToggleKey(setting))
-            return;
-        this.state[setting] = el.checked;
-        this.renderWeapons();
-        this.ctx.save();
-    }
-    onSetColGroup(e) {
-        if (!this.isActiveMode())
-            return;
-        if (!(e.target instanceof HTMLInputElement))
-            return;
-        const el = e.target;
-        if (!isWeaponsSuperheaderKey(el.dataset.colGroup))
-            return;
-        const superKey = el.dataset.colGroup;
-        if (el.checked)
-            this.state.showColGroups.add(superKey);
+        if (el.classList.contains(SettingToggles.htmlClass)) {
+            const setting = el.dataset[SettingToggles.dataKey.js];
+            if (isSettingToggleKey(setting)) {
+                this.state[setting] = el.checked;
+                this.renderWeapons();
+            }
+        }
+        else if (el.classList.contains(GroupToggles.htmlClass)) {
+            const group = el.dataset[GroupToggles.dataKey.js];
+            if (isGroupToggleKey(group)) {
+                if (el.checked)
+                    this.state.showColGroups.add(group);
+                else
+                    this.state.showColGroups.delete(group);
+                this.refresh();
+            }
+        }
         else
-            this.state.showColGroups.delete(superKey);
-        this.refresh();
+            return;
         this.ctx.save();
     }
     onTableHeaderClick(e) {
@@ -223,16 +259,13 @@ class WeaponsView extends View {
     // =========================================
     // RENDERING - GENERATE/UPDATE HTML
     // =========================================
-    syncSidebarToggles() {
-        const sidebar = getElem('sidebar-content');
-        for (const elClass of sidebar.querySelectorAll('[data-class]'))
-            if (elClass instanceof HTMLInputElement && isWeaponClass(elClass.dataset.class))
-                elClass.checked = this.state.selectedClasses.has(elClass.dataset.class);
-    }
-    updateSidebar() {
+    renderWeaponsModeElements() {
         if (!this.isActiveMode())
             return;
-        syncSidebarContent(getWeaponsSidebarHtml(this.loadedWeaponClasses, this.state.selectedClasses));
+        // update the sidebar's content
+        setSidebarContent(getWeaponsSidebarHtml(this.loadedWeaponClasses, this.state.selectedClasses));
+        // create the settings/col-group toggles
+        getElem('view-toggles').innerHTML = getTogglesHtml(SettingToggles) + getTogglesHtml(GroupToggles);
     }
     syncToggles() {
         if (!this.isActiveMode())
@@ -240,7 +273,7 @@ class WeaponsView extends View {
         for (const el of document.getElementsByClassName('weapons-setting-toggle')) {
             if (el instanceof HTMLInputElement &&
                 typeof el.dataset.setting === 'string' &&
-                isWeaponsToggleKey(el.dataset.setting)) {
+                isSettingToggleKey(el.dataset.setting)) {
                 // map element's 'data-setting' value to relevant current AppState value
                 const setting = el.dataset.setting;
                 const settingValue = this.state[setting];
@@ -281,7 +314,7 @@ class WeaponsView extends View {
         const { pinned, unpinned } = sortCalculatedWeapons(calcStats, this.state.sortKey, this.state.ascending);
         calcStats = [...pinned, ...unpinned]; // pinned weapons go at front of list
         // display the weapon rows
-        const rows = calcStats.map((cs) => getWeaponRow(cs, this.state.showColGroups, this.state.showSplit));
+        const rows = calcStats.map((cs) => getWeaponRow(cs, this.state.showColGroups, this.state.showSplit, this.state.showRawScaling));
         elBody.innerHTML = getWeaponsHtml(rows, weaponFadeIn);
     }
 }

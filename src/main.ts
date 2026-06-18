@@ -1,10 +1,11 @@
-import { clampStat,calculatePlayerStats } from './calc/sharedCalc.js';
+import { clampStat, calculatePlayerStats } from './calc/sharedCalc.js';
 import { loadAppData } from './loadJSONData.js';
 import type { CalculatedPlayerStats, PlayerStats } from './model.js';
 import { isMode, isSharedToggleKey, loadAppState, saveAppState, type AppState, type Mode } from './state.js';
 import { createArmorsView } from './views/armorsView.js';
-import { addClassListeners, addElemListener, View, type GameData, type ViewContext } from './views/view.js';
+import { View, type GameData, type ViewContext } from './views/view.js';
 import { createWeaponsView } from './views/weaponsView.js';
+import { addClassListeners, addElemListener, getElem } from './sharedDOM.js';
 
 // ===================================
 // BOOTSTRAP
@@ -81,6 +82,13 @@ function onSetPlayerStat(e: Event): void {
 // SHARED RENDERING
 // ===================================
 
+function renderSharedElements(): void {
+    const modeBtns: string[] = [];
+    for (const view of Object.values(views))
+        modeBtns.push(`<button type="button" class="mode-btn" data-mode="${view.mode}">${view.modeBtnText}</button>`);
+    getElem('mode-buttons').innerHTML = modeBtns.join('');
+}
+
 function syncModeButtons(): void {
     for (const el of document.getElementsByClassName('mode-btn')) {
         if (el instanceof HTMLButtonElement) {
@@ -142,7 +150,7 @@ function wireShared(): void {
     // hamburger button
     addElemListener('hamburger', 'click', onToggleSidebar);
     // mode toggles
-    addClassListeners('mode-btn', HTMLButtonElement, 'click', onSwitchMode);
+    addElemListener('mode-buttons', 'click', onSwitchMode);
     // shared settings toggles
     addClassListeners('shared-setting-toggle', HTMLInputElement, 'change', onSetSharedSetting);
     // player stats inputs
@@ -152,6 +160,7 @@ function wireShared(): void {
 function init(): void {
     for (const view of Object.values(views)) view.mount();
 
+    renderSharedElements();
     wireShared();
     syncSharedElements();
     updateDerivedStats();

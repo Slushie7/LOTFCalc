@@ -1,14 +1,31 @@
-import { addClassListeners, addElemListener, getElem, getTypedElem, View } from './view.js';
-import { handleMetaButtons, syncSidebarContent } from '../sharedDOM.js';
+import { View } from './view.js';
+import { getElem, addElemListener, handleMetaButtons, setSidebarContent, syncSidebarToggles } from '../sharedDOM.js';
 import { ARMORS_HEADER_GROUPS, getArmorRow, getArmorsSidebarHtml, getArmorsHeaderHtml, getArmorsHtml, isArmorsHeaderKey, isArmorsSuperheaderKey, sortCalculatedArmors, } from '../render/armorsRender.js';
 import { ARMOR_SLOTS, ARMOR_WEIGHT_CLASSES, isArmorSlot, isArmorWeightClass } from '../model.js';
 import { calculateArmorStats } from '../calc/armorsCalc.js';
+import { getTogglesHtml } from '../render/sharedRender.js';
+const GroupToggles = {
+    htmlClass: 'armors-group-toggle',
+    dataKey: { html: 'col-group', js: 'colGroup' },
+    toggles: {
+        DEF: { text: 'Defenses', hover: 'Armor defenses' },
+        STATUS: { text: 'Resistances', hover: 'Show armor resistances' },
+        MISC: {
+            text: 'Misc',
+            hover: 'Show armor weight class and kick-damage multiplier',
+        },
+    },
+};
+function isGroupToggleKey(k) {
+    return typeof k === 'string' && Object.hasOwn(GroupToggles.toggles, k);
+}
 export function createArmorsView(state, ctx) {
     return new ArmorsView(state, ctx);
 }
 class ArmorsView extends View {
     state;
     mode = 'armors';
+    modeBtnText = 'Armors';
     constructor(state, ctx) {
         super(ctx);
         this.state = state;
@@ -17,15 +34,15 @@ class ArmorsView extends View {
         // armor class toggles
         addElemListener('sidebar-content', 'click', (e) => this.onSidebarMetaClick(e));
         addElemListener('sidebar-content', 'change', (e) => this.onSetSidebarToggle(e));
-        // header group toggles
-        addClassListeners('armors-group-toggle', HTMLInputElement, 'change', (e) => this.onSetColGroup(e));
+        // settings/column group toggles
+        addElemListener('view-toggles', 'change', (e) => this.onSettingToggle(e));
         // table header sorting
         addElemListener('armors-header', 'click', (e) => this.onTableHeaderClick(e));
         addElemListener('armors-body', 'click', (e) => this.onTableBodyClick(e));
     }
     show() {
         getElem('view-armors').hidden = false;
-        this.renderSidebar();
+        this.renderArmorsModeElements();
         this.hideUpgInput();
         this.syncToggles();
         this.refresh();
@@ -54,7 +71,8 @@ class ArmorsView extends View {
                 this.state.selectedWeights.clear();
             }))
             return;
-        this.syncSidebarToggles();
+        syncSidebarToggles('slot', this.state.selectedSlots, isArmorSlot);
+        syncSidebarToggles('weight-class', this.state.selectedWeights, isArmorWeightClass);
         this.refresh();
         this.ctx.save();
     }
@@ -81,21 +99,24 @@ class ArmorsView extends View {
         this.renderArmors();
         this.ctx.save();
     }
-    onSetColGroup(e) {
+    onSettingToggle(e) {
         if (!this.isActiveMode())
             return;
         if (!(e.target instanceof HTMLInputElement))
             return;
         const el = e.target;
-        if (!isArmorsSuperheaderKey(el.dataset.colGroup))
-            return;
-        const superKey = el.dataset.colGroup;
-        if (el.checked)
-            this.state.showColGroups.add(superKey);
+        if (el.classList.contains(GroupToggles.htmlClass)) {
+            const group = el.dataset[GroupToggles.dataKey.js];
+            if (isGroupToggleKey(group)) {
+                if (el.checked)
+                    this.state.showColGroups.add(group);
+                else
+                    this.state.showColGroups.delete(group);
+                this.refresh();
+            }
+        }
         else
-            this.state.showColGroups.delete(superKey);
-        this.renderHeader();
-        this.renderArmors();
+            return;
         this.ctx.save();
     }
     onTableHeaderClick(e) {
@@ -147,19 +168,13 @@ class ArmorsView extends View {
     // =========================================
     // RENDERING - GENERATE/UPDATE HTML
     // =========================================
-    renderSidebar() {
+    renderArmorsModeElements() {
         if (!this.isActiveMode())
             return;
-        syncSidebarContent(getArmorsSidebarHtml(this.state.selectedSlots, this.state.selectedWeights));
-    }
-    syncSidebarToggles() {
-        const sidebar = getElem('sidebar-content');
-        for (const elSlot of sidebar.querySelectorAll('[data-slot]'))
-            if (elSlot instanceof HTMLInputElement && isArmorSlot(elSlot.dataset.slot))
-                elSlot.checked = this.state.selectedSlots.has(elSlot.dataset.slot);
-        for (const elWeight of sidebar.querySelectorAll('[data-slot]'))
-            if (elWeight instanceof HTMLInputElement && isArmorWeightClass(elWeight.dataset.weightClass))
-                elWeight.checked = this.state.selectedWeights.has(elWeight.dataset.weightClass);
+        // update the sidebar's content
+        setSidebarContent(getArmorsSidebarHtml(this.state.selectedSlots, this.state.selectedWeights));
+        // create the settings/col-group toggles
+        getElem('view-toggles').innerHTML = getTogglesHtml(GroupToggles);
     }
     hideUpgInput() {
         if (!this.isActiveMode())

@@ -1,6 +1,6 @@
 import { epsilonFloor } from '../calc/sharedCalc.js';
 import { ARMOR_SLOTS, ARMOR_WEIGHT_CLASSES, } from '../model.js';
-import { colDivider, colFirst, colStarter, escapeHtml, getHeaderHtml, getTableBodyHtml, headerStatusImagePaths, pushSectionHtml, } from './sharedRender.js';
+import { colDivider, colFirst, colStarter, escapeHtml, getHeaderHtml, getTableBodyHtml, headerStatusImagePaths, pushCell, pushSectionHtml, } from './sharedRender.js';
 const ARMORS_HEADER_KEYS = [
     // INFO
     'ARMR',
@@ -45,7 +45,7 @@ export const ARMORS_HEADER_GROUPS = [
     },
     {
         superKey: 'DEF',
-        superText: 'Defense',
+        superText: 'Defenses',
         columns: [
             { key: 'DP', text: 'Phys', hover: 'Physical Defense' },
             { key: 'DF', text: 'Fire', hover: 'Fire Defense' },
@@ -106,42 +106,37 @@ export function getArmorsHtml(weaponRows, armorFadeIn) {
     return getTableBodyHtml(weaponRows, firstColUrl, armorFadeIn);
 }
 export function getArmorRow(cas, showColGroups) {
-    function pushCell(text, cls = '') {
-        if (typeof text === 'number')
-            text = String(epsilonFloor(text));
-        cells.push({ text, cls });
-    }
     const cells = [];
     const arm = cas.armor;
     // INFO cols (ARMR, SLOT, WGT, POIS)
     if (showColGroups.has('INFO')) {
-        pushCell(arm.name, colFirst);
-        pushCell(arm.slot);
-        pushCell(arm.stats.weight.toFixed(1));
-        pushCell(arm.stats.poise.toFixed(1), colDivider);
+        pushCell(cells, arm.name, colFirst);
+        pushCell(cells, arm.slot);
+        pushCell(cells, arm.stats.weight.toFixed(1));
+        pushCell(cells, arm.stats.poise.toFixed(1), colDivider);
     }
     // DEF cols (DP, DF, DH, DW, DT)
     if (showColGroups.has('DEF')) {
-        pushCell(arm.stats.defPhysical, colStarter);
-        pushCell(arm.stats.defFire);
-        pushCell(arm.stats.defHoly);
-        pushCell(arm.stats.defWither);
-        pushCell(cas.defTotal, colDivider);
+        pushCell(cells, arm.stats.defPhysical, colStarter);
+        pushCell(cells, arm.stats.defFire);
+        pushCell(cells, arm.stats.defHoly);
+        pushCell(cells, arm.stats.defWither);
+        pushCell(cells, cas.defTotal, colDivider);
     }
     // STATUS cols (SMI, BLE, BRN, FRO, IGN, PSN, DT)
     if (showColGroups.has('STATUS')) {
-        pushCell(arm.stats.resSmite, colStarter);
-        pushCell(arm.stats.resBleed);
-        pushCell(arm.stats.resBurn);
-        pushCell(arm.stats.resFrost);
-        pushCell(arm.stats.resIgnite);
-        pushCell(arm.stats.resPoison);
-        pushCell(cas.resTotal, colDivider);
+        pushCell(cells, arm.stats.resSmite, colStarter);
+        pushCell(cells, arm.stats.resBleed);
+        pushCell(cells, arm.stats.resBurn);
+        pushCell(cells, arm.stats.resFrost);
+        pushCell(cells, arm.stats.resIgnite);
+        pushCell(cells, arm.stats.resPoison);
+        pushCell(cells, cas.resTotal, colDivider);
     }
     // MISC cols (WGTC, KDMG)
     if (showColGroups.has('MISC')) {
-        pushCell(arm.weightClass, colStarter);
-        pushCell(`${Math.round(arm.stats.kickMult * 100)}%`, colDivider);
+        pushCell(cells, arm.weightClass, colStarter);
+        pushCell(cells, `${Math.round(arm.stats.kickMult * 100)}%`, colDivider);
     }
     return { itemName: arm.name, itemKey: arm.key, cells, pinned: cas.pinned };
 }

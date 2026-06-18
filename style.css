@@ -315,19 +315,19 @@ body.sidebar-hidden #sidebar {
 }
 
 /* column / display toggles row */
-.toggles {
+#view-toggles {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.4rem 1rem;
     margin-bottom: 0.5rem;
     padding-inline: 0.85rem;
+    margin-top: 0.85rem;
 }
-.toggles label {
+#view-toggles label {
     font-size: 0.8rem;
 }
 .view {
-    margin-top: 0.85rem;
     margin-bottom: 0;
 }
 

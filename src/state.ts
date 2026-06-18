@@ -11,7 +11,7 @@ import {
     type ArmorsSuperheaderKey,
 } from './render/armorsRender.js';
 
-type BooleanKeys<T> = {
+export type BooleanKeys<T> = {
     [K in keyof T]-?: T[K] extends boolean ? K : never;
 }[keyof T];
 
@@ -52,16 +52,7 @@ export type WeaponsState = {
     pinnedWeapons: Set<string>;
     showRawScaling: boolean;
 };
-const WEAPONS_TOGGLE_KEYS = [
-    'showTwoHanding',
-    'showUnwieldable',
-    'showSplit',
-    'showRawScaling',
-] as const satisfies readonly BooleanKeys<WeaponsState>[];
-export type WeaponsToggleKey = (typeof WEAPONS_TOGGLE_KEYS)[number];
-export function isWeaponsToggleKey(k: string): k is WeaponsToggleKey {
-    return (WEAPONS_TOGGLE_KEYS as readonly string[]).includes(k);
-}
+
 
 export type ArmorsState = {
     selectedSlots: Set<ArmorSlot>;

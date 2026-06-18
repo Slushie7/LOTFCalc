@@ -2,8 +2,9 @@ import { clampStat, calculatePlayerStats } from './calc/sharedCalc.js';
 import { loadAppData } from './loadJSONData.js';
 import { isMode, isSharedToggleKey, loadAppState, saveAppState } from './state.js';
 import { createArmorsView } from './views/armorsView.js';
-import { addClassListeners, addElemListener, View } from './views/view.js';
+import { View } from './views/view.js';
 import { createWeaponsView } from './views/weaponsView.js';
+import { addClassListeners, addElemListener, getElem } from './sharedDOM.js';
 // ===================================
 // BOOTSTRAP
 // ===================================
@@ -70,6 +71,12 @@ function onSetPlayerStat(e) {
 // ===================================
 // SHARED RENDERING
 // ===================================
+function renderSharedElements() {
+    const modeBtns = [];
+    for (const view of Object.values(views))
+        modeBtns.push(`<button type="button" class="mode-btn" data-mode="${view.mode}">${view.modeBtnText}</button>`);
+    getElem('mode-buttons').innerHTML = modeBtns.join('');
+}
 function syncModeButtons() {
     for (const el of document.getElementsByClassName('mode-btn')) {
         if (el instanceof HTMLButtonElement) {
@@ -125,7 +132,7 @@ function wireShared() {
     // hamburger button
     addElemListener('hamburger', 'click', onToggleSidebar);
     // mode toggles
-    addClassListeners('mode-btn', HTMLButtonElement, 'click', onSwitchMode);
+    addElemListener('mode-buttons', 'click', onSwitchMode);
     // shared settings toggles
     addClassListeners('shared-setting-toggle', HTMLInputElement, 'change', onSetSharedSetting);
     // player stats inputs
@@ -134,6 +141,7 @@ function wireShared() {
 function init() {
     for (const view of Object.values(views))
         view.mount();
+    renderSharedElements();
     wireShared();
     syncSharedElements();
     updateDerivedStats();

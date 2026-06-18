@@ -1,3 +1,31 @@
+// ====================================
+// CHECKBUTTON TOGGLES
+
+import { epsilonFloor } from '../calc/sharedCalc.js';
+
+// ====================================
+export type ToggleText = {
+    text: string;
+    hover: string;
+};
+export type ToggleGroup<T extends string> = {
+    htmlClass: string;
+    dataKey: { html: string; js: string };
+    toggles: Partial<Record<T, ToggleText>>;
+};
+
+export function getTogglesHtml(tg: ToggleGroup<string>): string {
+    const parts: string[] = [];
+
+    for (const [key, setting] of Object.entries(tg.toggles))
+        if (setting !== undefined)
+            parts.push(
+                `<label title="${setting.hover}"><input type="checkbox" class="${tg.htmlClass}" data-${tg.dataKey.html}="${key}" />${setting.text}</label>`
+            );
+
+    return parts.join('');
+}
+
 export interface Cell {
     readonly text: string;
     readonly cls: string;
@@ -142,4 +170,37 @@ export function getTableBodyHtml(
         tableParts.push(`<tr${clsStr}>${rowParts.join('')}</tr>`);
     }
     return tableParts.join('');
+}
+
+export function formatIntOpt(val: number): string {
+    const floored = epsilonFloor(val);
+    return floored ? String(floored) : '-';
+}
+
+export function formatRoundOpt(val: number): string {
+    val = Math.round(val);
+    return val ? String(val) : '-';
+}
+
+export function formatPercent(val: number): string {
+    return `${epsilonFloor(val * 100)}%`;
+}
+
+export function pushCell(cells: Cell[], text: string | number, classes?: string | string[]): void {
+    if (classes === undefined) classes = [];
+    else if (typeof classes === 'string') classes = [classes];
+
+    if (typeof text === 'number') {
+        text = epsilonFloor(text);
+        if (!text)
+            text = '-'; // replace 0 with '-'
+        else text = String(text);
+    }
+
+    if (!text || text === '-') {
+        classes = [...classes, 'empty'];
+    }
+
+    const cls = classes.filter((s) => s !== '').join(' ');
+    cells.push({ text, cls });
 }
