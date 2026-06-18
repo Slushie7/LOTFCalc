@@ -89,6 +89,8 @@ body.sidebar-hidden #sidebar {
 }
 .appbar .hamburger {
     font-size: 1.35rem;
+    height: 1.6rem;
+    padding-top: 0.1rem; /* small offset so the glyph is truly centered vertically */
 }
 .appbar .appbar-setting {
     display: flex;
@@ -334,7 +336,6 @@ body.sidebar-hidden #sidebar {
    ============================================================ */
 .table-wrap {
     min-width: 0;
-    overflow-x: auto; /* the table scrolls sideways, not the page */
 }
 .calc-table {
     font-size: 0.8em;
@@ -343,6 +344,11 @@ body.sidebar-hidden #sidebar {
 .calc-table th,
 .calc-table td {
     padding: 0.25rem 0.4rem;
+}
+.calc-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 .calc-table thead tr:first-child th {
     border-top: 1px solid var(--pico-muted-border-color);
