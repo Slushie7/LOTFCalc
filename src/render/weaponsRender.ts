@@ -1,21 +1,14 @@
-import { epsilonFloor } from '../calc/sharedCalc.js';
 import type { DamageSplit, CalculatedWeaponStats } from '../model.js';
 import {
     colDivider,
     colFirst,
     colStarter,
-    escapeHtml,
     formatIntOpt,
     formatPercent,
     formatRoundOpt,
     getHeaderHtml,
-    getPinButton,
-    getTableBodyHtml,
     headerStatusImagePaths,
     pushCell,
-    pushSectionHtml,
-    SELECT_ALL_SVG,
-    SELECT_NONE_SVG,
     type Cell,
     type HeaderColumn,
     type HeaderGroup,
@@ -192,35 +185,12 @@ interface WeaponRow extends Row {
     readonly wieldable: boolean;
 }
 
-/**
- * Generates the HTML to display the available weapon classes. Classes in checkedClasses will
- * be displayed in a checked state.
- * @param weaponClasses
- * @param checkedClasses
- * @returns
- */
-export function getWeaponsSidebarHtml(weaponClasses: readonly string[], checkedClasses: Set<string>): string {
-    const parts: string[] = [];
-    pushSectionHtml(parts, 'Weapons', 'weapon-classes');
-    for (const wc of weaponClasses) {
-        const checked = checkedClasses.has(wc) ? ' checked' : '';
-        parts.push(`<label><input type="checkbox"${checked} data-class="${escapeHtml(wc)}">${escapeHtml(wc)}</label>`);
-    }
-    return parts.join('');
-}
-
 export function getWeaponsHeaderHtml(
     groups: readonly WeaponsHeaderGroup[],
     sortKey: WeaponsHeaderKey,
     ascending: boolean
 ): string {
     return getHeaderHtml(groups, sortKey, ascending, headerStatusImagePaths);
-}
-
-export function getWeaponsHtml(weaponRows: readonly WeaponRow[], weaponFadeIn: string | null): string {
-    const firstColUrl = (row: Row) =>
-        `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(row.itemName)}`;
-    return getTableBodyHtml(weaponRows, firstColUrl, weaponFadeIn);
 }
 
 function formatDmg(dmg: DamageSplit, showSplit: boolean): string {
@@ -331,84 +301,4 @@ export function getWeaponRow(
         pushCell(cells, formatIntOpt(reqs.inferno), wield.inferno ? colDivider : [wieldCls, colDivider]);
     }
     return { itemName: cws.weapon.name, itemKey: cws.weapon.key, wieldable, pinned: cws.pinned, cells };
-}
-
-type SortFunction = (cws1: CalculatedWeaponStats, cws2: CalculatedWeaponStats) => number;
-const sortFunctions: Record<WeaponsHeaderKey, SortFunction> = {
-    // INFO
-    WEAP: (cws1, cws2) => cws1.weapon.name.localeCompare(cws2.weapon.name),
-    CLS: (cws1, cws2) => cws1.weapon.className.localeCompare(cws2.weapon.className),
-    // AR
-    ARP: (cws1, cws2) => cws1.offense.ar.physical.total - cws2.offense.ar.physical.total,
-    ARH: (cws1, cws2) => cws1.offense.ar.holy.total - cws2.offense.ar.holy.total,
-    ARF: (cws1, cws2) => cws1.offense.ar.fire.total - cws2.offense.ar.fire.total,
-    ARW: (cws1, cws2) => cws1.offense.ar.wither.total - cws2.offense.ar.wither.total,
-    TOT: (cws1, cws2) => cws1.offense.ar.totalDamage - cws2.offense.ar.totalDamage,
-    // MAGIC
-    SP: (cws1, cws2) => cws1.offense.ar.spellPower.total - cws2.offense.ar.spellPower.total,
-    SLOTS: (cws1, cws2) => cws1.offense.extras.spellSlots - cws2.offense.extras.spellSlots,
-    // STATUS
-    BLE: (cws1, cws2) => cws1.offense.status.bleed - cws2.offense.status.bleed,
-    BRN: (cws1, cws2) => cws1.offense.status.burn - cws2.offense.status.burn,
-    PSN: (cws1, cws2) => cws1.offense.status.poison - cws2.offense.status.poison,
-    SMI: (cws1, cws2) => cws1.offense.status.smite - cws2.offense.status.smite,
-    IGN: (cws1, cws2) => cws1.offense.status.ignite - cws2.offense.status.ignite,
-    FRO: (cws1, cws2) => cws1.offense.status.frost - cws2.offense.status.frost,
-    // MISC
-    WGT: (cws1, cws2) => cws1.weapon.weight - cws2.weapon.weight,
-    PD: (cws1, cws2) => cws1.offense.extras.poiseDamage - cws2.offense.extras.poiseDamage,
-    STAG: (cws1, cws2) => cws1.offense.extras.staggerDamage - cws2.offense.extras.staggerDamage,
-    STAD: (cws1, cws2) => cws1.offense.extras.staminaDamage - cws2.offense.extras.staminaDamage,
-    PVP: (cws1, cws2) => cws1.offense.extras.pvpMultiplier - cws2.offense.extras.pvpMultiplier,
-    // RUNES
-    RUN: (cws1, cws2) => cws1.runeSockets.join().localeCompare(cws2.runeSockets.join()),
-    // DEF
-    DP: (cws1, cws2) => cws1.defense.physical - cws2.defense.physical,
-    DH: (cws1, cws2) => cws1.defense.holy - cws2.defense.holy,
-    DF: (cws1, cws2) => cws1.defense.fire - cws2.defense.fire,
-    DW: (cws1, cws2) => cws1.defense.wither - cws2.defense.wither,
-    DS: (cws1, cws2) => cws1.defense.stability - cws2.defense.stability,
-    // SCALING
-    SS: (cws1, cws2) => cws1.offense.scaling.strVal - cws2.offense.scaling.strVal,
-    SA: (cws1, cws2) => cws1.offense.scaling.agiVal - cws2.offense.scaling.agiVal,
-    SR: (cws1, cws2) => cws1.offense.scaling.radVal - cws2.offense.scaling.radVal,
-    SI: (cws1, cws2) => cws1.offense.scaling.infVal - cws2.offense.scaling.infVal,
-    // REQS
-    RS: (cws1, cws2) => cws1.weapon.wieldReqs.strength - cws2.weapon.wieldReqs.strength,
-    RA: (cws1, cws2) => cws1.weapon.wieldReqs.agility - cws2.weapon.wieldReqs.agility,
-    RR: (cws1, cws2) => cws1.weapon.wieldReqs.radiance - cws2.weapon.wieldReqs.radiance,
-    RI: (cws1, cws2) => cws1.weapon.wieldReqs.inferno - cws2.weapon.wieldReqs.inferno,
-};
-
-/**
- * Sort the CalculatedWeaponStats by the given sort key. Pinned weapons are separated from unpinned weapons,
- * and then both lists are sorted and returned.
- * @param calculated
- * @param sortKey
- * @param ascending
- * @returns
- */
-export function sortCalculatedWeapons(
-    calculated: CalculatedWeaponStats[],
-    sortKey: WeaponsHeaderKey,
-    ascending: boolean
-): { pinned: CalculatedWeaponStats[]; unpinned: CalculatedWeaponStats[] } {
-    const pinned: CalculatedWeaponStats[] = [];
-    const unpinned: CalculatedWeaponStats[] = [];
-
-    // separate pinned weapons from unpinned weapons
-    calculated.map((cws) => (cws.pinned ? pinned.push(cws) : unpinned.push(cws)));
-
-    const fn = sortFunctions[sortKey];
-    if (fn !== undefined) {
-        if (ascending) {
-            pinned.sort(fn);
-            unpinned.sort(fn);
-        } else {
-            pinned.sort((a, b) => -fn(a, b));
-            unpinned.sort((a, b) => -fn(a, b));
-        }
-    } else console.log(`Failed to retrieve sort function for sortKey "${sortKey}"`);
-
-    return { pinned, unpinned };
 }

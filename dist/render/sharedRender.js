@@ -1,5 +1,3 @@
-// ====================================
-// CHECKBUTTON TOGGLES
 import { epsilonFloor } from '../calc/sharedCalc.js';
 export function getTogglesHtml(tg) {
     const parts = [];
@@ -40,12 +38,25 @@ export function getPinButton(row, text, data) {
     const action = row.pinned ? 'Unpin from top of list' : 'Pin to top of list';
     return `<button class="lock${row.pinned ? ' pinned' : ''}" data-item="${escapeHtml(data)}" aria-label="${action} ${escapeHtml(text)}" title="${action}">${row.pinned ? LOCKED_SVG : UNLOCKED_SVG}</button>`;
 }
-export function pushSectionHtml(parts, text, sectionKey) {
-    parts.push(`<div class="sidebar-section-header">` +
-        `<h2>${escapeHtml(text)}</h2>` +
-        `<button class="meta-btn" type="button" data-section-key="${sectionKey}" data-command="select-all" title="Select All">${SELECT_ALL_SVG}</button>` +
-        `<button class="meta-btn" type="button" data-section-key="${sectionKey}" data-command="select-none" title="Clear Selection">${SELECT_NONE_SVG}</button>` +
-        `</div>`);
+export function getSidebarHtml(sections) {
+    if (!Array.isArray(sections))
+        sections = [sections];
+    const sectionsHtml = [];
+    for (const section of sections) {
+        const parts = [];
+        parts.push(`<div class="sidebar-section-header">` +
+            `<h2>${escapeHtml(section.text)}</h2>` +
+            `<button class="meta-btn" type="button" data-section-key="${section.sectionKey}" data-command="select-all" title="Select All">${SELECT_ALL_SVG}</button>` +
+            `<button class="meta-btn" type="button" data-section-key="${section.sectionKey}" data-command="select-none" title="Clear Selection">${SELECT_NONE_SVG}</button>` +
+            `</div>`);
+        for (const item of section.items) {
+            const checked = section.checkedItems.has(item) ? ' checked' : '';
+            const escaped = escapeHtml(item);
+            parts.push(`<label><input type="checkbox"${checked} data-class="${escaped}">${escaped}</label>`);
+        }
+        sectionsHtml.push(parts.join(''));
+    }
+    return sectionsHtml.join('<br>');
 }
 /**
  * Given the currently visible HeaderGroups, generates the HTML to display the grouping header and
@@ -106,6 +117,10 @@ export function getTableBodyHtml(rows, firstColUrl, fadeItemWithKey) {
         tableParts.push(`<tr${clsStr}>${rowParts.join('')}</tr>`);
     }
     return tableParts.join('');
+}
+export function getItemTableBodyHtml(rows, fadeItemWitKey) {
+    const firstColUrl = (row) => `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(row.itemName)}`;
+    return getTableBodyHtml(rows, firstColUrl, fadeItemWitKey);
 }
 export function formatIntOpt(val) {
     const floored = epsilonFloor(val);

@@ -29,4 +29,32 @@ export abstract class View {
     abstract show(): void;
     abstract hide(): void;
     abstract refresh(): void;
+
+    public sortCalculated<T extends { readonly pinned: boolean }, K extends string>(
+        calculated: T[],
+        sortKey: K,
+        ascending: boolean,
+        sortFns: Record<K, (a: T, b: T) => number>
+    ): T[] {
+        const pinned: T[] = [];
+        const unpinned: T[] = [];
+
+        // separate pinned weapons from unpinned weapons
+        calculated.map((c) => (c.pinned ? pinned.push(c) : unpinned.push(c)));
+
+        const fn = sortFns[sortKey];
+        if (fn !== undefined) {
+            if (ascending) {
+                pinned.sort(fn);
+                unpinned.sort(fn);
+            } else {
+                pinned.sort((a, b) => -fn(a, b));
+                unpinned.sort((a, b) => -fn(a, b));
+            }
+        } else console.log(`Failed to retrieve sort function for sortKey "${sortKey}"`);
+
+        return [...pinned, ...unpinned];
+    }
 }
+
+export type SortFunction<T> = (a: T, b: T) => number;

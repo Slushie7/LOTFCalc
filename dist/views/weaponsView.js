@@ -1,9 +1,9 @@
-import { WEAPONS_HEADER_GROUPS, isWeaponsHeaderKey, getWeaponsSidebarHtml, getWeaponsHeaderHtml, getWeaponRow, getWeaponsHtml, sortCalculatedWeapons, } from '../render/weaponsRender.js';
+import { WEAPONS_HEADER_GROUPS, isWeaponsHeaderKey, getWeaponRow } from '../render/weaponsRender.js';
 import { isWeaponClass } from '../model.js';
 import { calculateWeaponStats } from '../calc/weaponsCalc.js';
 import { View } from './view.js';
-import { addElemListener, getTypedElem, getElem, handleMetaButtons, setSidebarContent, syncSidebarToggles } from '../sharedDOM.js';
-import { getTogglesHtml } from '../render/sharedRender.js';
+import { addElemListener, getTypedElem, getElem, handleMetaButtons, setSidebarContent, syncSidebarToggles, } from '../sharedDOM.js';
+import { getHeaderHtml, getItemTableBodyHtml, getSidebarHtml, getTogglesHtml, headerStatusImagePaths, } from '../render/sharedRender.js';
 const SettingToggles = {
     htmlClass: 'weapons-setting-toggle',
     dataKey: { html: 'setting', js: 'setting' },
@@ -43,6 +43,51 @@ const GroupToggles = {
 function isGroupToggleKey(k) {
     return typeof k === 'string' && Object.hasOwn(GroupToggles.toggles, k);
 }
+const sortFunctions = {
+    // INFO
+    WEAP: (cws1, cws2) => cws1.weapon.name.localeCompare(cws2.weapon.name),
+    CLS: (cws1, cws2) => cws1.weapon.className.localeCompare(cws2.weapon.className),
+    // AR
+    ARP: (cws1, cws2) => cws1.offense.ar.physical.total - cws2.offense.ar.physical.total,
+    ARH: (cws1, cws2) => cws1.offense.ar.holy.total - cws2.offense.ar.holy.total,
+    ARF: (cws1, cws2) => cws1.offense.ar.fire.total - cws2.offense.ar.fire.total,
+    ARW: (cws1, cws2) => cws1.offense.ar.wither.total - cws2.offense.ar.wither.total,
+    TOT: (cws1, cws2) => cws1.offense.ar.totalDamage - cws2.offense.ar.totalDamage,
+    // MAGIC
+    SP: (cws1, cws2) => cws1.offense.ar.spellPower.total - cws2.offense.ar.spellPower.total,
+    SLOTS: (cws1, cws2) => cws1.offense.extras.spellSlots - cws2.offense.extras.spellSlots,
+    // STATUS
+    BLE: (cws1, cws2) => cws1.offense.status.bleed - cws2.offense.status.bleed,
+    BRN: (cws1, cws2) => cws1.offense.status.burn - cws2.offense.status.burn,
+    PSN: (cws1, cws2) => cws1.offense.status.poison - cws2.offense.status.poison,
+    SMI: (cws1, cws2) => cws1.offense.status.smite - cws2.offense.status.smite,
+    IGN: (cws1, cws2) => cws1.offense.status.ignite - cws2.offense.status.ignite,
+    FRO: (cws1, cws2) => cws1.offense.status.frost - cws2.offense.status.frost,
+    // MISC
+    WGT: (cws1, cws2) => cws1.weapon.weight - cws2.weapon.weight,
+    PD: (cws1, cws2) => cws1.offense.extras.poiseDamage - cws2.offense.extras.poiseDamage,
+    STAG: (cws1, cws2) => cws1.offense.extras.staggerDamage - cws2.offense.extras.staggerDamage,
+    STAD: (cws1, cws2) => cws1.offense.extras.staminaDamage - cws2.offense.extras.staminaDamage,
+    PVP: (cws1, cws2) => cws1.offense.extras.pvpMultiplier - cws2.offense.extras.pvpMultiplier,
+    // RUNES
+    RUN: (cws1, cws2) => cws1.runeSockets.join().localeCompare(cws2.runeSockets.join()),
+    // DEF
+    DP: (cws1, cws2) => cws1.defense.physical - cws2.defense.physical,
+    DH: (cws1, cws2) => cws1.defense.holy - cws2.defense.holy,
+    DF: (cws1, cws2) => cws1.defense.fire - cws2.defense.fire,
+    DW: (cws1, cws2) => cws1.defense.wither - cws2.defense.wither,
+    DS: (cws1, cws2) => cws1.defense.stability - cws2.defense.stability,
+    // SCALING
+    SS: (cws1, cws2) => cws1.offense.scaling.strVal - cws2.offense.scaling.strVal,
+    SA: (cws1, cws2) => cws1.offense.scaling.agiVal - cws2.offense.scaling.agiVal,
+    SR: (cws1, cws2) => cws1.offense.scaling.radVal - cws2.offense.scaling.radVal,
+    SI: (cws1, cws2) => cws1.offense.scaling.infVal - cws2.offense.scaling.infVal,
+    // REQS
+    RS: (cws1, cws2) => cws1.weapon.wieldReqs.strength - cws2.weapon.wieldReqs.strength,
+    RA: (cws1, cws2) => cws1.weapon.wieldReqs.agility - cws2.weapon.wieldReqs.agility,
+    RR: (cws1, cws2) => cws1.weapon.wieldReqs.radiance - cws2.weapon.wieldReqs.radiance,
+    RI: (cws1, cws2) => cws1.weapon.wieldReqs.inferno - cws2.weapon.wieldReqs.inferno,
+};
 const _melee = { add: ['AR'], remove: ['MAGIC'], indiff: ['STATUS', 'DEF'] };
 const _ranged = { add: ['AR'], remove: ['MAGIC', 'DEF'], indiff: ['STATUS'] };
 const SMART_TOGGLES = {
@@ -63,6 +108,9 @@ const SMART_TOGGLES = {
     Bows: _ranged,
     Crossbows: _ranged,
 };
+// ================================
+// VIEW
+// ================================
 export function createWeaponsView(state, ctx) {
     return new WeaponsView(state, ctx);
 }
@@ -249,10 +297,10 @@ class WeaponsView extends View {
         if (!(typeof el.dataset.item === 'string'))
             return;
         const weaponKey = el.dataset.item;
-        if (this.state.pinnedWeapons.has(weaponKey))
-            this.state.pinnedWeapons.delete(weaponKey);
+        if (this.state.pinnedItems.has(weaponKey))
+            this.state.pinnedItems.delete(weaponKey);
         else
-            this.state.pinnedWeapons.add(weaponKey);
+            this.state.pinnedItems.add(weaponKey);
         this.renderWeapons(weaponKey); // render weapons with the pinned/unpinned weapon transitioning into view
         this.ctx.save();
     }
@@ -263,7 +311,13 @@ class WeaponsView extends View {
         if (!this.isActiveMode())
             return;
         // update the sidebar's content
-        setSidebarContent(getWeaponsSidebarHtml(this.loadedWeaponClasses, this.state.selectedClasses));
+        const section = {
+            text: 'Weapons',
+            sectionKey: 'weapon-classes',
+            items: this.loadedWeaponClasses,
+            checkedItems: this.state.selectedClasses,
+        };
+        setSidebarContent(getSidebarHtml(section));
         // create the settings/col-group toggles
         getElem('view-toggles').innerHTML = getTogglesHtml(SettingToggles) + getTogglesHtml(GroupToggles);
     }
@@ -298,24 +352,23 @@ class WeaponsView extends View {
             return;
         const elHeader = getElem('weapons-header');
         const groups = WEAPONS_HEADER_GROUPS.filter((group) => this.state.showColGroups.has(group.superKey));
-        elHeader.innerHTML = getWeaponsHeaderHtml(groups, this.state.sortKey, this.state.ascending);
+        elHeader.innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending, headerStatusImagePaths);
     }
     renderWeapons(weaponFadeIn = null) {
         if (!this.isActiveMode())
             return;
         // update the weapons table
         const elBody = getElem('weapons-body');
-        const showWeaps = this.ctx.data.weapons.filter((weap) => this.state.selectedClasses.has(weap.className) || this.state.pinnedWeapons.has(weap.key));
-        let calcStats = showWeaps.map((weap) => calculateWeaponStats(weap, this.state.upgLevel, this.ctx.shared.playerStats, this.state.showTwoHanding, this.ctx.data.gradeRanges, this.state.pinnedWeapons));
+        const showWeaps = this.ctx.data.weapons.filter((weap) => this.state.selectedClasses.has(weap.className) || this.state.pinnedItems.has(weap.key));
+        let calcStats = showWeaps.map((weap) => calculateWeaponStats(weap, this.state.upgLevel, this.ctx.shared.playerStats, this.state.showTwoHanding, this.ctx.data.gradeRanges, this.state.pinnedItems));
         if (!this.state.showUnwieldable)
             // remove any unwieldable weapons
             calcStats = calcStats.filter((ws) => ws.wieldability.wieldable);
         // sort calculated weapon stats by current sortKey
-        const { pinned, unpinned } = sortCalculatedWeapons(calcStats, this.state.sortKey, this.state.ascending);
-        calcStats = [...pinned, ...unpinned]; // pinned weapons go at front of list
+        calcStats = this.sortCalculated(calcStats, this.state.sortKey, this.state.ascending, sortFunctions);
         // display the weapon rows
         const rows = calcStats.map((cs) => getWeaponRow(cs, this.state.showColGroups, this.state.showSplit, this.state.showRawScaling));
-        elBody.innerHTML = getWeaponsHtml(rows, weaponFadeIn);
+        elBody.innerHTML = getItemTableBodyHtml(rows, weaponFadeIn);
     }
 }
 //# sourceMappingURL=weaponsView.js.map

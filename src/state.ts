@@ -34,11 +34,6 @@ export type SharedState = {
     saveSettings: boolean;
     activeMode: Mode;
 };
-const SHARED_TOGGLE_KEYS = ['saveSettings'] as const satisfies readonly BooleanKeys<SharedState>[];
-export type SharedToggleKey = (typeof SHARED_TOGGLE_KEYS)[number];
-export function isSharedToggleKey(k: string): k is SharedToggleKey {
-    return (SHARED_TOGGLE_KEYS as readonly string[]).includes(k);
-}
 
 export type WeaponsState = {
     upgLevel: number;
@@ -49,10 +44,9 @@ export type WeaponsState = {
     showTwoHanding: boolean;
     showUnwieldable: boolean;
     showSplit: boolean;
-    pinnedWeapons: Set<string>;
+    pinnedItems: Set<string>;
     showRawScaling: boolean;
 };
-
 
 export type ArmorsState = {
     selectedSlots: Set<ArmorSlot>;
@@ -60,7 +54,7 @@ export type ArmorsState = {
     sortKey: ArmorsHeaderKey;
     ascending: boolean;
     showColGroups: Set<ArmorsSuperheaderKey>;
-    pinnedArmors: Set<string>;
+    pinnedItems: Set<string>;
 };
 
 export type AppState = {
@@ -85,7 +79,7 @@ function getDefaultState(): AppState {
         showTwoHanding: false,
         showUnwieldable: true,
         showSplit: false,
-        pinnedWeapons: new Set(),
+        pinnedItems: new Set(),
         showRawScaling: false,
     };
 
@@ -95,7 +89,7 @@ function getDefaultState(): AppState {
         sortKey: 'ARMR',
         ascending: true,
         showColGroups: new Set(['INFO', 'DEF', 'STATUS']),
-        pinnedArmors: new Set(),
+        pinnedItems: new Set(),
     };
 
     return { shared, weapons, armors };
@@ -123,7 +117,7 @@ type ExportedWeaponsState = {
     readonly showTwoHanding: boolean;
     readonly showUnwieldable: boolean;
     readonly showSplit: boolean;
-    readonly pinnedWeapons: readonly string[];
+    readonly pinnedItems: readonly string[];
     readonly showRawScaling: boolean;
 };
 type ExportedArmorsState = {
@@ -132,7 +126,7 @@ type ExportedArmorsState = {
     readonly sortKey: ArmorsHeaderKey;
     readonly ascending: boolean;
     readonly showColGroups: readonly ArmorsSuperheaderKey[];
-    readonly pinnedArmors: readonly string[];
+    readonly pinnedItems: readonly string[];
 };
 type ExportedAppState = {
     readonly v: number;
@@ -189,8 +183,8 @@ export function loadAppState(): AppState {
         if (typeof d.showTwoHanding !== 'boolean') return false;
         if (typeof d.showUnwieldable !== 'boolean') return false;
         if (typeof d.showSplit !== 'boolean') return false;
-        if (!Array.isArray(d.pinnedWeapons)) return false;
-        if (!d.pinnedWeapons.every((v) => typeof v === 'string')) return false;
+        if (!Array.isArray(d.pinnedItems)) return false;
+        if (!d.pinnedItems.every((v) => typeof v === 'string')) return false;
         if (typeof d.showRawScaling !== 'boolean') return false;
         return true;
     }
@@ -203,8 +197,8 @@ export function loadAppState(): AppState {
         if (typeof d.ascending !== 'boolean') return false;
         if (!Array.isArray(d.showColGroups)) return false;
         if (!d.showColGroups.every((v) => isArmorsSuperheaderKey(v))) return false;
-        if (!Array.isArray(d.pinnedArmors)) return false;
-        if (!d.pinnedArmors.every((v) => typeof v === 'string')) return false;
+        if (!Array.isArray(d.pinnedItems)) return false;
+        if (!d.pinnedItems.every((v) => typeof v === 'string')) return false;
 
         return true;
     }
@@ -262,7 +256,7 @@ export function loadAppState(): AppState {
     const selectedClasses = new Set(state.weapons.selectedClasses);
     const showColGroups = new Set(state.weapons.showColGroups);
     showColGroups.add('INFO');
-    const pinnedWeapons = new Set(state.weapons.pinnedWeapons);
+    const pinnedWeapons = new Set(state.weapons.pinnedItems);
 
     const weapons: WeaponsState = {
         upgLevel,
@@ -273,7 +267,7 @@ export function loadAppState(): AppState {
         showTwoHanding: state.weapons.showTwoHanding,
         showUnwieldable: state.weapons.showUnwieldable,
         showSplit: state.weapons.showSplit,
-        pinnedWeapons: pinnedWeapons,
+        pinnedItems: pinnedWeapons,
         showRawScaling: state.weapons.showRawScaling,
     };
 
@@ -281,7 +275,7 @@ export function loadAppState(): AppState {
     const selectedSlots = new Set(state.armors.selectedSlots);
     const selectedWeights = new Set(state.armors.selectedWeights);
     const showColGroupsArmor = new Set(state.armors.showColGroups);
-    const pinnedArmors = new Set(state.armors.pinnedArmors);
+    const pinnedArmors = new Set(state.armors.pinnedItems);
 
     const armors: ArmorsState = {
         selectedSlots,
@@ -289,7 +283,7 @@ export function loadAppState(): AppState {
         sortKey: state.armors.sortKey,
         ascending: state.armors.ascending,
         showColGroups: showColGroupsArmor,
-        pinnedArmors,
+        pinnedItems: pinnedArmors,
     };
 
     return { shared, weapons, armors };
@@ -315,7 +309,7 @@ export function saveAppState(state: AppState): void {
             showTwoHanding: state.weapons.showTwoHanding,
             showUnwieldable: state.weapons.showUnwieldable,
             showSplit: state.weapons.showSplit,
-            pinnedWeapons: [...state.weapons.pinnedWeapons],
+            pinnedItems: [...state.weapons.pinnedItems],
             showRawScaling: state.weapons.showRawScaling,
         };
         const armors: ExportedArmorsState = {
@@ -324,7 +318,7 @@ export function saveAppState(state: AppState): void {
             sortKey: state.armors.sortKey,
             ascending: state.armors.ascending,
             showColGroups: [...state.armors.showColGroups],
-            pinnedArmors: [...state.armors.pinnedArmors],
+            pinnedItems: [...state.armors.pinnedItems],
         };
         data = {
             v: STORAGE_VER,

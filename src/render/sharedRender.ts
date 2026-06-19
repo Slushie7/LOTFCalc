@@ -1,6 +1,3 @@
-// ====================================
-// CHECKBUTTON TOGGLES
-
 import { epsilonFloor } from '../calc/sharedCalc.js';
 
 // ====================================
@@ -87,14 +84,39 @@ export function getPinButton(row: Row, text: string, data: string): string {
     return `<button class="lock${row.pinned ? ' pinned' : ''}" data-item="${escapeHtml(data)}" aria-label="${action} ${escapeHtml(text)}" title="${action}">${row.pinned ? LOCKED_SVG : UNLOCKED_SVG}</button>`;
 }
 
-export function pushSectionHtml(parts: string[], text: string, sectionKey: string): void {
-    parts.push(
-        `<div class="sidebar-section-header">` +
-            `<h2>${escapeHtml(text)}</h2>` +
-            `<button class="meta-btn" type="button" data-section-key="${sectionKey}" data-command="select-all" title="Select All">${SELECT_ALL_SVG}</button>` +
-            `<button class="meta-btn" type="button" data-section-key="${sectionKey}" data-command="select-none" title="Clear Selection">${SELECT_NONE_SVG}</button>` +
-            `</div>`
-    );
+// ===============================
+// HTML GENERATION
+// ===============================
+
+export type SidebarSection<T extends string> = {
+    text: string;
+    sectionKey: string;
+    items: readonly T[];
+    checkedItems: Set<T>;
+};
+
+export function getSidebarHtml<T extends string>(sections: SidebarSection<T> | SidebarSection<T>[]): string {
+    if (!Array.isArray(sections)) sections = [sections];
+
+    const sectionsHtml: string[] = [];
+    for (const section of sections) {
+        const parts: string[] = [];
+        parts.push(
+            `<div class="sidebar-section-header">` +
+                `<h2>${escapeHtml(section.text)}</h2>` +
+                `<button class="meta-btn" type="button" data-section-key="${section.sectionKey}" data-command="select-all" title="Select All">${SELECT_ALL_SVG}</button>` +
+                `<button class="meta-btn" type="button" data-section-key="${section.sectionKey}" data-command="select-none" title="Clear Selection">${SELECT_NONE_SVG}</button>` +
+                `</div>`
+        );
+        for (const item of section.items) {
+            const checked = section.checkedItems.has(item) ? ' checked' : '';
+            const escaped = escapeHtml(item);
+            parts.push(`<label><input type="checkbox"${checked} data-class="${escaped}">${escaped}</label>`);
+        }
+        sectionsHtml.push(parts.join(''));
+    }
+
+    return sectionsHtml.join('<br>');
 }
 
 /**
@@ -170,6 +192,12 @@ export function getTableBodyHtml(
         tableParts.push(`<tr${clsStr}>${rowParts.join('')}</tr>`);
     }
     return tableParts.join('');
+}
+
+export function getItemTableBodyHtml(rows: readonly Row[], fadeItemWitKey: string | null): string {
+    const firstColUrl = (row: Row) =>
+        `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(row.itemName)}`;
+    return getTableBodyHtml(rows, firstColUrl, fadeItemWitKey);
 }
 
 export function formatIntOpt(val: number): string {

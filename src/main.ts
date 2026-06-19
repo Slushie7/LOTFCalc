@@ -1,11 +1,25 @@
 import { clampStat, calculatePlayerStats } from './calc/sharedCalc.js';
 import { loadAppData } from './loadJSONData.js';
 import type { CalculatedPlayerStats, PlayerStats } from './model.js';
-import { isMode, isSharedToggleKey, loadAppState, saveAppState, type AppState, type Mode } from './state.js';
+import {
+    isMode,
+    loadAppState,
+    saveAppState,
+    type AppState,
+    type BooleanKeys,
+    type Mode,
+    type SharedState,
+} from './state.js';
 import { createArmorsView } from './views/armorsView.js';
 import { View, type GameData, type ViewContext } from './views/view.js';
 import { createWeaponsView } from './views/weaponsView.js';
 import { addClassListeners, addElemListener, getElem } from './sharedDOM.js';
+
+const SHARED_TOGGLE_KEYS = ['saveSettings'] as const satisfies readonly BooleanKeys<SharedState>[];
+type SharedToggleKey = (typeof SHARED_TOGGLE_KEYS)[number];
+function isSharedToggleKey(k: string): k is SharedToggleKey {
+    return (SHARED_TOGGLE_KEYS as readonly string[]).includes(k);
+}
 
 // ===================================
 // BOOTSTRAP

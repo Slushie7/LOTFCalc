@@ -1,21 +1,34 @@
-import type { ViewContext } from './view.js';
+import type { SortFunction, ViewContext } from './view.js';
 import { View } from './view.js';
 import type { ArmorsState } from '../state.js';
 import { getElem, addElemListener, handleMetaButtons, setSidebarContent, syncSidebarToggles } from '../sharedDOM.js';
 import {
     ARMORS_HEADER_GROUPS,
     getArmorRow,
-    getArmorsSidebarHtml,
-    getArmorsHeaderHtml,
-    getArmorsHtml,
     isArmorsHeaderKey,
-    isArmorsSuperheaderKey,
-    sortCalculatedArmors,
     type ArmorsSuperheaderKey,
+    type ArmorsHeaderKey,
 } from '../render/armorsRender.js';
-import { ARMOR_SLOTS, ARMOR_WEIGHT_CLASSES, isArmorSlot, isArmorWeightClass, type Armor } from '../model.js';
+import {
+    ARMOR_SLOTS,
+    ARMOR_WEIGHT_CLASSES,
+    isArmorSlot,
+    isArmorWeightClass,
+    type Armor,
+    type ArmorSlot,
+    type ArmorWeightClass,
+    type CalculatedArmorStats,
+} from '../model.js';
 import { calculateArmorStats } from '../calc/armorsCalc.js';
-import { getTogglesHtml, type ToggleGroup } from '../render/sharedRender.js';
+import {
+    getHeaderHtml,
+    getItemTableBodyHtml,
+    getSidebarHtml,
+    getTogglesHtml,
+    headerStatusImagePaths,
+    type SidebarSection,
+    type ToggleGroup,
+} from '../render/sharedRender.js';
 
 const GroupToggles: ToggleGroup<ArmorsSuperheaderKey> = {
     htmlClass: 'armors-group-toggle',
@@ -32,6 +45,46 @@ const GroupToggles: ToggleGroup<ArmorsSuperheaderKey> = {
 function isGroupToggleKey(k: unknown): k is ArmorsSuperheaderKey {
     return typeof k === 'string' && Object.hasOwn(GroupToggles.toggles, k);
 }
+
+const SlotEnum: Record<ArmorSlot, number> = {
+    Head: 0,
+    Torso: 1,
+    Arms: 2,
+    Legs: 3,
+};
+const WeightEnum: Record<ArmorWeightClass, number> = {
+    Light: 0,
+    Medium: 1,
+    Heavy: 2,
+};
+const sortFunctions: Record<ArmorsHeaderKey, SortFunction<CalculatedArmorStats>> = {
+    // INFO
+    ARMR: (cas1, cas2) => cas1.armor.name.localeCompare(cas2.armor.name),
+    SLOT: (cas1, cas2) => SlotEnum[cas1.armor.slot] - SlotEnum[cas2.armor.slot],
+    WGT: (cas1, cas2) => cas1.armor.stats.weight - cas2.armor.stats.weight,
+    POIS: (cas1, cas2) => cas1.armor.stats.poise - cas2.armor.stats.poise,
+    // DEF
+    DP: (cas1, cas2) => cas1.armor.stats.defPhysical - cas2.armor.stats.defPhysical,
+    DF: (cas1, cas2) => cas1.armor.stats.defFire - cas2.armor.stats.defFire,
+    DH: (cas1, cas2) => cas1.armor.stats.defHoly - cas2.armor.stats.defHoly,
+    DW: (cas1, cas2) => cas1.armor.stats.defWither - cas2.armor.stats.defWither,
+    DT: (cas1, cas2) => cas1.defTotal - cas2.defTotal,
+    // STATUS
+    BLE: (cas1, cas2) => cas1.armor.stats.resBleed - cas2.armor.stats.resBleed,
+    BRN: (cas1, cas2) => cas1.armor.stats.resBurn - cas2.armor.stats.resBurn,
+    PSN: (cas1, cas2) => cas1.armor.stats.resPoison - cas2.armor.stats.resPoison,
+    SMI: (cas1, cas2) => cas1.armor.stats.resSmite - cas2.armor.stats.resSmite,
+    IGN: (cas1, cas2) => cas1.armor.stats.resIgnite - cas2.armor.stats.resIgnite,
+    FRO: (cas1, cas2) => cas1.armor.stats.resFrost - cas2.armor.stats.resFrost,
+    RT: (cas1, cas2) => cas1.resTotal - cas2.resTotal,
+    // MISC
+    WGTC: (cas1, cas2) => WeightEnum[cas1.armor.weightClass] - WeightEnum[cas2.armor.weightClass],
+    KDMG: (cas1, cas2) => cas1.armor.stats.kickMult - cas2.armor.stats.kickMult,
+};
+
+// ================================
+// VIEW
+// ================================
 
 export function createArmorsView(state: ArmorsState, ctx: ViewContext) {
     return new ArmorsView(state, ctx);
@@ -186,8 +239,8 @@ class ArmorsView extends View {
         if (!(typeof el.dataset.item === 'string')) return;
         const armorKey = el.dataset.item;
 
-        if (this.state.pinnedArmors.has(armorKey)) this.state.pinnedArmors.delete(armorKey);
-        else this.state.pinnedArmors.add(armorKey);
+        if (this.state.pinnedItems.has(armorKey)) this.state.pinnedItems.delete(armorKey);
+        else this.state.pinnedItems.add(armorKey);
 
         this.renderArmors(armorKey); // render armors with the pinned/unpinned armor transitioning into view
         this.ctx.save();
@@ -201,7 +254,16 @@ class ArmorsView extends View {
         if (!this.isActiveMode()) return;
 
         // update the sidebar's content
-        setSidebarContent(getArmorsSidebarHtml(this.state.selectedSlots, this.state.selectedWeights));
+        const sections: [SidebarSection<ArmorSlot>, SidebarSection<ArmorWeightClass>] = [
+            { text: 'Armors', sectionKey: 'armor-slots', items: ARMOR_SLOTS, checkedItems: this.state.selectedSlots },
+            {
+                text: 'Weights',
+                sectionKey: 'armor-weights',
+                items: ARMOR_WEIGHT_CLASSES,
+                checkedItems: this.state.selectedWeights,
+            },
+        ];
+        setSidebarContent(getSidebarHtml(sections));
 
         // create the settings/col-group toggles
         getElem('view-toggles').innerHTML = getTogglesHtml(GroupToggles);
@@ -226,7 +288,7 @@ class ArmorsView extends View {
 
         const elHeader = getElem('armors-header');
         const groups = ARMORS_HEADER_GROUPS.filter((group) => this.state.showColGroups.has(group.superKey));
-        elHeader.innerHTML = getArmorsHeaderHtml(groups, this.state.sortKey, this.state.ascending);
+        elHeader.innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending, headerStatusImagePaths);
     }
 
     private renderArmors(armorFadeIn: string | null = null): void {
@@ -237,14 +299,13 @@ class ArmorsView extends View {
         const showArmors: Armor[] = this.ctx.data.armors.filter(
             (arm) =>
                 (this.state.selectedSlots.has(arm.slot) && this.state.selectedWeights.has(arm.weightClass)) ||
-                this.state.pinnedArmors.has(arm.key)
+                this.state.pinnedItems.has(arm.key)
         );
-        let calcStats = showArmors.map((arm) => calculateArmorStats(arm, this.state.pinnedArmors));
+        let calcStats = showArmors.map((arm) => calculateArmorStats(arm, this.state.pinnedItems));
         // sort calculated armor stats by current sortKey
-        const { pinned, unpinned } = sortCalculatedArmors(calcStats, this.state.sortKey, this.state.ascending);
-        calcStats = [...pinned, ...unpinned]; // pinned armors go at front of list
+        calcStats = this.sortCalculated(calcStats, this.state.sortKey, this.state.ascending, sortFunctions);
         // display the armor rows
         const rows = calcStats.map((cs) => getArmorRow(cs, this.state.showColGroups));
-        elBody.innerHTML = getArmorsHtml(rows, armorFadeIn);
+        elBody.innerHTML = getItemTableBodyHtml(rows, armorFadeIn);
     }
 }

@@ -9,10 +9,6 @@ const MODES = ['weapons', 'armors'];
 export function isMode(v) {
     return MODES.includes(v);
 }
-const SHARED_TOGGLE_KEYS = ['saveSettings'];
-export function isSharedToggleKey(k) {
-    return SHARED_TOGGLE_KEYS.includes(k);
-}
 function getDefaultState() {
     const shared = {
         playerStats: { strength: 30, agility: 30, endurance: 30, vitality: 30, radiance: 30, inferno: 30 },
@@ -28,7 +24,7 @@ function getDefaultState() {
         showTwoHanding: false,
         showUnwieldable: true,
         showSplit: false,
-        pinnedWeapons: new Set(),
+        pinnedItems: new Set(),
         showRawScaling: false,
     };
     const armors = {
@@ -37,7 +33,7 @@ function getDefaultState() {
         sortKey: 'ARMR',
         ascending: true,
         showColGroups: new Set(['INFO', 'DEF', 'STATUS']),
-        pinnedArmors: new Set(),
+        pinnedItems: new Set(),
     };
     return { shared, weapons, armors };
 }
@@ -108,9 +104,9 @@ export function loadAppState() {
             return false;
         if (typeof d.showSplit !== 'boolean')
             return false;
-        if (!Array.isArray(d.pinnedWeapons))
+        if (!Array.isArray(d.pinnedItems))
             return false;
-        if (!d.pinnedWeapons.every((v) => typeof v === 'string'))
+        if (!d.pinnedItems.every((v) => typeof v === 'string'))
             return false;
         if (typeof d.showRawScaling !== 'boolean')
             return false;
@@ -133,9 +129,9 @@ export function loadAppState() {
             return false;
         if (!d.showColGroups.every((v) => isArmorsSuperheaderKey(v)))
             return false;
-        if (!Array.isArray(d.pinnedArmors))
+        if (!Array.isArray(d.pinnedItems))
             return false;
-        if (!d.pinnedArmors.every((v) => typeof v === 'string'))
+        if (!d.pinnedItems.every((v) => typeof v === 'string'))
             return false;
         return true;
     }
@@ -192,7 +188,7 @@ export function loadAppState() {
     const selectedClasses = new Set(state.weapons.selectedClasses);
     const showColGroups = new Set(state.weapons.showColGroups);
     showColGroups.add('INFO');
-    const pinnedWeapons = new Set(state.weapons.pinnedWeapons);
+    const pinnedWeapons = new Set(state.weapons.pinnedItems);
     const weapons = {
         upgLevel,
         selectedClasses,
@@ -202,21 +198,21 @@ export function loadAppState() {
         showTwoHanding: state.weapons.showTwoHanding,
         showUnwieldable: state.weapons.showUnwieldable,
         showSplit: state.weapons.showSplit,
-        pinnedWeapons: pinnedWeapons,
+        pinnedItems: pinnedWeapons,
         showRawScaling: state.weapons.showRawScaling,
     };
     // parse ArmorsState
     const selectedSlots = new Set(state.armors.selectedSlots);
     const selectedWeights = new Set(state.armors.selectedWeights);
     const showColGroupsArmor = new Set(state.armors.showColGroups);
-    const pinnedArmors = new Set(state.armors.pinnedArmors);
+    const pinnedArmors = new Set(state.armors.pinnedItems);
     const armors = {
         selectedSlots,
         selectedWeights,
         sortKey: state.armors.sortKey,
         ascending: state.armors.ascending,
         showColGroups: showColGroupsArmor,
-        pinnedArmors,
+        pinnedItems: pinnedArmors,
     };
     return { shared, weapons, armors };
 }
@@ -240,7 +236,7 @@ export function saveAppState(state) {
             showTwoHanding: state.weapons.showTwoHanding,
             showUnwieldable: state.weapons.showUnwieldable,
             showSplit: state.weapons.showSplit,
-            pinnedWeapons: [...state.weapons.pinnedWeapons],
+            pinnedItems: [...state.weapons.pinnedItems],
             showRawScaling: state.weapons.showRawScaling,
         };
         const armors = {
@@ -249,7 +245,7 @@ export function saveAppState(state) {
             sortKey: state.armors.sortKey,
             ascending: state.armors.ascending,
             showColGroups: [...state.armors.showColGroups],
-            pinnedArmors: [...state.armors.pinnedArmors],
+            pinnedItems: [...state.armors.pinnedItems],
         };
         data = {
             v: STORAGE_VER,
