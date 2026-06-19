@@ -59,6 +59,16 @@ def clean_armor_icon(icon_path: Path) -> str:
     return cleaned
 
 
+def clean_rune_icon(icon_path: Path) -> str:
+    cleaned = prune(icon_path.name, 'thumb_ItemImg_ITM_RUN_')
+    return cleaned
+
+
+def clean_spell_icon(icon_path: Path) -> str:
+    cleaned = prune(icon_path.name, 'thumb_ItemImg_MAG_SPL_')
+    return cleaned
+
+
 class LOTFExtractor:
     def __init__(self, lotf2_dir: str | Path, mode: str, *args) -> None:
         lotf2_dir = Path(lotf2_dir)
@@ -72,40 +82,41 @@ class LOTFExtractor:
         # required paths
         self.STAT_SC_DEFS_PATH = atk_defs_dir / 'DT_UI_StatScalarDefinition.json'
         self.BATTLE_EFFECTS_PATH = data_dir / 'BattleEffects/DT_BattleEffectsData.json'
+        self.ATTACK_DEFS_PATH = data_dir / 'Combat/DT_GlobalAttackDamageDefinition.json'
         self.ARMOR_META_DIR = data_dir / 'Equipment/Armor/Player'
+        self.SPELLS_META_DIR = data_dir / 'Equipment/Items/Magic'
         self.WEAPONS_META_DIR = data_dir / 'Equipment/Weapons/Player'
         self.RUNES_DT_PATH = data_dir / 'Runes/DT_RunesDataTable.json'
         self.RUNES_RELEASE_PATH = data_dir / 'Runes/Release'
         self.CURVE_LIB_PATH = self.STATS_DIR / 'DT_CurveLibrary.json'
         self.RANGED_STATS_PATH = self.STATS_DIR / 'DT_RangedWeaponStats.json'
         self.SC_CURVE_LIB_PATH = self.STATS_DIR / 'DT_ScalingCurveLibrary.json'
+        self.SPELLS_STATS_PATH = self.STATS_DIR / 'DT_SpellStats.json'
         self.WEAPON_STATS_PATH = self.STATS_DIR / 'DT_WeaponStats.json'
         self.GAME_LOC_PATH = localization_dir / 'Game.json'
         self.ITEM_ART_PATH = content_dir / 'Art/UI/Items'
 
         if not mode:
             print('LOTFCalcExtractor: Export Mode')
-            local_names = self._extract_item_strings()
             curves = self._extract_curves()
             stat_grade_ranges = self._extract_stat_scalar_grades()
             buffs = self._extract_buffs()
-            runes = self._extract_runes(local_names, buffs)
+            runes = self._extract_runes(buffs)
             ranged_ammo = self._extract_ranged_ammo()
-            weapons, base_damages = self._extract_weapons(local_names, curves, stat_grade_ranges, ranged_ammo, buffs)
-            armor = self._extract_armor(local_names)
+            weapons, base_damages = self._extract_weapons(curves, stat_grade_ranges, ranged_ammo, buffs)
+            armor = self._extract_armor()
             self._export_json(curves, stat_grade_ranges, weapons, base_damages, buffs, runes, armor)
 
         elif mode == 'runes-test':
             print('LOTFCalcExtractor: Runes Test')
-            local_names = self._extract_item_strings()
             buffs = self._extract_buffs()
-            runes = self._extract_runes(local_names, buffs)
+            runes = self._extract_runes(buffs)
             self._runes_test(runes)
 
         elif mode == 'compare':
             self._compare_json(*args)
-            
-        elif mode =='images':
+
+        elif mode == 'images':
             self._extract_images()
 
         else:
@@ -224,7 +235,7 @@ class LOTFExtractor:
         print(f'Extracted {len(buffs)} buffs!')
         return buffs
 
-    def _extract_runes(self, local_names: dict[str, str], buffs: dict[str, Buff]) -> tuple[Rune, ...]:
+    def _extract_runes(self, buffs: dict[str, Buff]) -> tuple[Rune, ...]:
         print('Extracting runes')
 
         runes: list[Rune] = []
@@ -241,8 +252,11 @@ class LOTFExtractor:
 
             # get the rune's localized name
             rune_key = properties['RuneDefinionRow']['RowName']
-            loc_key = properties['ItemName']['Key']
-            rune_name = local_names[loc_key]
+            rune_name = properties['ItemName']['SourceString'].strip()
+            rune_icon = clean_rune_icon(Path(properties['ItemIcon']['ObjectPath']))
+            if not rune_icon.endswith('.0'):
+                raise ValueError(f'Unhandled thumbnail suffix for "{rune_icon}"')
+            rune_icon = rune_icon[:-2]
 
             # parse the data from the main runes datatable
             dt_entry: dict = dt[rune_key]
@@ -274,7 +288,16 @@ class LOTFExtractor:
             if armor_buff is None or armor_buff_target is None:
                 raise ValueError(f'Failed to retrieve armor buff for rune {rune_key}')
             runes.append(
-                Rune(rune_key, rune_name, rune_type, weap_buff, weap_buff_target, armor_buff, armor_buff_target)
+                Rune(
+                    rune_key,
+                    rune_name,
+                    rune_icon,
+                    rune_type,
+                    weap_buff,
+                    weap_buff_target,
+                    armor_buff,
+                    armor_buff_target,
+                )
             )
 
         print(f'Extracted {len(runes)} runes!')
@@ -293,7 +316,6 @@ class LOTFExtractor:
 
     def _extract_weapons(
         self,
-        local_names: dict[str, str],
         curves: dict[str, Curve],
         stat_grade_ranges: tuple[StatScalarGradeRange, ...],
         ranged_ammo: dict[str, int],
@@ -367,11 +389,7 @@ class LOTFExtractor:
                 with open(file, encoding='utf-8') as f:
                     defd = json.load(f)[1]['Properties']
                 weapon_key = defd['StatsRow']['RowName']
-                loc_key = defd['ItemName']['Key']
-                if (weapon_name := local_names.get(loc_key)) is None:
-                    print(f'Failed to retrieve localized name for weapon {weapon_key} - skipping')
-                    continue
-                weapon_name = local_names[loc_key]
+                weapon_name = defd['ItemName']['SourceString'].strip()
 
                 # get the path to the armor's thumbnail and clean the path up
                 icon = clean_weapon_icon(Path(defd['ItemIcon']['ObjectPath']))
@@ -507,7 +525,7 @@ class LOTFExtractor:
 
         return tuple(weapons), tuple(base_damages)
 
-    def _extract_armor(self, local_names: dict[str, str]) -> tuple[Armor, ...]:
+    def _extract_armor(self) -> tuple[Armor, ...]:
         print('Extracting armor stats')
 
         armor: list[Armor] = []
@@ -538,7 +556,7 @@ class LOTFExtractor:
                     d = json.load(f)[0]['Properties']
 
                 key = d['StatsRow']['RowName']
-                name = local_names[d['ItemName']['Key']].strip()
+                name = d['ItemName']['SourceString'].strip()
 
                 # get the path to the armor's thumbnail and clean the path up
                 icon = clean_armor_icon(Path(d['ItemIcon']['ObjectPath']))
@@ -601,7 +619,7 @@ class LOTFExtractor:
 
         stat_grade_ranges_export = [grade.to_dict() for grade in stat_grade_ranges]
 
-        weapons_export: list[dict[str, str]] = [weapon.to_dict() for weapon in weapons]
+        weapons_export = [weapon.to_dict() for weapon in weapons]
 
         buffs_export = [buff.to_dict() for buff in buffs.values()]
 
@@ -664,7 +682,7 @@ class LOTFExtractor:
 
     def _compare_json(self, file1: Path | str, file2: Path | str) -> None:
         def compare_dicts(
-            d1: dict[str, Any], d2: dict[str, Any], n1: str, n2: str, checked_set: set[str], type_name: str
+            d1: dict[str, Any] | tuple, d2: dict[str, Any] | tuple, n1: str, n2: str, type_name: str
         ) -> bool:
             def _compare_dicts(
                 d1: dict[str, Any], d2: dict[str, Any], n1: str, n2: str, checked_set: set[str], type_name: str
@@ -685,6 +703,11 @@ class LOTFExtractor:
                         checked_set.add(key)
                 return _mismatch
 
+            if not isinstance(d1, dict):
+                d1 = {x.key: x for x in d1}
+            if not isinstance(d2, dict):
+                d2 = {x.key: x for x in d2}
+            checked_set: set[str] = set()
             mismatch = False
             print(f'Comparing {type_name}s')
             if len(d1) != len(d2):
@@ -713,23 +736,10 @@ class LOTFExtractor:
         weaps1, curves1, runes1, armor1 = load_json_data(file1)
         weaps2, curves2, runes2, armor2 = load_json_data(file2)
 
-        checked_curves: set[str] = set()
-        compare_dicts(curves1, curves2, name1, name2, checked_curves, 'Curve')
+        compare_dicts(curves1, curves2, name1, name2, 'Curve')
+        compare_dicts(runes1, runes2, name1, name2, 'Rune')
+        compare_dicts(weaps1, weaps2, name1, name2, 'Weapon')
+        compare_dicts(armor1, armor2, name1, name2, 'Armor')
 
-        rune_d1 = {rune.key: rune for rune in runes1}
-        rune_d2 = {rune.key: rune for rune in runes2}
-        checked_runes: set[str] = set()
-        compare_dicts(rune_d1, rune_d2, name1, name2, checked_runes, 'Rune')
-
-        weap_d1 = {weap.key: weap for weap in weaps1}
-        weap_d2 = {weap.key: weap for weap in weaps2}
-        checked_weaps: set[str] = set()
-        compare_dicts(weap_d1, weap_d2, name1, name2, checked_weaps, 'Weapon')
-
-        armor_d1 = {armor.key: armor for armor in armor1}
-        armor_d2 = {armor.key: armor for armor in armor2}
-        checked_armor: set[str] = set()
-        compare_dicts(armor_d1, armor_d2, name1, name2, checked_armor, 'Armor')
-
-    def _extract_images(self)->None:
-        pass # TODO
+    def _extract_images(self) -> None:
+        pass  # TODO

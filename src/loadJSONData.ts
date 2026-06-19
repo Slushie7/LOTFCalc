@@ -131,6 +131,7 @@ interface RawBuff {
 interface RawRune {
     key: string;
     name: string;
+    icon: string;
     type: RuneType;
     weapon_buff_key: string;
     weapon_buff_target: BuffTarget;
@@ -345,6 +346,7 @@ function toRune(r: RawRune, buffs: Map<string, Buff>): Rune {
     return {
         key: r.key,
         name: r.name,
+        icon: r.icon,
         type: r.type,
         weaponBuff,
         weaponBuffTarget: r.weapon_buff_target,

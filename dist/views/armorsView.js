@@ -1,12 +1,12 @@
 import { View } from './view.js';
-import { getElem, addElemListener, handleMetaButtons, setSidebarContent, syncSidebarToggles } from '../sharedDOM.js';
+import { getElem, addElemListener, handleMetaButtons, setSidebarContent, syncSidebarToggles, convertHtmlDataAttrib, } from '../sharedDOM.js';
 import { ARMORS_HEADER_GROUPS, getArmorRow, isArmorsHeaderKey, } from '../render/armorsRender.js';
 import { ARMOR_SLOTS, ARMOR_WEIGHT_CLASSES, isArmorSlot, isArmorWeightClass, } from '../model.js';
 import { calculateArmorStats } from '../calc/armorsCalc.js';
-import { getHeaderHtml, getItemTableBodyHtml, getSidebarHtml, getTogglesHtml, headerStatusImagePaths, } from '../render/sharedRender.js';
+import { getHeaderHtml, getItemTableBodyHtml, getSidebarHtml, getTogglesHtml, headerStatusImagePaths, isToggleKey, } from '../render/sharedRender.js';
 const GroupToggles = {
     htmlClass: 'armors-group-toggle',
-    dataKey: { html: 'col-group', js: 'colGroup' },
+    htmlDataKey: 'col-group',
     toggles: {
         DEF: { text: 'Defenses', hover: 'Armor defenses' },
         STATUS: { text: 'Resistances', hover: 'Show armor resistances' },
@@ -16,9 +16,6 @@ const GroupToggles = {
         },
     },
 };
-function isGroupToggleKey(k) {
-    return typeof k === 'string' && Object.hasOwn(GroupToggles.toggles, k);
-}
 const SlotEnum = {
     Head: 0,
     Torso: 1,
@@ -30,7 +27,7 @@ const WeightEnum = {
     Medium: 1,
     Heavy: 2,
 };
-const sortFunctions = {
+const armorsSortFns = {
     // INFO
     ARMR: (cas1, cas2) => cas1.armor.name.localeCompare(cas2.armor.name),
     SLOT: (cas1, cas2) => SlotEnum[cas1.armor.slot] - SlotEnum[cas2.armor.slot],
@@ -144,8 +141,8 @@ class ArmorsView extends View {
             return;
         const el = e.target;
         if (el.classList.contains(GroupToggles.htmlClass)) {
-            const group = el.dataset[GroupToggles.dataKey.js];
-            if (isGroupToggleKey(group)) {
+            const group = el.dataset[convertHtmlDataAttrib(GroupToggles.htmlDataKey)];
+            if (isToggleKey(group, GroupToggles)) {
                 if (el.checked)
                     this.state.showColGroups.add(group);
                 else
@@ -252,7 +249,7 @@ class ArmorsView extends View {
             this.state.pinnedItems.has(arm.key));
         let calcStats = showArmors.map((arm) => calculateArmorStats(arm, this.state.pinnedItems));
         // sort calculated armor stats by current sortKey
-        calcStats = this.sortCalculated(calcStats, this.state.sortKey, this.state.ascending, sortFunctions);
+        calcStats = this.sortCalculated(calcStats, this.state.sortKey, this.state.ascending, armorsSortFns);
         // display the armor rows
         const rows = calcStats.map((cs) => getArmorRow(cs, this.state.showColGroups));
         elBody.innerHTML = getItemTableBodyHtml(rows, armorFadeIn);

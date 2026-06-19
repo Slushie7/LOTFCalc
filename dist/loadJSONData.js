@@ -144,6 +144,7 @@ function toRune(r, buffs) {
     return {
         key: r.key,
         name: r.name,
+        icon: r.icon,
         type: r.type,
         weaponBuff,
         weaponBuffTarget: r.weapon_buff_target,

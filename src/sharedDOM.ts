@@ -41,6 +41,12 @@ export function setSidebarContent(innerHTML: string, show: boolean | null = true
     getElem('sidebar-content').innerHTML = innerHTML;
 }
 
+/**
+ * Converts an HTML tag's data attribute name to JS's camelCase representation. The 'data-' prefix is optional.
+ * e.g. convertHtmlDataAttrib('data-some-attr-key') -> 'someAttrKey'
+ * @param dataAttrib 
+ * @returns 
+ */
 export function convertHtmlDataAttrib(dataAttrib: string): string {
     if (dataAttrib.startsWith('data-')) dataAttrib = dataAttrib.slice(5);
 

@@ -306,6 +306,7 @@ class Buff:
 class Rune:
     key: str
     name: str
+    icon: str
     type: RUNE_TYPE
     weapon_buff: Buff
     weapon_buff_target: Literal['Character', 'Equipment']
@@ -316,6 +317,7 @@ class Rune:
         return {
             'key': self.key,
             'name': self.name,
+            'icon': self.icon,
             'type': self.type,
             'weapon_buff_key': self.weapon_buff.key,
             'weapon_buff_target': self.weapon_buff_target,
@@ -328,6 +330,7 @@ class Rune:
         return cls(
             d['key'],
             d['name'],
+            d['icon'],
             d['type'],
             buffs_d[d['weapon_buff_key']],
             d['weapon_buff_target'],

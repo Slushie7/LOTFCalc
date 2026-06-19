@@ -179,6 +179,7 @@ export interface Buff {
 export interface Rune {
     readonly key: string;
     readonly name: string;
+    readonly icon: string;
     readonly type: RuneType;
     readonly weaponBuff: Buff;
     readonly weaponBuffTarget: BuffTarget;

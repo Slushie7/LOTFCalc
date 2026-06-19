@@ -1,7 +1,14 @@
 import type { SortFunction, ViewContext } from './view.js';
 import { View } from './view.js';
 import type { ArmorsState } from '../state.js';
-import { getElem, addElemListener, handleMetaButtons, setSidebarContent, syncSidebarToggles } from '../sharedDOM.js';
+import {
+    getElem,
+    addElemListener,
+    handleMetaButtons,
+    setSidebarContent,
+    syncSidebarToggles,
+    convertHtmlDataAttrib,
+} from '../sharedDOM.js';
 import {
     ARMORS_HEADER_GROUPS,
     getArmorRow,
@@ -26,13 +33,14 @@ import {
     getSidebarHtml,
     getTogglesHtml,
     headerStatusImagePaths,
+    isToggleKey,
     type SidebarSection,
     type ToggleGroup,
 } from '../render/sharedRender.js';
 
 const GroupToggles: ToggleGroup<ArmorsSuperheaderKey> = {
     htmlClass: 'armors-group-toggle',
-    dataKey: { html: 'col-group', js: 'colGroup' },
+    htmlDataKey: 'col-group',
     toggles: {
         DEF: { text: 'Defenses', hover: 'Armor defenses' },
         STATUS: { text: 'Resistances', hover: 'Show armor resistances' },
@@ -42,9 +50,6 @@ const GroupToggles: ToggleGroup<ArmorsSuperheaderKey> = {
         },
     },
 };
-function isGroupToggleKey(k: unknown): k is ArmorsSuperheaderKey {
-    return typeof k === 'string' && Object.hasOwn(GroupToggles.toggles, k);
-}
 
 const SlotEnum: Record<ArmorSlot, number> = {
     Head: 0,
@@ -57,7 +62,7 @@ const WeightEnum: Record<ArmorWeightClass, number> = {
     Medium: 1,
     Heavy: 2,
 };
-const sortFunctions: Record<ArmorsHeaderKey, SortFunction<CalculatedArmorStats>> = {
+const armorsSortFns: Record<ArmorsHeaderKey, SortFunction<CalculatedArmorStats>> = {
     // INFO
     ARMR: (cas1, cas2) => cas1.armor.name.localeCompare(cas2.armor.name),
     SLOT: (cas1, cas2) => SlotEnum[cas1.armor.slot] - SlotEnum[cas2.armor.slot],
@@ -194,8 +199,8 @@ class ArmorsView extends View {
         const el = e.target;
 
         if (el.classList.contains(GroupToggles.htmlClass)) {
-            const group = el.dataset[GroupToggles.dataKey.js];
-            if (isGroupToggleKey(group)) {
+            const group = el.dataset[convertHtmlDataAttrib(GroupToggles.htmlDataKey)];
+            if (isToggleKey(group, GroupToggles)) {
                 if (el.checked) this.state.showColGroups.add(group);
                 else this.state.showColGroups.delete(group);
                 this.refresh();
@@ -303,7 +308,7 @@ class ArmorsView extends View {
         );
         let calcStats = showArmors.map((arm) => calculateArmorStats(arm, this.state.pinnedItems));
         // sort calculated armor stats by current sortKey
-        calcStats = this.sortCalculated(calcStats, this.state.sortKey, this.state.ascending, sortFunctions);
+        calcStats = this.sortCalculated(calcStats, this.state.sortKey, this.state.ascending, armorsSortFns);
         // display the armor rows
         const rows = calcStats.map((cs) => getArmorRow(cs, this.state.showColGroups));
         elBody.innerHTML = getItemTableBodyHtml(rows, armorFadeIn);

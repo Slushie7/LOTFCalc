@@ -1,15 +1,18 @@
 import { epsilonFloor } from '../calc/sharedCalc.js';
 
-// ====================================
 export type ToggleText = {
     text: string;
     hover: string;
 };
 export type ToggleGroup<T extends string> = {
     htmlClass: string;
-    dataKey: { html: string; js: string };
+    htmlDataKey: string;
     toggles: Partial<Record<T, ToggleText>>;
 };
+
+export function isToggleKey<T extends string>(k: unknown, tg: ToggleGroup<T>): k is T {
+    return typeof k === 'string' && Object.hasOwn(tg.toggles, k);
+}
 
 export function getTogglesHtml(tg: ToggleGroup<string>): string {
     const parts: string[] = [];
@@ -17,7 +20,7 @@ export function getTogglesHtml(tg: ToggleGroup<string>): string {
     for (const [key, setting] of Object.entries(tg.toggles))
         if (setting !== undefined)
             parts.push(
-                `<label title="${setting.hover}"><input type="checkbox" class="${tg.htmlClass}" data-${tg.dataKey.html}="${key}" />${setting.text}</label>`
+                `<label title="${setting.hover}"><input type="checkbox" class="${tg.htmlClass}" data-${tg.htmlDataKey}="${key}" />${setting.text}</label>`
             );
 
     return parts.join('');

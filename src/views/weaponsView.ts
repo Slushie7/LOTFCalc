@@ -13,6 +13,7 @@ import {
     handleMetaButtons,
     setSidebarContent,
     syncSidebarToggles,
+    convertHtmlDataAttrib,
 } from '../sharedDOM.js';
 import {
     getHeaderHtml,
@@ -20,13 +21,14 @@ import {
     getSidebarHtml,
     getTogglesHtml,
     headerStatusImagePaths,
+    isToggleKey,
     type SidebarSection,
     type ToggleGroup,
 } from '../render/sharedRender.js';
 
 const SettingToggles: ToggleGroup<BooleanKeys<WeaponsState>> = {
     htmlClass: 'weapons-setting-toggle',
-    dataKey: { html: 'setting', js: 'setting' },
+    htmlDataKey: 'setting',
     toggles: {
         showTwoHanding: { text: 'Two-Handing', hover: 'Show effective stats from two-handing a weapon' },
         showUnwieldable: { text: 'Unwieldable', hover: 'Show weapons you lack the stats to wield' },
@@ -37,13 +39,10 @@ const SettingToggles: ToggleGroup<BooleanKeys<WeaponsState>> = {
         showRawScaling: { text: 'Raw Scaling', hover: 'Show scaling grades as raw numerical values' },
     },
 };
-function isSettingToggleKey(k: unknown): k is BooleanKeys<WeaponsState> {
-    return typeof k === 'string' && Object.hasOwn(SettingToggles.toggles, k);
-}
 
 const GroupToggles: ToggleGroup<WeaponsSuperheaderKey> = {
     htmlClass: 'weapons-group-toggle',
-    dataKey: { html: 'col-group', js: 'colGroup' },
+    htmlDataKey: 'col-group',
     toggles: {
         AR: { text: 'Attack', hover: 'Show attack rating for physical, holy, fire, and wither' },
         MAGIC: { text: 'Magic', hover: 'Show spell power and number of spell slots for catalysts' },
@@ -61,11 +60,8 @@ const GroupToggles: ToggleGroup<WeaponsSuperheaderKey> = {
         REQS: { text: 'Wield Reqs', hover: 'Show the stats required to effectively wield weapons' },
     },
 };
-function isGroupToggleKey(k: unknown): k is WeaponsSuperheaderKey {
-    return typeof k === 'string' && Object.hasOwn(GroupToggles.toggles, k);
-}
 
-const sortFunctions: Record<WeaponsHeaderKey, SortFunction<CalculatedWeaponStats>> = {
+const weaponsSortFns: Record<WeaponsHeaderKey, SortFunction<CalculatedWeaponStats>> = {
     // INFO
     WEAP: (cws1, cws2) => cws1.weapon.name.localeCompare(cws2.weapon.name),
     CLS: (cws1, cws2) => cws1.weapon.className.localeCompare(cws2.weapon.className),
@@ -293,14 +289,14 @@ class WeaponsView extends View {
         const el = e.target;
 
         if (el.classList.contains(SettingToggles.htmlClass)) {
-            const setting = el.dataset[SettingToggles.dataKey.js];
-            if (isSettingToggleKey(setting)) {
+            const setting = el.dataset[convertHtmlDataAttrib(SettingToggles.htmlDataKey)];
+            if (isToggleKey(setting, SettingToggles)) {
                 this.state[setting] = el.checked;
                 this.renderWeapons();
             }
         } else if (el.classList.contains(GroupToggles.htmlClass)) {
-            const group = el.dataset[GroupToggles.dataKey.js];
-            if (isGroupToggleKey(group)) {
+            const group = el.dataset[convertHtmlDataAttrib(GroupToggles.htmlDataKey)];
+            if (isToggleKey(group, GroupToggles)) {
                 if (el.checked) this.state.showColGroups.add(group);
                 else this.state.showColGroups.delete(group);
                 this.refresh();
@@ -378,7 +374,7 @@ class WeaponsView extends View {
             if (
                 el instanceof HTMLInputElement &&
                 typeof el.dataset.setting === 'string' &&
-                isSettingToggleKey(el.dataset.setting)
+                isToggleKey(el.dataset.setting, SettingToggles)
             ) {
                 // map element's 'data-setting' value to relevant current AppState value
                 const setting = el.dataset.setting as keyof WeaponsState;
@@ -430,7 +426,7 @@ class WeaponsView extends View {
             // remove any unwieldable weapons
             calcStats = calcStats.filter((ws) => ws.wieldability.wieldable);
         // sort calculated weapon stats by current sortKey
-        calcStats = this.sortCalculated(calcStats, this.state.sortKey, this.state.ascending, sortFunctions);
+        calcStats = this.sortCalculated(calcStats, this.state.sortKey, this.state.ascending, weaponsSortFns);
         // display the weapon rows
         const rows = calcStats.map((cs) =>
             getWeaponRow(cs, this.state.showColGroups, this.state.showSplit, this.state.showRawScaling)
