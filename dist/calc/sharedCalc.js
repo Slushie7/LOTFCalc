@@ -89,7 +89,7 @@ export function calculatePlayerStats(playerStats, curves) {
     const vit = playerStats.vitality;
     const rad = playerStats.radiance;
     const inf = playerStats.inferno;
-    const level = str + agi + end + vit + rad + inf;
+    const level = str + agi + end + vit + rad + inf - 53;
     const hpCurve = getCurve('MaxHealth_Vitality');
     const hp = interpolate(hpCurve, vit);
     const manaCurve = getCurve('MaxMana_FaithChaos');

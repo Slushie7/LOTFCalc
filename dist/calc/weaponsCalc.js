@@ -76,12 +76,14 @@ function calculateContribution(statScaledDmg, upgLevel, statLevel) {
     if (statScaledDmg.stat === 'S' || statScaledDmg.stat === 'A') {
         physical = getValue(bd.dmgPhysical, upgLevel) * factor;
     }
-    else if (statScaledDmg.stat === 'R' || statScaledDmg.stat === 'I') {
-        holy = getValue(bd.dmgHoly, upgLevel) * factor;
-        fire = getValue(bd.dmgFire, upgLevel) * factor;
+    if (statScaledDmg.stat === 'R' || statScaledDmg.stat === 'I') {
         wither = getValue(bd.dmgWither, upgLevel) * factor;
         spellPower = getValue(bd.dmgSpell, upgLevel) * factor;
     }
+    if (statScaledDmg.stat === 'R')
+        holy = getValue(bd.dmgHoly, upgLevel) * factor;
+    if (statScaledDmg.stat === 'I')
+        fire = getValue(bd.dmgFire, upgLevel) * factor;
     const ar = { physical, holy, fire, wither, spellPower };
     return { ar, weaponScalingStatCoef: weaponScalingStat };
 }
