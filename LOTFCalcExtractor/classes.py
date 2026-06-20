@@ -32,6 +32,9 @@ ARMOR_SLOT_MAP: dict[str, ARMOR_SLOT] = {
 ARMOR_WEIGHT_CLASSES = Literal['Light', 'Medium', 'Heavy']
 ARMOR_INFO_PAT = re.compile(r'Inventory\.Category\.Equipment\.Armor\.(.*?)\.(.*?)\..*')
 
+SPELL_TYPE = Literal['Inferno', 'Radiant', 'Umbral']
+CAST_TYPE = Literal['Single', 'Channeled']
+
 
 def epsilon_floor(x: float) -> int:
     return math.floor(x + 1e-9)
@@ -423,6 +426,19 @@ class Armor:
             d['set'],
             ArmorStats.from_dict(d['stats']),
         )
+
+
+@dataclass(frozen=True)
+class SpellTest:
+    key: str
+    name: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {}
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> Self:
+        return cls(d['key'], d['name'])
 
 
 # ================================

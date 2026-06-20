@@ -55,7 +55,7 @@ export function getSidebarHtml(sections) {
         for (const item of section.items) {
             const checked = section.checkedItems.has(item) ? ' checked' : '';
             const escaped = escapeHtml(item);
-            parts.push(`<label><input type="checkbox"${checked} data-class="${escaped}">${escaped}</label>`);
+            parts.push(`<label><input type="checkbox"${checked} data-${section.sectionKey}="${escaped}">${escaped}</label>`);
         }
         sectionsHtml.push(parts.join(''));
     }

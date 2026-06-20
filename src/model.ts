@@ -64,6 +64,10 @@ export function isArmorWeightClass(v: unknown): v is ArmorWeightClass {
     return ARMOR_WEIGHT_CLASSES.includes(v as ArmorWeightClass);
 }
 
+interface TableData {
+    readonly pinned: boolean
+}
+
 export interface Curve {
     readonly key: string;
     readonly interpMode: InterpMode;
@@ -292,7 +296,7 @@ export interface CalculatedWeaponDefense {
 /**
  * Calculated weapon stats for displaying in the app
  */
-export interface CalculatedWeaponStats {
+export interface CalculatedWeaponStats extends TableData {
     readonly weapon: Weapon;
     readonly offense: CalculatedWeaponOffense;
     readonly defense: CalculatedWeaponDefense;
@@ -300,7 +304,6 @@ export interface CalculatedWeaponStats {
     readonly upgLevel: number;
     readonly playerStats: PlayerStats;
     readonly wieldability: CalculatedCanWield;
-    readonly pinned: boolean;
 }
 
 export interface CalculatedPlayerStats {
@@ -321,11 +324,10 @@ export interface CalculatedPlayerStats {
     readonly resFrost: number;
 }
 
-export interface CalculatedArmorStats {
+export interface CalculatedArmorStats extends TableData {
     readonly armor: Armor;
     readonly defTotal: number;
     readonly resTotal: number;
-    readonly pinned: boolean;
 }
 
 export interface CalculatedPlayerDefenses {

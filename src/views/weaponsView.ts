@@ -229,7 +229,7 @@ class WeaponsView extends View {
         if (
             !handleMetaButtons(
                 e,
-                'weapon-classes',
+                'weapon-class',
                 () => {
                     this.loadedWeaponClasses.forEach((v) => this.state.selectedClasses.add(v));
                 },
@@ -240,7 +240,7 @@ class WeaponsView extends View {
         )
             return;
 
-        syncSidebarToggles('class', this.state.selectedClasses, isWeaponClass);
+        syncSidebarToggles('weapon-class', this.state.selectedClasses, isWeaponClass);
         this.applySmartToggles();
 
         this.refresh();
@@ -253,10 +253,10 @@ class WeaponsView extends View {
         if (!(e.target instanceof HTMLInputElement)) return;
 
         const el = e.target;
-        if (!isWeaponClass(el.dataset.class)) return;
+        if (!isWeaponClass(el.dataset.weaponClass)) return;
 
         // add/remove the class name from selectedClasses
-        const className = el.dataset.class;
+        const className = el.dataset.weaponClass;
         if (el.checked) this.state.selectedClasses.add(className);
         else this.state.selectedClasses.delete(className);
 
@@ -357,7 +357,7 @@ class WeaponsView extends View {
         // update the sidebar's content
         const section: SidebarSection<WeaponClass> = {
             text: 'Weapons',
-            sectionKey: 'weapon-classes',
+            sectionKey: 'weapon-class',
             items: this.loadedWeaponClasses,
             checkedItems: this.state.selectedClasses,
         };

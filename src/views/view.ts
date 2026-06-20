@@ -30,7 +30,7 @@ export abstract class View {
     abstract hide(): void;
     abstract refresh(): void;
 
-    public sortCalculated<T extends { readonly pinned: boolean }, K extends string>(
+    protected sortCalculated<T extends { readonly pinned: boolean }, K extends string>(
         calculated: T[],
         sortKey: K,
         ascending: boolean,

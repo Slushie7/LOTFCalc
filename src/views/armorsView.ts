@@ -144,7 +144,7 @@ class ArmorsView extends View {
         if (
             !handleMetaButtons(
                 e,
-                'armor-slots',
+                'armor-slot',
                 () => {
                     ARMOR_SLOTS.forEach((v) => this.state.selectedSlots.add(v));
                 },
@@ -154,7 +154,7 @@ class ArmorsView extends View {
             ) &&
             !handleMetaButtons(
                 e,
-                'armor-weights',
+                'armor-weight',
                 () => {
                     ARMOR_WEIGHT_CLASSES.forEach((v) => this.state.selectedWeights.add(v));
                 },
@@ -165,8 +165,8 @@ class ArmorsView extends View {
         )
             return;
 
-        syncSidebarToggles('slot', this.state.selectedSlots, isArmorSlot);
-        syncSidebarToggles('weight-class', this.state.selectedWeights, isArmorWeightClass);
+        syncSidebarToggles('armor-slot', this.state.selectedSlots, isArmorSlot);
+        syncSidebarToggles('armor-weight', this.state.selectedWeights, isArmorWeightClass);
         this.refresh();
         this.ctx.save();
     }
@@ -177,12 +177,12 @@ class ArmorsView extends View {
         if (!(e.target instanceof HTMLInputElement)) return;
 
         const el = e.target;
-        if (el.dataset.slot && isArmorSlot(el.dataset.slot)) {
-            const slot = el.dataset.slot;
+        if (el.dataset.armorSlot && isArmorSlot(el.dataset.armorSlot)) {
+            const slot = el.dataset.armorSlot;
             if (el.checked) this.state.selectedSlots.add(slot);
             else this.state.selectedSlots.delete(slot);
-        } else if (el.dataset.weightClass && isArmorWeightClass(el.dataset.weightClass)) {
-            const wc = el.dataset.weightClass;
+        } else if (el.dataset.armorWeight && isArmorWeightClass(el.dataset.armorWeight)) {
+            const wc = el.dataset.armorWeight;
             if (el.checked) this.state.selectedWeights.add(wc);
             else this.state.selectedWeights.delete(wc);
         }
@@ -260,10 +260,10 @@ class ArmorsView extends View {
 
         // update the sidebar's content
         const sections: [SidebarSection<ArmorSlot>, SidebarSection<ArmorWeightClass>] = [
-            { text: 'Armors', sectionKey: 'armor-slots', items: ARMOR_SLOTS, checkedItems: this.state.selectedSlots },
+            { text: 'Armors', sectionKey: 'armor-slot', items: ARMOR_SLOTS, checkedItems: this.state.selectedSlots },
             {
                 text: 'Weights',
-                sectionKey: 'armor-weights',
+                sectionKey: 'armor-weight',
                 items: ARMOR_WEIGHT_CLASSES,
                 checkedItems: this.state.selectedWeights,
             },
