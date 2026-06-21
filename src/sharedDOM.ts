@@ -9,16 +9,6 @@ export function getElem(id: string): HTMLElement {
     return getTypedElem(id, HTMLElement);
 }
 
-export function addTypedElemListener<T extends HTMLElement>(
-    id: string,
-    elemType: new () => T,
-    type: keyof HTMLElementEventMap,
-    listener: (e: Event) => void,
-    options?: boolean | AddEventListenerOptions
-): void {
-    getTypedElem(id, elemType).addEventListener(type, listener, options);
-}
-
 export function addElemListener(
     id: string,
     type: keyof HTMLElementEventMap,

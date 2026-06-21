@@ -185,13 +185,6 @@ interface WeaponRow extends Row {
     readonly wieldable: boolean;
 }
 
-export function getWeaponsHeaderHtml(
-    groups: readonly WeaponsHeaderGroup[],
-    sortKey: WeaponsHeaderKey,
-    ascending: boolean
-): string {
-    return getHeaderHtml(groups, sortKey, ascending, HEADER_STATUS_IMAGE_PATHS);
-}
 
 function formatDmg(dmg: DamageSplit, showSplit: boolean): string {
     if (!dmg.total) return '-';
