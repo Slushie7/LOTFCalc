@@ -13,39 +13,38 @@ export function addTypedElemListener<T extends HTMLElement>(
     id: string,
     elemType: new () => T,
     type: keyof HTMLElementEventMap,
-    listener: (e: Event) => void
+    listener: (e: Event) => void,
+    options?: boolean | AddEventListenerOptions
 ): void {
-    getTypedElem(id, elemType).addEventListener(type, listener);
+    getTypedElem(id, elemType).addEventListener(type, listener, options);
 }
 
-export function addElemListener(id: string, type: keyof HTMLElementEventMap, listener: (e: Event) => void): void {
-    getElem(id).addEventListener(type, listener);
+export function addElemListener(
+    id: string,
+    type: keyof HTMLElementEventMap,
+    listener: (e: Event) => void,
+    options?: boolean | AddEventListenerOptions
+): void {
+    getElem(id).addEventListener(type, listener, options);
 }
 
 export function addClassListeners<T extends HTMLElement>(
     classNames: string,
     elemT: new () => T,
     type: keyof HTMLElementEventMap,
-    listener: (e: Event) => void
+    listener: (e: Event) => void,
+    options?: boolean | AddEventListenerOptions
 ): void {
     for (const el of document.getElementsByClassName(classNames)) {
-        if (el instanceof elemT) el.addEventListener(type, listener);
+        if (el instanceof elemT) el.addEventListener(type, listener, options);
     }
-}
-
-export function setSidebarContent(innerHTML: string, show: boolean | null = true): void {
-    if (show !== null)
-        if (show) document.body.classList.remove('sidebar-hidden');
-        else document.body.classList.add('sidebar-hidden');
-
-    getElem('sidebar-content').innerHTML = innerHTML;
 }
 
 /**
  * Converts an HTML tag's data attribute name to JS's camelCase representation. The 'data-' prefix is optional.
  * e.g. convertHtmlDataAttrib('data-some-attr-key') -> 'someAttrKey'
- * @param dataAttrib 
- * @returns 
+ * @param dataAttrib
+ * @returns
  */
 export function convertHtmlDataAttrib(dataAttrib: string): string {
     if (dataAttrib.startsWith('data-')) dataAttrib = dataAttrib.slice(5);
@@ -64,34 +63,16 @@ export function syncSidebarToggles(
     checkedSet: Set<string>,
     verifyFn?: (v: unknown) => boolean
 ): void {
+    // remove any 'data-' prefix
     if (htmlDataKey.startsWith('data-')) htmlDataKey = htmlDataKey.slice(5);
 
-    const jsDataKey = convertHtmlDataAttrib(htmlDataKey);
+    const jsDataKey = convertHtmlDataAttrib(htmlDataKey); // convert to JS's camelCase representation
     const sidebar = getElem('sidebar-content');
     for (const el of sidebar.querySelectorAll(`[data-${htmlDataKey}]`)) {
         if (el instanceof HTMLInputElement) {
             const data = el.dataset[jsDataKey];
+            // set the input's checked state
             if (data !== undefined && (!verifyFn || verifyFn(data))) el.checked = checkedSet.has(data);
         }
     }
-}
-
-export function handleMetaButtons(
-    e: Event,
-    sectionKey: string,
-    onSelectAll: () => void,
-    onSelectNone: () => void
-): boolean {
-    if (!(e.target instanceof HTMLElement) && !(e.target instanceof SVGElement)) return false;
-    const el = e.target.closest<HTMLButtonElement>('button.meta-btn');
-    if (el && el.dataset.sectionKey === sectionKey) {
-        if (el.dataset.command === 'select-all') {
-            onSelectAll();
-            return true;
-        } else if (el.dataset.command === 'select-none') {
-            onSelectNone();
-            return true;
-        }
-    }
-    return false;
 }

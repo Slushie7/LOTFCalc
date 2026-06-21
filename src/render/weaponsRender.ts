@@ -7,7 +7,7 @@ import {
     formatPercent,
     formatRoundOpt,
     getHeaderHtml,
-    headerStatusImagePaths,
+    HEADER_STATUS_IMAGE_PATHS,
     pushCell,
     type Cell,
     type HeaderColumn,
@@ -71,11 +71,11 @@ export function isWeaponsSuperheaderKey(v: unknown): v is WeaponsSuperheaderKey 
     return WEAPONS_SUPERHEADER_KEYS.includes(v as WeaponsSuperheaderKey);
 }
 
-export interface WeaponsHeaderColumn extends HeaderColumn {
+export interface WeaponsHeaderColumn extends HeaderColumn<WeaponsHeaderKey> {
     readonly key: WeaponsHeaderKey;
 }
 
-export interface WeaponsHeaderGroup extends HeaderGroup {
+export interface WeaponsHeaderGroup extends HeaderGroup<WeaponsHeaderKey, WeaponsSuperheaderKey> {
     readonly superKey: WeaponsSuperheaderKey;
     readonly columns: readonly WeaponsHeaderColumn[];
 }
@@ -190,7 +190,7 @@ export function getWeaponsHeaderHtml(
     sortKey: WeaponsHeaderKey,
     ascending: boolean
 ): string {
-    return getHeaderHtml(groups, sortKey, ascending, headerStatusImagePaths);
+    return getHeaderHtml(groups, sortKey, ascending, HEADER_STATUS_IMAGE_PATHS);
 }
 
 function formatDmg(dmg: DamageSplit, showSplit: boolean): string {

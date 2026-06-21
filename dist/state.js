@@ -72,82 +72,85 @@ export function loadAppState() {
         return defaultState; // couldn't parse settings
     }
     function validateShared(d) {
-        if (typeof d.playerStats !== 'object' || !d.playerStats)
+        if (!d)
             return false;
-        const ps = d.playerStats;
+        const p = d;
+        if (typeof p.playerStats !== 'object' || !p.playerStats)
+            return false;
+        const ps = p.playerStats;
         if (!Object.keys(defaultState.shared.playerStats).every((k) => typeof ps[k] === 'number'))
             return false;
-        if (typeof d.saveSettings !== 'boolean')
+        if (typeof p.saveSettings !== 'boolean')
             return false;
-        if (!isMode(d.activeMode))
+        if (!isMode(p.activeMode))
+            return false;
+        return true;
+    }
+    function validateTable(d, headerKeyVerif, superHeaderKeyVerif) {
+        if (!d)
+            return false;
+        const p = d;
+        if (!headerKeyVerif(p.sortKey))
+            return false;
+        if (typeof p.ascending !== 'boolean')
+            return false;
+        if (!Array.isArray(p.showColGroups))
+            return false;
+        if (!p.showColGroups.every((v) => superHeaderKeyVerif(v)))
+            return false;
+        if (!Array.isArray(p.pinnedItems))
+            return false;
+        if (!p.pinnedItems.every((v) => typeof v === 'string'))
             return false;
         return true;
     }
     function validateWeapons(d) {
-        if (typeof d.upgLevel !== 'number')
+        if (!validateTable(d, isWeaponsHeaderKey, isWeaponsSuperheaderKey))
             return false;
-        if (!Array.isArray(d.selectedClasses))
+        const p = d;
+        if (typeof p.upgLevel !== 'number')
             return false;
-        if (!d.selectedClasses.every((v) => isWeaponClass(v)))
+        if (!Array.isArray(p.selectedClasses))
             return false;
-        if (!isWeaponsHeaderKey(d.sortKey))
+        if (!p.selectedClasses.every((v) => isWeaponClass(v)))
             return false;
-        if (typeof d.ascending !== 'boolean')
+        if (typeof p.showTwoHanding !== 'boolean')
             return false;
-        if (!Array.isArray(d.showColGroups))
+        if (typeof p.showUnwieldable !== 'boolean')
             return false;
-        if (!d.showColGroups.every((v) => isWeaponsSuperheaderKey(v)))
+        if (typeof p.showSplit !== 'boolean')
             return false;
-        if (typeof d.showTwoHanding !== 'boolean')
-            return false;
-        if (typeof d.showUnwieldable !== 'boolean')
-            return false;
-        if (typeof d.showSplit !== 'boolean')
-            return false;
-        if (!Array.isArray(d.pinnedItems))
-            return false;
-        if (!d.pinnedItems.every((v) => typeof v === 'string'))
-            return false;
-        if (typeof d.showRawScaling !== 'boolean')
+        if (typeof p.showRawScaling !== 'boolean')
             return false;
         return true;
     }
     function validateArmors(d) {
-        if (!Array.isArray(d.selectedSlots))
+        if (!validateTable(d, isArmorsHeaderKey, isArmorsSuperheaderKey))
             return false;
-        if (!d.selectedSlots.every((v) => isArmorSlot(v)))
+        const p = d;
+        if (!Array.isArray(p.selectedSlots))
             return false;
-        if (!Array.isArray(d.selectedWeights))
+        if (!p.selectedSlots.every((v) => isArmorSlot(v)))
             return false;
-        if (!d.selectedWeights.every((v) => isArmorWeightClass(v)))
+        if (!Array.isArray(p.selectedWeights))
             return false;
-        if (!isArmorsHeaderKey(d.sortKey))
-            return false;
-        if (typeof d.ascending !== 'boolean')
-            return false;
-        if (!Array.isArray(d.showColGroups))
-            return false;
-        if (!d.showColGroups.every((v) => isArmorsSuperheaderKey(v)))
-            return false;
-        if (!Array.isArray(d.pinnedItems))
-            return false;
-        if (!d.pinnedItems.every((v) => typeof v === 'string'))
+        if (!p.selectedWeights.every((v) => isArmorWeightClass(v)))
             return false;
         return true;
     }
     function validateAppState(d) {
-        if (typeof d.v !== 'number' || d.v !== STORAGE_VER)
+        if (typeof d !== 'object' || !d)
             return false;
-        if (typeof d.shared !== 'object' || !d.shared)
+        const p = d;
+        if (typeof p.v !== 'number' || p.v !== STORAGE_VER)
             return false;
-        if (typeof d.weapons !== 'object' || !d.weapons)
+        if (typeof p.shared !== 'object' || !p.shared)
             return false;
-        if (typeof d.armors !== 'object' || !d.armors)
+        if (typeof p.weapons !== 'object' || !p.weapons)
             return false;
-        const shared = d.shared;
-        const weapons = d.weapons;
-        const armors = d.armors;
-        return validateShared(shared) && validateWeapons(weapons) && validateArmors(armors);
+        if (typeof p.armors !== 'object' || !p.armors)
+            return false;
+        return validateShared(p.shared) && validateWeapons(p.weapons) && validateArmors(p.armors);
     }
     // try to validate the format of the JSON data
     if (typeof parsed === 'boolean' && !parsed) {

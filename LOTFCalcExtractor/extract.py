@@ -29,9 +29,6 @@ from .classes import (
     ARMOR_WEIGHT_CLASSES,
     Armor,
     ArmorStats,
-    SpellTest,
-    CAST_TYPE,
-    SPELL_TYPE,
 )
 from .load_weapons import load_json_data
 
@@ -67,11 +64,6 @@ def clean_rune_icon(icon_path: Path) -> str:
     return cleaned
 
 
-def clean_spell_icon(icon_path: Path) -> str:
-    cleaned = prune(icon_path.name, 'thumb_ItemImg_MAG_SPL_')
-    return cleaned
-
-
 class LOTFExtractor:
     def __init__(self, lotf2_dir: str | Path, mode: str, *args) -> None:
         lotf2_dir = Path(lotf2_dir)
@@ -83,8 +75,10 @@ class LOTFExtractor:
         localization_dir = content_dir / 'Localization/Game/en'
 
         # required paths
+        self.GAME_DIR = content_dir.parent
         self.STAT_SC_DEFS_PATH = atk_defs_dir / 'DT_UI_StatScalarDefinition.json'
         self.BATTLE_EFFECTS_PATH = data_dir / 'BattleEffects/DT_BattleEffectsData.json'
+        self.ENEMIES_DIR = data_dir / 'Character/Enemies'
         self.ATTACK_DEFS_PATH = data_dir / 'Combat/DT_GlobalAttackDamageDefinition.json'
         self.ARMOR_META_DIR = data_dir / 'Equipment/Armor/Player'
         self.SPELLS_META_DIR = data_dir / 'Equipment/Items/Magic'
@@ -305,105 +299,6 @@ class LOTFExtractor:
 
         print(f'Extracted {len(runes)} runes!')
         return tuple(runes)
-
-    def _extract_spells(self) -> tuple[SpellTest, ...]:
-        def read_int(key: str) -> int:
-            val = spellstats_d[key]
-            if not isinstance(val, int):
-                raise TypeError(f'Expected int value from key "{key}" but got {type(val)}')
-            return val
-
-        print('Extracting spell stats')
-
-        spells: list[SpellTest] = []
-
-        with open(self.SPELLS_STATS_PATH, encoding='utf-8') as f:
-            spellstats_d = json.load(f)[0]['Rows']
-
-        with open(self.ATTACK_DEFS_PATH, encoding='utf-8') as f:
-            atkdefs_d = json.load(f)[0]['Rows']
-
-        # scan through the spell definitions subdirs
-        for file in self.SPELLS_META_DIR.iterdir():
-            if not file.is_file() or file.suffix.lower() != '.json':
-                continue
-
-            with open(file, encoding='utf-8') as f:
-                d = json.load(f)[1]['Properties']
-
-            key = d['StatsRow']['RowName']
-            name = d['ItemName']['SourceString'].strip()
-
-            # get the path to the spell's thumbnail and clean the path up
-            icon = clean_spell_icon(Path(d['ItemIcon']['ObjectPath']))
-            if not icon.endswith('.0'):
-                raise ValueError(f'Unhandled thumbnail suffix for "{icon}"')
-            icon = icon[:-2]
-
-            _costs_per_d = {}
-            for cost_per_d in d['Cost']:
-                _costs_per_d[cost_per_d['Key']['TagName']] = cost_per_d['Value']
-            mana_cost_per = _costs_per_d['Cost.ManaPercentage'] / 100
-            stam_cost_per = _costs_per_d['Cost.StaminaPercentage'] / 100
-
-            if len(d['magicToSpawn']) > 1:
-                raise ValueError("len(d['magicToSpawn']) > 1", key)
-
-            spell_d = spellstats_d[key]
-
-            req_str = spell_d['RequirementStrength']
-            req_agi = spell_d['RequirementAgility']
-            req_end = spell_d['RequirementEndurance']
-            req_vit = spell_d['RequirementVitality']
-            req_rad = spell_d['RequirementFaith']
-            req_inf = spell_d['RequirementChaos']
-            wield_reqs = PlayerStats(req_str, req_agi, req_end, req_vit, req_rad, req_inf)
-
-            stam_cost = spell_d['StaminaCost']
-            stam_loop_cost = spell_d['LoopingStaminaCost']
-            mana_cost = spell_d['ManaCost']
-            mana_loop_cost = spell_d['LoopingManaCost']
-
-            # parse AttackDef entry
-            atkdef_key = spell_d['DamageDefinitionShownInUI']['DamageDefID']
-            if atkdef_key not in atkdefs_d:
-                print(f'atkdef_key "{atkdef_key}" not in AttackDefs - skipping')
-                continue
-            atkdef = atkdefs_d[atkdef_key]
-
-            pvp_mult = atkdef['MultiplierForPVP']
-
-            dmg_per_mults: dict[str, float] = {}
-            for dmg_per_mult_d in atkdef['DamagePercentageMultiplier']:
-                dpm_key = dmg_per_mult_d['Key']['TagName']
-                dpm_val = dmg_per_mult_d['Value']
-                dmg_per_mults[dpm_key] = dpm_val
-
-            dmg_mult_physical = dmg_per_mults.get('Attack.Damage.Physical', 0.0)
-            dmg_mult_fire = dmg_per_mults.get('Attack.Damage.Fire', 0.0)
-            dmg_mult_holy = dmg_per_mults.get('Attack.Damage.Holy', 0.0)
-            dmg_mult_wither = dmg_per_mults.get('Attack.Damage.Dark', 0.0)
-            dmg_mult_magic = dmg_per_mults.get('Attack.Damage.Magic', 0.0)
-            dmg_mult_poise = dmg_per_mults.get('Attack.Damage.Poise', 0.0)
-            dmg_mult_stamina = dmg_per_mults.get('Attack.Damage.Stamina', 0.0)
-            dmg_mult_stagger = dmg_per_mults.get('Attack.Damage.Stagger', 0.0)
-
-            atk_props: list[str] = atkdef['AttackProperties']
-            cast_type: CAST_TYPE = (
-                'Channeled' if 'Attack.Property.AttackType.Spell.Channeling' in atk_props else 'Single'
-            )
-            shout = 'Attack.Property.AttackType.Spell.Shout' in atk_props
-            spell_type: SPELL_TYPE
-            if 'Attack.Property.AttackType.Spell.Rhogar' in atk_props:
-                spell_type = 'Inferno'
-            elif 'Attack.Property.AttackType.Spell.Radiant' in atk_props:
-                spell_type = 'Radiant'
-            elif 'Attack.Property.AttackType.Spell.Umbral' in atk_props:
-                spell_type = 'Umbral'
-            else:
-                raise ValueError(f'Could not classify spell type for {atkdef_key}')
-
-        return tuple(spells)
 
     def _extract_ranged_ammo(self) -> dict[str, int]:
         with open(self.RANGED_STATS_PATH, encoding='utf-8') as f:

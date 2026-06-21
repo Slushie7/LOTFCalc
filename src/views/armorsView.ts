@@ -1,14 +1,5 @@
-import type { SortFunction, ViewContext } from './view.js';
-import { View } from './view.js';
+import type { ViewContext } from './view.js';
 import type { ArmorsState } from '../state.js';
-import {
-    getElem,
-    addElemListener,
-    handleMetaButtons,
-    setSidebarContent,
-    syncSidebarToggles,
-    convertHtmlDataAttrib,
-} from '../sharedDOM.js';
 import {
     ARMORS_HEADER_GROUPS,
     getArmorRow,
@@ -27,16 +18,8 @@ import {
     type CalculatedArmorStats,
 } from '../model.js';
 import { calculateArmorStats } from '../calc/armorsCalc.js';
-import {
-    getHeaderHtml,
-    getItemTableBodyHtml,
-    getSidebarHtml,
-    getTogglesHtml,
-    headerStatusImagePaths,
-    isToggleKey,
-    type SidebarSection,
-    type ToggleGroup,
-} from '../render/sharedRender.js';
+import { type Row, type SidebarSection, type ToggleGroup } from '../render/sharedRender.js';
+import { TableView, type SortFunction } from './tableView.js';
 
 const GroupToggles: ToggleGroup<ArmorsSuperheaderKey> = {
     htmlClass: 'armors-group-toggle',
@@ -95,222 +78,48 @@ export function createArmorsView(state: ArmorsState, ctx: ViewContext) {
     return new ArmorsView(state, ctx);
 }
 
-class ArmorsView extends View {
+class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperheaderKey, CalculatedArmorStats> {
     readonly mode = 'armors' as const;
     readonly modeBtnText = 'Armors' as const;
 
-    constructor(
-        private readonly state: ArmorsState,
-        ctx: ViewContext
-    ) {
-        super(ctx);
+    protected readonly headerGroups = ARMORS_HEADER_GROUPS;
+    protected readonly colGroupToggles = GroupToggles;
+    protected readonly sortFns = armorsSortFns;
+    protected readonly ascendingByDefault: ReadonlySet<ArmorsHeaderKey> = new Set(['ARMR', 'SLOT', 'WGT']);
+    protected isHeaderKey = isArmorsHeaderKey;
+
+    protected readonly sidebarSections: [SidebarSection<ArmorSlot>, SidebarSection<ArmorWeightClass>] = [
+        {
+            text: 'Armors',
+            sectionKey: 'armor-slot',
+            items: ARMOR_SLOTS,
+            checkedItemsGetter: () => this.state.selectedSlots,
+            itemVerifyFn: isArmorSlot,
+        },
+        {
+            text: 'Weights',
+            sectionKey: 'armor-weight',
+            items: ARMOR_WEIGHT_CLASSES,
+            checkedItemsGetter: () => this.state.selectedWeights,
+            itemVerifyFn: isArmorWeightClass,
+        },
+    ];
+
+    constructor(state: ArmorsState, ctx: ViewContext) {
+        super(state, ctx);
     }
 
-    mount(): void {
-        // armor class toggles
-        addElemListener('sidebar-content', 'click', (e) => this.onSidebarMetaClick(e));
-        addElemListener('sidebar-content', 'change', (e) => this.onSetSidebarToggle(e));
-        // settings/column group toggles
-        addElemListener('view-toggles', 'change', (e) => this.onSettingToggle(e));
-        // table header sorting
-        addElemListener('armors-header', 'click', (e) => this.onTableHeaderClick(e));
-        addElemListener('armors-body', 'click', (e) => this.onTableBodyClick(e));
-    }
-
-    show(): void {
-        getElem('view-armors').hidden = false;
-        this.renderArmorsModeElements();
-        this.hideUpgInput();
-        this.syncToggles();
-        this.refresh();
-    }
-
-    hide(): void {
-        getElem('view-armors').hidden = true;
-    }
-
-    refresh(): void {
-        this.renderHeader();
-        this.renderArmors();
-    }
-
-    // =========================================
-    // EVENT HANDLERS
-    // =========================================
-
-    private onSidebarMetaClick(e: Event): void {
-        if (!this.isActiveMode()) return;
-
-        if (
-            !handleMetaButtons(
-                e,
-                'armor-slot',
-                () => {
-                    ARMOR_SLOTS.forEach((v) => this.state.selectedSlots.add(v));
-                },
-                () => {
-                    this.state.selectedSlots.clear();
-                }
-            ) &&
-            !handleMetaButtons(
-                e,
-                'armor-weight',
-                () => {
-                    ARMOR_WEIGHT_CLASSES.forEach((v) => this.state.selectedWeights.add(v));
-                },
-                () => {
-                    this.state.selectedWeights.clear();
-                }
-            )
-        )
-            return;
-
-        syncSidebarToggles('armor-slot', this.state.selectedSlots, isArmorSlot);
-        syncSidebarToggles('armor-weight', this.state.selectedWeights, isArmorWeightClass);
-        this.refresh();
-        this.ctx.save();
-    }
-
-    private onSetSidebarToggle(e: Event): void {
-        if (!this.isActiveMode()) return;
-
-        if (!(e.target instanceof HTMLInputElement)) return;
-
-        const el = e.target;
-        if (el.dataset.armorSlot && isArmorSlot(el.dataset.armorSlot)) {
-            const slot = el.dataset.armorSlot;
-            if (el.checked) this.state.selectedSlots.add(slot);
-            else this.state.selectedSlots.delete(slot);
-        } else if (el.dataset.armorWeight && isArmorWeightClass(el.dataset.armorWeight)) {
-            const wc = el.dataset.armorWeight;
-            if (el.checked) this.state.selectedWeights.add(wc);
-            else this.state.selectedWeights.delete(wc);
-        }
-
-        this.renderArmors();
-        this.ctx.save();
-    }
-
-    private onSettingToggle(e: Event): void {
-        if (!this.isActiveMode()) return;
-
-        if (!(e.target instanceof HTMLInputElement)) return;
-
-        const el = e.target;
-
-        if (el.classList.contains(GroupToggles.htmlClass)) {
-            const group = el.dataset[convertHtmlDataAttrib(GroupToggles.htmlDataKey)];
-            if (isToggleKey(group, GroupToggles)) {
-                if (el.checked) this.state.showColGroups.add(group);
-                else this.state.showColGroups.delete(group);
-                this.refresh();
-            }
-        } else return;
-
-        this.ctx.save();
-    }
-
-    private onTableHeaderClick(e: Event): void {
-        if (!this.isActiveMode()) return;
-        if (!(e instanceof MouseEvent)) return;
-        if (!(e.target instanceof Element)) return;
-
-        const el = e.target.closest<HTMLElement>('th.sortable');
-        if (!el) return;
-        if (!isArmorsHeaderKey(el.dataset.colKey)) return;
-
-        const colKey = el.dataset.colKey;
-
-        if (colKey === this.state.sortKey) this.state.ascending = !this.state.ascending;
-        else {
-            this.state.sortKey = colKey;
-            if (colKey === 'ARMR' || colKey === 'SLOT' || colKey === 'WGT' || colKey === 'WGTC')
-                // these columns default to ascending
-                this.state.ascending = true;
-            else this.state.ascending = false;
-        }
-
-        this.refresh();
-        this.ctx.save();
-    }
-
-    private onTableBodyClick(e: Event): void {
-        if (!this.isActiveMode()) return;
-        if (!(e instanceof MouseEvent)) return;
-        if (!(e.target instanceof Element)) return;
-
-        const el = e.target.closest<HTMLButtonElement>('button.lock');
-        if (!el) return;
-        if (!(typeof el.dataset.item === 'string')) return;
-        const armorKey = el.dataset.item;
-
-        if (this.state.pinnedItems.has(armorKey)) this.state.pinnedItems.delete(armorKey);
-        else this.state.pinnedItems.add(armorKey);
-
-        this.renderArmors(armorKey); // render armors with the pinned/unpinned armor transitioning into view
-        this.ctx.save();
-    }
-
-    // =========================================
-    // RENDERING - GENERATE/UPDATE HTML
-    // =========================================
-
-    private renderArmorsModeElements(): void {
-        if (!this.isActiveMode()) return;
-
-        // update the sidebar's content
-        const sections: [SidebarSection<ArmorSlot>, SidebarSection<ArmorWeightClass>] = [
-            { text: 'Armors', sectionKey: 'armor-slot', items: ARMOR_SLOTS, checkedItems: this.state.selectedSlots },
-            {
-                text: 'Weights',
-                sectionKey: 'armor-weight',
-                items: ARMOR_WEIGHT_CLASSES,
-                checkedItems: this.state.selectedWeights,
-            },
-        ];
-        setSidebarContent(getSidebarHtml(sections));
-
-        // create the settings/col-group toggles
-        getElem('view-toggles').innerHTML = getTogglesHtml(GroupToggles);
-    }
-
-    private hideUpgInput(): void {
-        if (!this.isActiveMode()) return;
-        getElem('weapon-level-div').hidden = true;
-    }
-
-    private syncToggles(): void {
-        if (!this.isActiveMode()) return;
-
-        for (const el of document.getElementsByClassName('armors-group-toggle')) {
-            if (el instanceof HTMLInputElement)
-                el.checked = this.state.showColGroups.has(el.dataset.colGroup as ArmorsSuperheaderKey);
-        }
-    }
-
-    private renderHeader(): void {
-        if (!this.isActiveMode()) return;
-
-        const elHeader = getElem('armors-header');
-        const groups = ARMORS_HEADER_GROUPS.filter((group) => this.state.showColGroups.has(group.superKey));
-        elHeader.innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending, headerStatusImagePaths);
-    }
-
-    private renderArmors(armorFadeIn: string | null = null): void {
-        if (!this.isActiveMode()) return;
-
-        // update the armors table
-        const elBody = getElem('armors-body');
+    protected collectItems(): readonly CalculatedArmorStats[] {
         const showArmors: Armor[] = this.ctx.data.armors.filter(
             (arm) =>
                 (this.state.selectedSlots.has(arm.slot) && this.state.selectedWeights.has(arm.weightClass)) ||
                 this.state.pinnedItems.has(arm.key)
         );
-        let calcStats = showArmors.map((arm) => calculateArmorStats(arm, this.state.pinnedItems));
-        // sort calculated armor stats by current sortKey
-        calcStats = this.sortCalculated(calcStats, this.state.sortKey, this.state.ascending, armorsSortFns);
-        // display the armor rows
-        const rows = calcStats.map((cs) => getArmorRow(cs, this.state.showColGroups));
-        elBody.innerHTML = getItemTableBodyHtml(rows, armorFadeIn);
+        const calcStats = showArmors.map((arm) => calculateArmorStats(arm, this.state.pinnedItems));
+        return calcStats;
+    }
+
+    protected buildRow(item: CalculatedArmorStats): Row {
+        return getArmorRow(item, this.state.showColGroups);
     }
 }

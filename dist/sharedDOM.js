@@ -9,25 +9,17 @@ export function getTypedElem(id, elemType) {
 export function getElem(id) {
     return getTypedElem(id, HTMLElement);
 }
-export function addTypedElemListener(id, elemType, type, listener) {
-    getTypedElem(id, elemType).addEventListener(type, listener);
+export function addTypedElemListener(id, elemType, type, listener, options) {
+    getTypedElem(id, elemType).addEventListener(type, listener, options);
 }
-export function addElemListener(id, type, listener) {
-    getElem(id).addEventListener(type, listener);
+export function addElemListener(id, type, listener, options) {
+    getElem(id).addEventListener(type, listener, options);
 }
-export function addClassListeners(classNames, elemT, type, listener) {
+export function addClassListeners(classNames, elemT, type, listener, options) {
     for (const el of document.getElementsByClassName(classNames)) {
         if (el instanceof elemT)
-            el.addEventListener(type, listener);
+            el.addEventListener(type, listener, options);
     }
-}
-export function setSidebarContent(innerHTML, show = true) {
-    if (show !== null)
-        if (show)
-            document.body.classList.remove('sidebar-hidden');
-        else
-            document.body.classList.add('sidebar-hidden');
-    getElem('sidebar-content').innerHTML = innerHTML;
 }
 /**
  * Converts an HTML tag's data attribute name to JS's camelCase representation. The 'data-' prefix is optional.
@@ -48,32 +40,18 @@ export function convertHtmlDataAttrib(dataAttrib) {
     return parts.join('');
 }
 export function syncSidebarToggles(htmlDataKey, checkedSet, verifyFn) {
+    // remove any 'data-' prefix
     if (htmlDataKey.startsWith('data-'))
         htmlDataKey = htmlDataKey.slice(5);
-    const jsDataKey = convertHtmlDataAttrib(htmlDataKey);
+    const jsDataKey = convertHtmlDataAttrib(htmlDataKey); // convert to JS's camelCase representation
     const sidebar = getElem('sidebar-content');
     for (const el of sidebar.querySelectorAll(`[data-${htmlDataKey}]`)) {
         if (el instanceof HTMLInputElement) {
             const data = el.dataset[jsDataKey];
+            // set the input's checked state
             if (data !== undefined && (!verifyFn || verifyFn(data)))
                 el.checked = checkedSet.has(data);
         }
     }
-}
-export function handleMetaButtons(e, sectionKey, onSelectAll, onSelectNone) {
-    if (!(e.target instanceof HTMLElement) && !(e.target instanceof SVGElement))
-        return false;
-    const el = e.target.closest('button.meta-btn');
-    if (el && el.dataset.sectionKey === sectionKey) {
-        if (el.dataset.command === 'select-all') {
-            onSelectAll();
-            return true;
-        }
-        else if (el.dataset.command === 'select-none') {
-            onSelectNone();
-            return true;
-        }
-    }
-    return false;
 }
 //# sourceMappingURL=sharedDOM.js.map

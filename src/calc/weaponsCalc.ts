@@ -1,5 +1,4 @@
 import type {
-    Curve,
     StatScalarGradeRange,
     StatScaledDamage,
     Weapon,
@@ -12,7 +11,6 @@ import type {
     BaseDamage,
     AttackRating,
     CalculatedCanWield,
-    CalculatedPlayerStats,
     CalculatedWeaponAR,
     CalculatedWeaponDefense,
     CalculatedWeaponExtras,

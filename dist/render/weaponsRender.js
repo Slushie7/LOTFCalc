@@ -1,4 +1,4 @@
-import { colDivider, colFirst, colStarter, formatIntOpt, formatPercent, formatRoundOpt, getHeaderHtml, headerStatusImagePaths, pushCell, } from './sharedRender.js';
+import { colDivider, colFirst, colStarter, formatIntOpt, formatPercent, formatRoundOpt, getHeaderHtml, HEADER_STATUS_IMAGE_PATHS, pushCell, } from './sharedRender.js';
 const WEAPONS_HEADER_KEYS = [
     // basic
     'WEAP',
@@ -152,7 +152,7 @@ export const WEAPONS_HEADER_GROUPS = [
     },
 ];
 export function getWeaponsHeaderHtml(groups, sortKey, ascending) {
-    return getHeaderHtml(groups, sortKey, ascending, headerStatusImagePaths);
+    return getHeaderHtml(groups, sortKey, ascending, HEADER_STATUS_IMAGE_PATHS);
 }
 function formatDmg(dmg, showSplit) {
     if (!dmg.total)

@@ -247,7 +247,7 @@ body.sidebar-hidden #sidebar {
    ============================================================ */
 #sidebar {
     grid-area: sidebar;
-    padding: 1rem 1.25rem;
+    padding: 0.85rem 0.85rem;
     border-right: 1px solid var(--pico-muted-border-color);
     font-size: 0.8em;
 }
@@ -270,7 +270,7 @@ body.sidebar-hidden #sidebar {
     display: inline-flex;
     align-items: center;
     justify-content: center; /* you had align- but not justify-, so the icon wasn't centered */
-    padding: 0.1rem;
+    padding: 0.25rem 0 0 0;
     background: none;
     border: none;
     box-shadow: none;
@@ -280,6 +280,12 @@ body.sidebar-hidden #sidebar {
     cursor: pointer;
     transition: color var(--pico-transition);
     margin: 0;
+}
+#sidebar .meta-left {
+    padding-right: 0.1rem;
+}
+#sidebar .meta-right {
+    padding-left: 0.1rem;
 }
 #sidebar .meta-btn:hover,
 #sidebar .meta-btn:focus-visible {

@@ -6,7 +6,7 @@ const RUNE_TYPES = [...STAT_KEYS, '*'];
 export function isRuneType(v) {
     return RUNE_TYPES.includes(v);
 }
-const WEAPON_CLASSES = [
+export const WEAPON_CLASSES = [
     'Axes',
     'Bows',
     'Catalysts',

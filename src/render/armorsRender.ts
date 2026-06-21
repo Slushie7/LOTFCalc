@@ -1,6 +1,4 @@
-import {
-    type CalculatedArmorStats,
-} from '../model.js';
+import { type CalculatedArmorStats } from '../model.js';
 import {
     colDivider,
     colFirst,
@@ -47,11 +45,11 @@ export function isArmorsSuperheaderKey(v: unknown): v is ArmorsSuperheaderKey {
     return ARMORS_SUPERHEADER_KEYS.includes(v as ArmorsSuperheaderKey);
 }
 
-export interface ArmorsHeaderColumn extends HeaderColumn {
+export interface ArmorsHeaderColumn extends HeaderColumn<ArmorsHeaderKey> {
     readonly key: ArmorsHeaderKey;
 }
 
-export interface ArmorsHeaderGroup extends HeaderGroup {
+export interface ArmorsHeaderGroup extends HeaderGroup<ArmorsHeaderKey, ArmorsSuperheaderKey> {
     readonly superKey: ArmorsSuperheaderKey;
     readonly columns: readonly ArmorsHeaderColumn[];
 }

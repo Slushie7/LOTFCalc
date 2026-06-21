@@ -6,14 +6,14 @@ import { isWeaponsHeaderKey, isWeaponsSuperheaderKey } from './render/weaponsRen
 import {
     isArmorsHeaderKey,
     isArmorsSuperheaderKey,
-    type ArmorsHeaderGroup,
     type ArmorsHeaderKey,
     type ArmorsSuperheaderKey,
 } from './render/armorsRender.js';
 
 export type BooleanKeys<T> = {
     [K in keyof T]-?: T[K] extends boolean ? K : never;
-}[keyof T];
+}[keyof T] &
+    string;
 
 // =========================================
 // MODES
@@ -29,39 +29,38 @@ export function isMode(v: unknown): v is Mode {
 // APP STATE OBJECTS
 // =========================================
 
-export type SharedState = {
+export interface SharedState {
     playerStats: PlayerStats;
     saveSettings: boolean;
     activeMode: Mode;
-};
+}
 
-export type WeaponsState = {
+export interface TableState<HK extends string, SHK extends string> {
+    sortKey: HK;
+    ascending: boolean;
+    showColGroups: Set<SHK>;
+    pinnedItems: Set<string>;
+}
+
+export interface WeaponsState extends TableState<WeaponsHeaderKey, WeaponsSuperheaderKey> {
     upgLevel: number;
     selectedClasses: Set<WeaponClass>;
-    sortKey: WeaponsHeaderKey;
-    ascending: boolean;
-    showColGroups: Set<WeaponsSuperheaderKey>;
     showTwoHanding: boolean;
     showUnwieldable: boolean;
     showSplit: boolean;
-    pinnedItems: Set<string>;
     showRawScaling: boolean;
-};
+}
 
-export type ArmorsState = {
+export interface ArmorsState extends TableState<ArmorsHeaderKey, ArmorsSuperheaderKey> {
     selectedSlots: Set<ArmorSlot>;
     selectedWeights: Set<ArmorWeightClass>;
-    sortKey: ArmorsHeaderKey;
-    ascending: boolean;
-    showColGroups: Set<ArmorsSuperheaderKey>;
-    pinnedItems: Set<string>;
-};
+}
 
-export type AppState = {
+export interface AppState {
     shared: SharedState;
     weapons: WeaponsState;
     armors: ArmorsState;
-};
+}
 
 function getDefaultState(): AppState {
     const shared: SharedState = {
@@ -103,37 +102,39 @@ function getDefaultState(): AppState {
 const STORAGE_KEY = 'lotfcalc.settings';
 const STORAGE_VER = 3;
 
-type ExportedSharedState = {
+interface ExportedSharedState {
     readonly playerStats: PlayerStats;
     readonly saveSettings: boolean;
     readonly activeMode: Mode;
-};
-type ExportedWeaponsState = {
+}
+
+interface ExportedTableState<HK extends string, SHK extends string> {
+    readonly sortKey: HK;
+    readonly ascending: boolean;
+    readonly showColGroups: readonly SHK[];
+    readonly pinnedItems: readonly string[];
+}
+
+interface ExportedWeaponsState extends ExportedTableState<WeaponsHeaderKey, WeaponsSuperheaderKey> {
     readonly upgLevel: number;
     readonly selectedClasses: readonly WeaponClass[];
-    readonly sortKey: WeaponsHeaderKey;
-    readonly ascending: boolean;
-    readonly showColGroups: readonly WeaponsSuperheaderKey[];
     readonly showTwoHanding: boolean;
     readonly showUnwieldable: boolean;
     readonly showSplit: boolean;
-    readonly pinnedItems: readonly string[];
     readonly showRawScaling: boolean;
-};
-type ExportedArmorsState = {
+}
+
+interface ExportedArmorsState extends ExportedTableState<ArmorsHeaderKey, ArmorsSuperheaderKey> {
     readonly selectedSlots: ArmorSlot[];
     readonly selectedWeights: readonly ArmorWeightClass[];
-    readonly sortKey: ArmorsHeaderKey;
-    readonly ascending: boolean;
-    readonly showColGroups: readonly ArmorsSuperheaderKey[];
-    readonly pinnedItems: readonly string[];
-};
-type ExportedAppState = {
+}
+
+interface ExportedAppState {
     readonly v: number;
     readonly shared: ExportedSharedState;
     readonly weapons: ExportedWeaponsState;
     readonly armors: ExportedArmorsState;
-};
+}
 
 /**
  * Try to load the previous AppState from localStorage
@@ -164,53 +165,66 @@ export function loadAppState(): AppState {
         return defaultState; // couldn't parse settings
     }
 
-    function validateShared(d: Record<string, unknown>): d is ExportedSharedState {
-        if (typeof d.playerStats !== 'object' || !d.playerStats) return false;
-        const ps = d.playerStats as Record<string, number>;
+    function validateShared(d: object): d is ExportedSharedState {
+        if (!d) return false;
+        const p = d as ExportedSharedState;
+        if (typeof p.playerStats !== 'object' || !p.playerStats) return false;
+        const ps = p.playerStats as Record<string, number>;
         if (!Object.keys(defaultState.shared.playerStats).every((k) => typeof ps[k] === 'number')) return false;
-        if (typeof d.saveSettings !== 'boolean') return false;
-        if (!isMode(d.activeMode)) return false;
-        return true;
-    }
-    function validateWeapons(d: Record<string, unknown>): d is ExportedWeaponsState {
-        if (typeof d.upgLevel !== 'number') return false;
-        if (!Array.isArray(d.selectedClasses)) return false;
-        if (!d.selectedClasses.every((v) => isWeaponClass(v))) return false;
-        if (!isWeaponsHeaderKey(d.sortKey)) return false;
-        if (typeof d.ascending !== 'boolean') return false;
-        if (!Array.isArray(d.showColGroups)) return false;
-        if (!d.showColGroups.every((v) => isWeaponsSuperheaderKey(v))) return false;
-        if (typeof d.showTwoHanding !== 'boolean') return false;
-        if (typeof d.showUnwieldable !== 'boolean') return false;
-        if (typeof d.showSplit !== 'boolean') return false;
-        if (!Array.isArray(d.pinnedItems)) return false;
-        if (!d.pinnedItems.every((v) => typeof v === 'string')) return false;
-        if (typeof d.showRawScaling !== 'boolean') return false;
-        return true;
-    }
-    function validateArmors(d: Record<string, unknown>): d is ExportedArmorsState {
-        if (!Array.isArray(d.selectedSlots)) return false;
-        if (!d.selectedSlots.every((v) => isArmorSlot(v))) return false;
-        if (!Array.isArray(d.selectedWeights)) return false;
-        if (!d.selectedWeights.every((v) => isArmorWeightClass(v))) return false;
-        if (!isArmorsHeaderKey(d.sortKey)) return false;
-        if (typeof d.ascending !== 'boolean') return false;
-        if (!Array.isArray(d.showColGroups)) return false;
-        if (!d.showColGroups.every((v) => isArmorsSuperheaderKey(v))) return false;
-        if (!Array.isArray(d.pinnedItems)) return false;
-        if (!d.pinnedItems.every((v) => typeof v === 'string')) return false;
+        if (typeof p.saveSettings !== 'boolean') return false;
+        if (!isMode(p.activeMode)) return false;
 
         return true;
     }
-    function validateAppState(d: Record<string, unknown>): d is ExportedAppState {
-        if (typeof d.v !== 'number' || d.v !== STORAGE_VER) return false;
-        if (typeof d.shared !== 'object' || !d.shared) return false;
-        if (typeof d.weapons !== 'object' || !d.weapons) return false;
-        if (typeof d.armors !== 'object' || !d.armors) return false;
-        const shared = d.shared as Record<string, unknown>;
-        const weapons = d.weapons as Record<string, unknown>;
-        const armors = d.armors as Record<string, unknown>;
-        return validateShared(shared) && validateWeapons(weapons) && validateArmors(armors);
+    function validateTable<HK extends string, SHK extends string>(
+        d: object,
+        headerKeyVerif: (s: unknown) => boolean,
+        superHeaderKeyVerif: (s: unknown) => boolean
+    ): d is ExportedTableState<HK, SHK> {
+        if (!d) return false;
+        const p = d as ExportedTableState<HK, SHK>;
+        if (!headerKeyVerif(p.sortKey)) return false;
+        if (typeof p.ascending !== 'boolean') return false;
+        if (!Array.isArray(p.showColGroups)) return false;
+        if (!p.showColGroups.every((v) => superHeaderKeyVerif(v))) return false;
+        if (!Array.isArray(p.pinnedItems)) return false;
+        if (!p.pinnedItems.every((v) => typeof v === 'string')) return false;
+
+        return true;
+    }
+    function validateWeapons(d: object): d is ExportedWeaponsState {
+        if (!validateTable<WeaponsHeaderKey, WeaponsSuperheaderKey>(d, isWeaponsHeaderKey, isWeaponsSuperheaderKey))
+            return false;
+        const p = d as ExportedWeaponsState;
+        if (typeof p.upgLevel !== 'number') return false;
+        if (!Array.isArray(p.selectedClasses)) return false;
+        if (!p.selectedClasses.every((v) => isWeaponClass(v))) return false;
+        if (typeof p.showTwoHanding !== 'boolean') return false;
+        if (typeof p.showUnwieldable !== 'boolean') return false;
+        if (typeof p.showSplit !== 'boolean') return false;
+        if (typeof p.showRawScaling !== 'boolean') return false;
+
+        return true;
+    }
+    function validateArmors(d: object): d is ExportedArmorsState {
+        if (!validateTable<ArmorsHeaderKey, ArmorsSuperheaderKey>(d, isArmorsHeaderKey, isArmorsSuperheaderKey))
+            return false;
+        const p = d as ExportedArmorsState;
+        if (!Array.isArray(p.selectedSlots)) return false;
+        if (!p.selectedSlots.every((v) => isArmorSlot(v))) return false;
+        if (!Array.isArray(p.selectedWeights)) return false;
+        if (!p.selectedWeights.every((v) => isArmorWeightClass(v))) return false;
+
+        return true;
+    }
+    function validateAppState(d: unknown): d is ExportedAppState {
+        if (typeof d !== 'object' || !d) return false;
+        const p = d as ExportedAppState;
+        if (typeof p.v !== 'number' || p.v !== STORAGE_VER) return false;
+        if (typeof p.shared !== 'object' || !p.shared) return false;
+        if (typeof p.weapons !== 'object' || !p.weapons) return false;
+        if (typeof p.armors !== 'object' || !p.armors) return false;
+        return validateShared(p.shared) && validateWeapons(p.weapons) && validateArmors(p.armors);
     }
 
     // try to validate the format of the JSON data

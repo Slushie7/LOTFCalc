@@ -10,7 +10,7 @@ export function isRuneType(v: unknown): v is RuneType {
     return RUNE_TYPES.includes(v as RuneType);
 }
 
-const WEAPON_CLASSES = [
+export const WEAPON_CLASSES = [
     'Axes',
     'Bows',
     'Catalysts',
@@ -64,7 +64,7 @@ export function isArmorWeightClass(v: unknown): v is ArmorWeightClass {
     return ARMOR_WEIGHT_CLASSES.includes(v as ArmorWeightClass);
 }
 
-interface TableData {
+export interface TableData {
     readonly pinned: boolean
 }
 

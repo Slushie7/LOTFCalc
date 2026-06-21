@@ -31,7 +31,7 @@ export abstract class View {
     abstract refresh(): void;
 
     protected sortCalculated<T extends { readonly pinned: boolean }, K extends string>(
-        calculated: T[],
+        calculated: readonly T[],
         sortKey: K,
         ascending: boolean,
         sortFns: Record<K, (a: T, b: T) => number>
@@ -56,5 +56,3 @@ export abstract class View {
         return [...pinned, ...unpinned];
     }
 }
-
-export type SortFunction<T> = (a: T, b: T) => number;
