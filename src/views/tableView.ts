@@ -12,7 +12,7 @@ import {
     type ToggleGroup,
 } from '../render/sharedRender.js';
 import { addElemListener, convertHtmlDataAttrib, getElem, syncSidebarToggles } from '../sharedDOM.js';
-import type { BooleanKeys, TableState, WeaponsState } from '../state.js';
+import type { TableState } from '../state.js';
 import { View, type ViewContext } from './view.js';
 
 export type SortFunction<T> = (a: T, b: T) => number;
@@ -95,8 +95,6 @@ export abstract class TableView<
     // ====================================
 
     protected onSidebarChange(e: Event): void {
-        let handled = false;
-
         if (e.target instanceof HTMLInputElement) {
             // regular set-inclusion toggles
             const el = e.target;
@@ -107,6 +105,7 @@ export abstract class TableView<
                     const checkedSet = section.checkedItemsGetter();
                     if (el.checked) checkedSet.add(val);
                     else checkedSet.delete(val);
+
                     this.processSidebarSelection();
                     this.renderItems();
                     this.ctx.save();
@@ -171,7 +170,7 @@ export abstract class TableView<
         if (this.state.pinnedItems.has(itemKey)) this.state.pinnedItems.delete(itemKey);
         else this.state.pinnedItems.add(itemKey);
 
-        this.renderItems(itemKey); // render weapons with the pinned/unpinned weapon transitioning into view
+        this.renderItems(itemKey); // render items with the pinned/unpinned item transitioning into view
         this.ctx.save();
     }
 
@@ -217,14 +216,14 @@ export abstract class TableView<
     }
 
     protected renderItems(itemKeyFadeIn: string | null = null): void {
-        // sort calculated weapon stats by current sortKey
+        // collect and sort items by current sortKey
         const calcStats = this.sortCalculated(
             this.collectItems(),
             this.state.sortKey,
             this.state.ascending,
             this.sortFns
         );
-        // display the weapon rows
+        // display the items in the table
         const rows = calcStats.map((cst) => this.buildRow(cst));
         getElem(`${this.mode}-body`).innerHTML = getItemTableBodyHtml(rows, itemKeyFadeIn);
     }
@@ -248,7 +247,7 @@ export abstract class TableView<
         const pinned: T[] = [];
         const unpinned: T[] = [];
 
-        // separate pinned weapons from unpinned weapons
+        // separate pinned items from unpinned items
         for (const c of calculated)
             if (c.pinned) pinned.push(c);
             else unpinned.push(c);

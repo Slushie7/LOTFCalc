@@ -1,8 +1,5 @@
 const STAT_KEYS = ['S', 'A', 'R', 'I'] as const;
 export type StatKey = (typeof STAT_KEYS)[number];
-export function isStatKey(v: unknown): v is StatKey {
-    return STAT_KEYS.includes(v as StatKey);
-}
 
 const RUNE_TYPES = [...STAT_KEYS, '*'] as const;
 export type RuneType = (typeof RUNE_TYPES)[number];
@@ -36,9 +33,6 @@ export function isWeaponClass(v: unknown): v is WeaponClass {
 // stored types
 const INTERP_MODES = ['RCIM_Linear'] as const;
 type InterpMode = (typeof INTERP_MODES)[number];
-function isInterpMode(v: unknown): v is InterpMode {
-    return INTERP_MODES.includes(v as InterpMode);
-}
 
 const SCALING_TYPES = ['Additive', 'Multiplicative'] as const;
 export type ScalingType = (typeof SCALING_TYPES)[number];
@@ -48,9 +42,6 @@ export function isScalingType(v: unknown): v is ScalingType {
 
 const BUFF_TARGETS = ['Character', 'Equipment'] as const;
 export type BuffTarget = (typeof BUFF_TARGETS)[number];
-export function isBuffTarget(v: unknown): v is BuffTarget {
-    return BUFF_TARGETS.includes(v as BuffTarget);
-}
 
 export const ARMOR_SLOTS = ['Head', 'Torso', 'Arms', 'Legs'] as const;
 export type ArmorSlot = (typeof ARMOR_SLOTS)[number];

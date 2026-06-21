@@ -6,12 +6,7 @@ import { calculateWeaponStats } from '../calc/weaponsCalc.js';
 
 import type { ViewContext } from './view.js';
 import { addElemListener, getTypedElem, getElem, convertHtmlDataAttrib } from '../sharedDOM.js';
-import {
-    getTogglesHtml,
-    isToggleKey,
-    type SidebarSection,
-    type ToggleGroup,
-} from '../render/sharedRender.js';
+import { getTogglesHtml, isToggleKey, type SidebarSection, type ToggleGroup } from '../render/sharedRender.js';
 import { TableView, type SortFunction } from './tableView.js';
 
 const SettingToggles: ToggleGroup<BooleanKeys<WeaponsState>> = {
@@ -173,7 +168,6 @@ class WeaponsView extends TableView<WeaponsState, WeaponsHeaderKey, WeaponsSuper
         // weapon upgrade level dropdown
         addElemListener('weapon-level', 'change', (e) => this.onSetUpgLevel(e), { signal });
         // setting/groups toggles
-        addElemListener('view-toggles', 'change', (e) => this.onSettingToggle(e), { signal });
     }
 
     /**
@@ -225,18 +219,17 @@ class WeaponsView extends TableView<WeaponsState, WeaponsHeaderKey, WeaponsSuper
         }
     }
 
-    protected onSettingToggle(e: Event): void {
-        if (!(e.target instanceof HTMLInputElement)) return;
-        const el = e.target;
-
+    protected handleExtraToggle(el: HTMLInputElement): boolean {
         if (el.classList.contains(SettingToggles.htmlClass)) {
             const setting = el.dataset[convertHtmlDataAttrib(SettingToggles.htmlDataKey)];
             if (isToggleKey(setting, SettingToggles)) {
                 this.state[setting] = el.checked;
                 this.renderItems();
-                this.ctx.save();
+                return true;
             }
         }
+
+        return false;
     }
 
     // =========================================

@@ -3,8 +3,6 @@ import {
     formatIntOpt,
     formatPercent,
     formatRoundOpt,
-    getHeaderHtml,
-    HEADER_STATUS_IMAGE_PATHS,
     pushCell,
     type Cell,
     type HeaderColumn,

@@ -1,15 +1,17 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",            // output JS language level; modern browsers are fine
-    "module": "NodeNext",          // emit ES modules; enforces the .js-in-imports rule
-    "moduleResolution": "NodeNext",
-    "rootDir": "src",              // .ts lives here
-    "outDir": "dist",              // .js emitted here
-    "strict": true,                // you'll want this — strictest checking
-    "noUncheckedIndexedAccess": true, // weapons[i] is typed T | undefined; catches OOB access
-    "sourceMap": true,             // browser debugger shows your .ts, not the .js
-    "verbatimModuleSyntax": true,  // forces `type` on type-only imports → makes erasure visible
-    "skipLibCheck": true
-  },
-  "include": ["src/**/*.ts"]
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "rootDir": "src",
+        "outDir": "dist",
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "sourceMap": true,
+        "verbatimModuleSyntax": true,
+        "skipLibCheck": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true
+    },
+    "include": ["src/**/*.ts"]
 }

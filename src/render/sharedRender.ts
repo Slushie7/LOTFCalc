@@ -169,7 +169,7 @@ export function getHeaderHtml<HK extends string, SHK extends string>(
     return `<tr>${superParts.join('')}</tr><tr>${headerParts.join('')}</tr>`;
 }
 
-export function getTableBodyHtml(
+function getTableBodyHtml(
     rows: readonly Row[],
     firstColUrl: ((r: Row) => string) | null,
     fadeItemWithKey: string | null

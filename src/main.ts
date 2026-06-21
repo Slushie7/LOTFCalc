@@ -42,7 +42,7 @@ const views: Record<Mode, View> = {
 // SHARED EVENT HANDLERS
 // ===================================
 
-function onToggleSidebar(e?: Event): void {
+function onToggleSidebar(): void {
     document.body.classList.toggle('sidebar-hidden');
 }
 
