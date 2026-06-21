@@ -29,7 +29,7 @@ export function isWeaponClass(v) {
 }
 // stored types
 const INTERP_MODES = ['RCIM_Linear'];
-export function isInterpMode(v) {
+function isInterpMode(v) {
     return INTERP_MODES.includes(v);
 }
 const SCALING_TYPES = ['Additive', 'Multiplicative'];

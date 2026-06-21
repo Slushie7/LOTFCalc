@@ -1,8 +1,5 @@
 import type { DamageSplit, CalculatedWeaponStats } from '../model.js';
 import {
-    colDivider,
-    colFirst,
-    colStarter,
     formatIntOpt,
     formatPercent,
     formatRoundOpt,
@@ -71,11 +68,11 @@ export function isWeaponsSuperheaderKey(v: unknown): v is WeaponsSuperheaderKey 
     return WEAPONS_SUPERHEADER_KEYS.includes(v as WeaponsSuperheaderKey);
 }
 
-export interface WeaponsHeaderColumn extends HeaderColumn<WeaponsHeaderKey> {
+interface WeaponsHeaderColumn extends HeaderColumn<WeaponsHeaderKey> {
     readonly key: WeaponsHeaderKey;
 }
 
-export interface WeaponsHeaderGroup extends HeaderGroup<WeaponsHeaderKey, WeaponsSuperheaderKey> {
+interface WeaponsHeaderGroup extends HeaderGroup<WeaponsHeaderKey, WeaponsSuperheaderKey> {
     readonly superKey: WeaponsSuperheaderKey;
     readonly columns: readonly WeaponsHeaderColumn[];
 }
@@ -185,7 +182,6 @@ interface WeaponRow extends Row {
     readonly wieldable: boolean;
 }
 
-
 function formatDmg(dmg: DamageSplit, showSplit: boolean): string {
     if (!dmg.total) return '-';
     if (showSplit && dmg.fromStats) return `${dmg.base}+${dmg.fromStats}`;
@@ -212,75 +208,75 @@ export function getWeaponRow(
 
     // INFO fields: 'WEAP', 'CLS'
     if (showColGroups.has('INFO')) {
-        pushCell(cells, `${cws.weapon.name} +${cws.upgLevel}`, [colFirst, wieldCls]);
-        pushCell(cells, cws.weapon.className, colDivider);
+        pushCell(cells, `${cws.weapon.name} +${cws.upgLevel}`, ['col-first', wieldCls]);
+        pushCell(cells, cws.weapon.className, 'col-divider');
     }
 
     // AR fields: 'ARP', 'ARH', 'ARF', 'ARW', 'TOT', 'SP'
     if (showColGroups.has('AR')) {
         const ar = cws.offense.ar;
-        pushCell(cells, formatDmg(ar.physical, showSplit), [colStarter, wieldCls]);
+        pushCell(cells, formatDmg(ar.physical, showSplit), ['col-starter', wieldCls]);
         pushCell(cells, formatDmg(ar.fire, showSplit), wieldCls);
         pushCell(cells, formatDmg(ar.holy, showSplit), wieldCls);
         pushCell(cells, formatDmg(ar.wither, showSplit), wieldCls);
-        pushCell(cells, formatIntOpt(ar.totalDamage), [wieldCls, colDivider]);
+        pushCell(cells, formatIntOpt(ar.totalDamage), [wieldCls, 'col-divider']);
     }
 
     // MAGIC fields: 'SP', 'SLOTS'
     if (showColGroups.has('MAGIC')) {
-        pushCell(cells, formatDmg(cws.offense.ar.spellPower, showSplit), [colStarter, wieldCls]);
-        pushCell(cells, formatIntOpt(cws.offense.extras.spellSlots), colDivider);
+        pushCell(cells, formatDmg(cws.offense.ar.spellPower, showSplit), ['col-starter', wieldCls]);
+        pushCell(cells, formatIntOpt(cws.offense.extras.spellSlots), 'col-divider');
     }
 
     // STATUS fields: 'SMI', 'BLE', 'BRN', 'FRO', 'IGN', 'PSN'
     if (showColGroups.has('STATUS')) {
         const status = cws.offense.status;
-        pushCell(cells, formatIntOpt(status.smite), colStarter);
+        pushCell(cells, formatIntOpt(status.smite), 'col-starter');
         pushCell(cells, formatIntOpt(status.bleed));
         pushCell(cells, formatIntOpt(status.burn));
         pushCell(cells, formatIntOpt(status.frost));
         pushCell(cells, formatIntOpt(status.ignite));
-        pushCell(cells, formatIntOpt(status.poison), colDivider);
+        pushCell(cells, formatIntOpt(status.poison), 'col-divider');
     }
 
     // MISC fields: 'WGT', 'PD', 'STAG', 'STAD', 'PVP'
     if (showColGroups.has('MISC')) {
         const ex = cws.offense.extras;
-        pushCell(cells, cws.weapon.weight.toFixed(1), colStarter);
+        pushCell(cells, cws.weapon.weight.toFixed(1), 'col-starter');
         pushCell(cells, ex.poiseDamage.toFixed(0));
         pushCell(cells, ex.staggerDamage.toFixed(1));
         pushCell(cells, formatPercent(ex.staminaDamage));
-        pushCell(cells, formatPercent(ex.pvpMultiplier), colDivider);
+        pushCell(cells, formatPercent(ex.pvpMultiplier), 'col-divider');
     }
 
     // RUNES fields: 'RUN'
     if (showColGroups.has('RUNES')) {
-        pushCell(cells, cws.runeSockets.join(',') || '-', [colStarter, colDivider]);
+        pushCell(cells, cws.runeSockets.join(',') || '-', ['col-starter', 'col-divider']);
     }
 
     // DEF fields: 'DP', 'DH', 'DF', 'DW', 'DS'
     if (showColGroups.has('DEF')) {
         const def = cws.defense;
-        pushCell(cells, formatPercent(def.physical), [colStarter, wieldCls]);
+        pushCell(cells, formatPercent(def.physical), ['col-starter', wieldCls]);
         pushCell(cells, formatPercent(def.fire), wieldCls);
         pushCell(cells, formatPercent(def.holy), wieldCls);
         pushCell(cells, formatPercent(def.wither), wieldCls);
-        pushCell(cells, formatPercent(def.stability), [wieldCls, colDivider]);
+        pushCell(cells, formatPercent(def.stability), [wieldCls, 'col-divider']);
     }
 
     // SCALE fields: 'SS', 'SA', 'SR', 'SI'
     if (showColGroups.has('SCALING')) {
         const sc = cws.offense.scaling;
         if (showRawScaling) {
-            pushCell(cells, formatRoundOpt(sc.strVal), colStarter);
+            pushCell(cells, formatRoundOpt(sc.strVal), 'col-starter');
             pushCell(cells, formatRoundOpt(sc.agiVal));
             pushCell(cells, formatRoundOpt(sc.radVal));
-            pushCell(cells, formatRoundOpt(sc.infVal), colDivider);
+            pushCell(cells, formatRoundOpt(sc.infVal), 'col-divider');
         } else {
-            pushCell(cells, sc.strGrade, colStarter);
+            pushCell(cells, sc.strGrade, 'col-starter');
             pushCell(cells, sc.agiGrade);
             pushCell(cells, sc.radGrade);
-            pushCell(cells, sc.infGrade, colDivider);
+            pushCell(cells, sc.infGrade, 'col-divider');
         }
     }
 
@@ -288,10 +284,10 @@ export function getWeaponRow(
     if (showColGroups.has('REQS')) {
         const reqs = cws.weapon.wieldReqs;
         const wield = cws.wieldability;
-        pushCell(cells, formatIntOpt(reqs.strength), wield.strength ? colStarter : [colStarter, wieldCls]);
+        pushCell(cells, formatIntOpt(reqs.strength), wield.strength ? 'col-starter' : ['col-starter', wieldCls]);
         pushCell(cells, formatIntOpt(reqs.agility), wield.agility ? '' : wieldCls);
         pushCell(cells, formatIntOpt(reqs.radiance), wield.radiance ? '' : wieldCls);
-        pushCell(cells, formatIntOpt(reqs.inferno), wield.inferno ? colDivider : [wieldCls, colDivider]);
+        pushCell(cells, formatIntOpt(reqs.inferno), wield.inferno ? 'col-divider' : [wieldCls, 'col-divider']);
     }
     return { itemName: cws.weapon.name, itemKey: cws.weapon.key, wieldable, pinned: cws.pinned, cells };
 }

@@ -1,5 +1,5 @@
 import {} from '../model.js';
-import { colDivider, colFirst, colStarter, pushCell, } from './sharedRender.js';
+import { pushCell, } from './sharedRender.js';
 const ARMORS_HEADER_KEYS = [
     // INFO
     'ARMR',
@@ -80,33 +80,33 @@ export function getArmorRow(cas, showColGroups) {
     const arm = cas.armor;
     // INFO cols (ARMR, SLOT, WGT, POIS)
     if (showColGroups.has('INFO')) {
-        pushCell(cells, arm.name, colFirst);
+        pushCell(cells, arm.name, 'col-first');
         pushCell(cells, arm.slot);
         pushCell(cells, arm.stats.weight.toFixed(1));
-        pushCell(cells, arm.stats.poise.toFixed(1), colDivider);
+        pushCell(cells, arm.stats.poise.toFixed(1), 'col-divider');
     }
     // DEF cols (DP, DF, DH, DW, DT)
     if (showColGroups.has('DEF')) {
-        pushCell(cells, arm.stats.defPhysical, colStarter);
+        pushCell(cells, arm.stats.defPhysical, 'col-starter');
         pushCell(cells, arm.stats.defFire);
         pushCell(cells, arm.stats.defHoly);
         pushCell(cells, arm.stats.defWither);
-        pushCell(cells, cas.defTotal, colDivider);
+        pushCell(cells, cas.defTotal, 'col-divider');
     }
     // STATUS cols (SMI, BLE, BRN, FRO, IGN, PSN, DT)
     if (showColGroups.has('STATUS')) {
-        pushCell(cells, arm.stats.resSmite, colStarter);
+        pushCell(cells, arm.stats.resSmite, 'col-starter');
         pushCell(cells, arm.stats.resBleed);
         pushCell(cells, arm.stats.resBurn);
         pushCell(cells, arm.stats.resFrost);
         pushCell(cells, arm.stats.resIgnite);
         pushCell(cells, arm.stats.resPoison);
-        pushCell(cells, cas.resTotal, colDivider);
+        pushCell(cells, cas.resTotal, 'col-divider');
     }
     // MISC cols (WGTC, KDMG)
     if (showColGroups.has('MISC')) {
-        pushCell(cells, arm.weightClass, colStarter);
-        pushCell(cells, `${Math.round(arm.stats.kickMult * 100)}%`, colDivider);
+        pushCell(cells, arm.weightClass, 'col-starter');
+        pushCell(cells, `${Math.round(arm.stats.kickMult * 100)}%`, 'col-divider');
     }
     return { itemName: arm.name, itemKey: arm.key, cells, pinned: cas.pinned };
 }

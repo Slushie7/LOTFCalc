@@ -238,4 +238,30 @@ export abstract class TableView<
             if (isToggleKey(elDataKey, this.colGroupToggles)) el.checked = this.state.showColGroups.has(elDataKey);
         }
     }
+
+    protected sortCalculated<T extends { readonly pinned: boolean }, K extends string>(
+        calculated: readonly T[],
+        sortKey: K,
+        ascending: boolean,
+        sortFns: Record<K, (a: T, b: T) => number>
+    ): T[] {
+        const pinned: T[] = [];
+        const unpinned: T[] = [];
+
+        // separate pinned weapons from unpinned weapons
+        for (const c of calculated)
+            if (c.pinned) pinned.push(c);
+            else unpinned.push(c);
+
+        const fn = sortFns[sortKey];
+        if (ascending) {
+            pinned.sort(fn);
+            unpinned.sort(fn);
+        } else {
+            pinned.sort((a, b) => -fn(a, b));
+            unpinned.sort((a, b) => -fn(a, b));
+        }
+
+        return [...pinned, ...unpinned];
+    }
 }

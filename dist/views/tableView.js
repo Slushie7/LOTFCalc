@@ -189,5 +189,25 @@ export class TableView extends View {
                 el.checked = this.state.showColGroups.has(elDataKey);
         }
     }
+    sortCalculated(calculated, sortKey, ascending, sortFns) {
+        const pinned = [];
+        const unpinned = [];
+        // separate pinned weapons from unpinned weapons
+        for (const c of calculated)
+            if (c.pinned)
+                pinned.push(c);
+            else
+                unpinned.push(c);
+        const fn = sortFns[sortKey];
+        if (ascending) {
+            pinned.sort(fn);
+            unpinned.sort(fn);
+        }
+        else {
+            pinned.sort((a, b) => -fn(a, b));
+            unpinned.sort((a, b) => -fn(a, b));
+        }
+        return [...pinned, ...unpinned];
+    }
 }
 //# sourceMappingURL=tableView.js.map

@@ -9,9 +9,6 @@ export function getTypedElem(id, elemType) {
 export function getElem(id) {
     return getTypedElem(id, HTMLElement);
 }
-export function addTypedElemListener(id, elemType, type, listener, options) {
-    getTypedElem(id, elemType).addEventListener(type, listener, options);
-}
 export function addElemListener(id, type, listener, options) {
     getElem(id).addEventListener(type, listener, options);
 }

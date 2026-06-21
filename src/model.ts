@@ -35,8 +35,8 @@ export function isWeaponClass(v: unknown): v is WeaponClass {
 
 // stored types
 const INTERP_MODES = ['RCIM_Linear'] as const;
-export type InterpMode = (typeof INTERP_MODES)[number];
-export function isInterpMode(v: unknown): v is InterpMode {
+type InterpMode = (typeof INTERP_MODES)[number];
+function isInterpMode(v: unknown): v is InterpMode {
     return INTERP_MODES.includes(v as InterpMode);
 }
 
