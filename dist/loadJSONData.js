@@ -129,7 +129,7 @@ function toWeapon(r, curves, baseDamages) {
     };
 }
 function toEffect(r) {
-    return { attribute: r.attribute, scalingType: r.scaling_type, value: r.value };
+    return { attribute: r.attribute, scalingType: r.scaling_type, value: r.value, appType: r.app_type };
 }
 function toBuff(r) {
     return { key: r.key, effects: r.effects.map((rEff) => toEffect(rEff)) };

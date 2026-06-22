@@ -17,10 +17,9 @@ from .classes import (
     WeaponDefense,
     WeaponOffense,
     WeaponRuneSockets,
-    RUNE_TYPE,
     Effect,
     Buff,
-    RUNE_SHAPE_MAP,
+    RUNE_SOCKET_MAP,
     SCALING_TYPE,
     Rune,
     WEAP_CLASS_MAP,
@@ -29,6 +28,10 @@ from .classes import (
     ARMOR_WEIGHT_CLASSES,
     Armor,
     ArmorStats,
+    BE_TARGET_MAP,
+    BUFF_TARGET,
+    RUNE_TYPE_MAP,
+    RUNE_SOCKET_TYPE,
 )
 from .load_weapons import load_json_data
 
@@ -199,6 +202,14 @@ class LOTFExtractor:
             effects: list[Effect] = []
             effect_params: Iterable[dict] = params_cont.get('NumericEffectParams', ())
             for param in effect_params:
+                effect_type = param.get('EffectType')
+                app_type = ''
+                if effect_type == 'ApplyBattleEffectOnKill':
+                    app_type = 'On Kill'
+                elif effect_type == 'ApplyBattleEffectOnHitToOwner':
+                    app_type = 'On Hit'
+                elif effect_type == 'ApplyBattleEffectOnHitToTarget':
+                    app_type = 'To Target'
                 value = param.get('Value', 0.0)
                 mod_type = param.get('ModType', '')
                 if not mod_type:
@@ -226,8 +237,21 @@ class LOTFExtractor:
                 attr = param.get('Attribute', {}).get('AttributeName', '')
                 if not attr:
                     continue
-                effects.append(Effect(attr, operation, value))
+                if attr == 'MagicRegenRate':
+                    app_type = 'Per Second'
+                effects.append(Effect(attr, operation, value, app_type))
+            if buff_key == 'RUNE_SparkyRune':
+                effects.append(Effect('WieldRequirements', 'Multiplicative', 0, ''))
             buffs[buff_key] = Buff(buff_key, tuple(effects))
+
+        # hand-jam rune buffs that couldn't be processed
+        buffs['RUNE_WeatheredWeapon'] = Buff(
+            'RUNE_WeatheredWeapon', (Effect('DefensePhysical', 'Additive', -20.0, 'On Hit, 10s, 5 Stacks'),)
+        )
+        buffs['RUNE_VampiricWeapon'] = Buff('RUNE_VampiricWeapon', (Effect('HealthRegen', 'Additive', 3.0, 'On Hit'),))
+        buffs['RUNE_DjinnWeapon'] = Buff('RUNE_DjinnWeapon', (Effect('ManaRegen', 'Additive', 3.0, 'On Kill'),))
+        buffs['RUNE_StrigaWeapon'] = Buff('RUNE_StrigaWeapon', (Effect('HealthRegen', 'Additive', 15.0, 'On Kill'),))
+        buffs['RUNE_StrigaArmor'] = Buff('RUNE_StrigaArmor', (Effect('HealthRegen', 'Additive', 2.0, 'Per Second'),))
 
         print(f'Extracted {len(buffs)} buffs!')
         return buffs
@@ -258,7 +282,7 @@ class LOTFExtractor:
             # parse the data from the main runes datatable
             dt_entry: dict = dt[rune_key]
             rune_shape = dt_entry['Shape'].split('::')[1]
-            rune_type = RUNE_SHAPE_MAP[rune_shape]
+            rune_type = RUNE_TYPE_MAP[rune_shape]
 
             weap_buff: Buff | None = None
             weap_buff_target: str | None = None
@@ -272,7 +296,14 @@ class LOTFExtractor:
                 if len(containers) > 1:
                     raise ValueError('Too many containers')
                 container = containers[0]
-                target: Literal['Character', 'Equipment'] = container['BattleEffectTarget'].split('::')[1]
+                be_target: Literal['Character', 'Equipment'] = container['BattleEffectTarget'].split('::')[1]
+                target = BE_TARGET_MAP.get(be_target, be_target)
+                if rune_key == 'WeatheredRune':
+                    # special case - re-assign target to 'Enemy'
+                    target = 'Enemy'
+                if target not in literal_args(BUFF_TARGET):
+                    raise ValueError(f'Invalid buff target "{target}"')
+                target = cast(BUFF_TARGET, target)
                 buff_id = container['BattleEffect']['BattleEffectID']
                 if effect_type == 'Weapon':
                     weap_buff, weap_buff_target = buffs[buff_id], target
@@ -437,12 +468,12 @@ class LOTFExtractor:
                 wield_reqs = PlayerStats(req_str, req_agi, req_end, req_vit, req_rad, req_inf)
 
                 # runes
-                rune_sockets: list[RUNE_TYPE] = []
+                rune_sockets: list[RUNE_SOCKET_TYPE] = []
                 for rune_shape in stats_d['RuneSocketShapes']:
                     if not isinstance(rune_shape, str):
                         raise TypeError(f'Expected str value from key "RuneSocketShapes" but got {type(rune_shape)}')
                     rune_shape = rune_shape.split('::')[1]  # strip everything before '::'
-                    rune_type: RUNE_TYPE = RUNE_SHAPE_MAP[rune_shape]
+                    rune_type: RUNE_SOCKET_TYPE = RUNE_SOCKET_MAP[rune_shape]
                     rune_sockets.append(rune_type)
                 rune_sockets_by_level = read_curve('RuneSocketsByLevel')
                 weap_rune_sockets = WeaponRuneSockets(tuple(rune_sockets), rune_sockets_by_level)
@@ -635,7 +666,7 @@ class LOTFExtractor:
         }
 
         with open(out_path, 'w', encoding='utf-8') as f:
-            json.dump(output, f, indent=2)
+            json.dump(output, f)
 
         print(f'Exported weapons data to {out_path}!')
 

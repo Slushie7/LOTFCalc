@@ -1,11 +1,12 @@
-import { isArmorSlot, isArmorWeightClass, isWeaponClass } from './model.js';
+import { isArmorSlot, isArmorWeightClass, isRuneType, isWeaponClass } from './model.js';
 import { clampStat } from './calc/sharedCalc.js';
 import { isWeaponsHeaderKey, isWeaponsSuperheaderKey } from './render/weaponsRender.js';
 import { isArmorsHeaderKey, isArmorsSuperheaderKey, } from './render/armorsRender.js';
+import { isRunesHeaderKey, isRunesSuperheaderKey, } from './render/runesRender.js';
 // =========================================
 // MODES
 // =========================================
-const MODES = ['weapons', 'armors'];
+const MODES = ['weapons', 'armors', 'runes'];
 export function isMode(v) {
     return MODES.includes(v);
 }
@@ -35,7 +36,14 @@ function getDefaultState() {
         showColGroups: new Set(['INFO', 'DEF', 'STATUS']),
         pinnedItems: new Set(),
     };
-    return { shared, weapons, armors };
+    const runes = {
+        selectedTypes: new Set(['Strength', 'Agility', 'Radiance', 'Inferno']),
+        sortKey: 'RUNE',
+        ascending: true,
+        showColGroups: new Set(['INFO', 'WEAP', 'ARMR']),
+        pinnedItems: new Set(),
+    };
+    return { shared, weapons, armors, runes };
 }
 // =========================================
 // STATE LOAD/SAVE
@@ -138,6 +146,16 @@ export function loadAppState() {
             return false;
         return true;
     }
+    function validateRunes(d) {
+        if (!validateTable(d, isRunesHeaderKey, isRunesSuperheaderKey))
+            return false;
+        const p = d;
+        if (!Array.isArray(p.selectedTypes))
+            return false;
+        if (!p.selectedTypes.every((v) => isRuneType(v)))
+            return false;
+        return true;
+    }
     function validateAppState(d) {
         if (typeof d !== 'object' || !d)
             return false;
@@ -150,7 +168,9 @@ export function loadAppState() {
             return false;
         if (typeof p.armors !== 'object' || !p.armors)
             return false;
-        return validateShared(p.shared) && validateWeapons(p.weapons) && validateArmors(p.armors);
+        if (typeof p.runes !== 'object' || !p.runes)
+            return false;
+        return (validateShared(p.shared) && validateWeapons(p.weapons) && validateArmors(p.armors) && validateRunes(p.runes));
     }
     // try to validate the format of the JSON data
     if (typeof parsed === 'boolean' && !parsed) {
@@ -217,7 +237,17 @@ export function loadAppState() {
         showColGroups: showColGroupsArmor,
         pinnedItems: pinnedArmors,
     };
-    return { shared, weapons, armors };
+    const selectedTypes = new Set(state.runes.selectedTypes);
+    const showColGroupsRunes = new Set(state.runes.showColGroups);
+    const pinnedRunes = new Set(state.runes.pinnedItems);
+    const runes = {
+        selectedTypes,
+        sortKey: state.runes.sortKey,
+        ascending: state.runes.ascending,
+        showColGroups: showColGroupsRunes,
+        pinnedItems: pinnedRunes,
+    };
+    return { shared, weapons, armors, runes };
 }
 /**
  * Save the current AppState to localStorage
@@ -250,11 +280,19 @@ export function saveAppState(state) {
             showColGroups: [...state.armors.showColGroups],
             pinnedItems: [...state.armors.pinnedItems],
         };
+        const runes = {
+            selectedTypes: [...state.runes.selectedTypes],
+            sortKey: state.runes.sortKey,
+            ascending: state.runes.ascending,
+            showColGroups: [...state.runes.showColGroups],
+            pinnedItems: [...state.runes.pinnedItems],
+        };
         data = {
             v: STORAGE_VER,
             shared,
             weapons,
             armors,
+            runes,
         };
     }
     else {

@@ -111,7 +111,11 @@ function getTableBodyHtml(rows, firstColUrl, fadeItemWithKey) {
                 }
                 imgTags = imageParts.join('');
             }
-            let text = escapeHtml(cell.text);
+            let text;
+            if (Array.isArray(cell.text))
+                text = cell.text.map(escapeHtml).join('<br>');
+            else
+                text = escapeHtml(cell.text);
             let pinBtn = '';
             if (idx === 0) {
                 // first col - pin button and url link

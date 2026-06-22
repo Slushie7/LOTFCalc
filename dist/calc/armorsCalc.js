@@ -15,20 +15,20 @@ export function calculateArmorStats(armor, pinnedArmors) {
 }
 export function calculatePlayerDefenses(playerStats, head, torso, arms, legs, curves) {
     const ps = calculatePlayerStats(playerStats, curves);
-    const armor = [head, torso, arms, legs].filter((a) => a !== null);
-    const weight = armor.reduce((acc, cur) => acc + cur.stats.weight, 0);
-    const poise = armor.reduce((acc, cur) => acc + cur.stats.poise, 0);
-    const physical = armor.reduce((acc, cur) => acc + cur.stats.defPhysical, ps.defPhysical);
-    const fire = armor.reduce((acc, cur) => acc + cur.stats.defFire, ps.defFire);
-    const holy = armor.reduce((acc, cur) => acc + cur.stats.defHoly, ps.defHoly);
-    const wither = armor.reduce((acc, cur) => acc + cur.stats.defWither, ps.defWither);
-    const bleed = armor.reduce((acc, cur) => acc + cur.stats.resBleed, ps.resBleed);
-    const burn = armor.reduce((acc, cur) => acc + cur.stats.resBurn, ps.resBurn);
-    const poison = armor.reduce((acc, cur) => acc + cur.stats.resPoison, ps.resPoison);
-    const smite = armor.reduce((acc, cur) => acc + cur.stats.resSmite, ps.resSmite);
-    const ignite = armor.reduce((acc, cur) => acc + cur.stats.resIgnite, ps.resIgnite);
-    const frost = armor.reduce((acc, cur) => acc + cur.stats.resFrost, ps.resFrost);
-    const kickMult = armor.reduce((acc, cur) => acc + cur.stats.kickMult, 0);
+    const pieces = [head, torso, arms, legs].filter((a) => a !== null);
+    const weight = pieces.reduce((acc, cur) => acc + cur.stats.weight, 0);
+    const poise = pieces.reduce((acc, cur) => acc + cur.stats.poise, 0);
+    const physical = pieces.reduce((acc, cur) => acc + cur.stats.defPhysical, ps.defPhysical);
+    const fire = pieces.reduce((acc, cur) => acc + cur.stats.defFire, ps.defFire);
+    const holy = pieces.reduce((acc, cur) => acc + cur.stats.defHoly, ps.defHoly);
+    const wither = pieces.reduce((acc, cur) => acc + cur.stats.defWither, ps.defWither);
+    const bleed = pieces.reduce((acc, cur) => acc + cur.stats.resBleed, ps.resBleed);
+    const burn = pieces.reduce((acc, cur) => acc + cur.stats.resBurn, ps.resBurn);
+    const poison = pieces.reduce((acc, cur) => acc + cur.stats.resPoison, ps.resPoison);
+    const smite = pieces.reduce((acc, cur) => acc + cur.stats.resSmite, ps.resSmite);
+    const ignite = pieces.reduce((acc, cur) => acc + cur.stats.resIgnite, ps.resIgnite);
+    const frost = pieces.reduce((acc, cur) => acc + cur.stats.resFrost, ps.resFrost);
+    const kickMult = pieces.reduce((acc, cur) => acc + cur.stats.kickMult, 0);
     return { weight, poise, physical, fire, holy, wither, bleed, burn, poison, smite, ignite, frost, kickMult };
 }
 //# sourceMappingURL=armorsCalc.js.map

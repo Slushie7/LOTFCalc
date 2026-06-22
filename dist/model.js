@@ -1,9 +1,9 @@
 const STAT_KEYS = ['S', 'A', 'R', 'I'];
-const RUNE_TYPES = [...STAT_KEYS];
+export const RUNE_TYPES = ['Strength', 'Agility', 'Radiance', 'Inferno'];
 export function isRuneType(v) {
     return RUNE_TYPES.includes(v);
 }
-const RUNE_SOCKET_TYPES = [...RUNE_TYPES, '*'];
+const RUNE_SOCKET_TYPES = [...STAT_KEYS, '*'];
 export function isRuneSocketType(v) {
     return RUNE_SOCKET_TYPES.includes(v);
 }
@@ -34,7 +34,7 @@ const SCALING_TYPES = ['Additive', 'Multiplicative'];
 export function isScalingType(v) {
     return SCALING_TYPES.includes(v);
 }
-const BUFF_TARGETS = ['Character', 'Equipment'];
+const BUFF_TARGETS = ['Player', 'Equipment', 'Enemy'];
 export const ARMOR_SLOTS = ['Head', 'Torso', 'Arms', 'Legs'];
 export function isArmorSlot(v) {
     return ARMOR_SLOTS.includes(v);

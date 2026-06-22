@@ -1,0 +1,85 @@
+import { calculateRuneStats } from '../calc/runesCalc.js';
+import { isRuneType, RUNE_TYPES, type CalculatedRuneStats, type Rune, type RuneType } from '../model.js';
+import {
+    getRuneRow,
+    isRunesHeaderKey,
+    RUNES_HEADER_GROUPS,
+    type RunesHeaderKey,
+    type RunesSuperheaderKey,
+} from '../render/runesRender.js';
+import type { Row, SidebarSection, ToggleGroup } from '../render/sharedRender.js';
+import type { RunesState } from '../state.js';
+import { TableView, type SortFunction } from './tableView.js';
+import type { ViewContext } from './view.js';
+
+const GroupToggles: ToggleGroup<RunesSuperheaderKey> = {
+    htmlClass: 'runes-group-toggle',
+    htmlDataKey: 'col-group',
+    toggles: {
+        WEAP: { text: 'Weapon Effects', hover: 'Show rune weapon effects' },
+        ARMR: { text: 'Shield Effects', hover: 'Show rune shield effects' },
+    },
+};
+
+function compareArrays(a: readonly string[], b: readonly string[]): number {
+    const len = Math.min(a.length, b.length);
+    for (let i = 0; i < len; i++) {
+        const x = a[i]!;
+        const y = b[i]!;
+        const c = x.localeCompare(y);
+        if (c !== 0) return c < 0 ? -1 : 1;
+    }
+    return a.length - b.length;
+}
+const runesSortFns: Record<RunesHeaderKey, SortFunction<CalculatedRuneStats>> = {
+    // INFO
+    RUNE: (a, b) => a.rune.name.localeCompare(b.rune.name),
+    TYPE: (a, b) => a.rune.type.localeCompare(b.rune.type),
+    WEAPFX: (a, b) => compareArrays(a.weaponEffects, b.weaponEffects),
+    ARMRFX: (a, b) => compareArrays(a.armorEffects, b.armorEffects),
+};
+
+// ================================
+// VIEW
+// ================================
+
+export function createRunesView(state: RunesState, ctx: ViewContext) {
+    return new RunesView(state, ctx);
+}
+
+class RunesView extends TableView<RunesState, RunesHeaderKey, RunesSuperheaderKey, CalculatedRuneStats> {
+    readonly mode = 'runes' as const;
+    readonly modeBtnText = 'Runes' as const;
+
+    protected readonly headerGroups = RUNES_HEADER_GROUPS;
+    protected readonly colGroupToggles = GroupToggles;
+    protected readonly sortFns = runesSortFns;
+    protected readonly ascendingByDefault: ReadonlySet<RunesHeaderKey> = new Set(['RUNE', 'TYPE', 'WEAPFX', 'ARMRFX']);
+    protected isHeaderKey = isRunesHeaderKey;
+
+    protected readonly sidebarSections: [SidebarSection<RuneType>] = [
+        {
+            text: 'Runes',
+            sectionKey: 'rune-type',
+            items: RUNE_TYPES,
+            checkedItemsGetter: () => this.state.selectedTypes,
+            itemVerifyFn: isRuneType,
+        },
+    ];
+
+    constructor(state: RunesState, ctx: ViewContext) {
+        super(state, ctx);
+    }
+
+    protected collectItems(): readonly CalculatedRuneStats[] {
+        const showRunes: Rune[] = this.ctx.data.runes.filter(
+            (rune) => this.state.selectedTypes.has(rune.type) || this.state.pinnedItems.has(rune.key)
+        );
+        const calcStats = showRunes.map((rune) => calculateRuneStats(rune, this.state.pinnedItems));
+        return calcStats;
+    }
+
+    protected buildRow(item: CalculatedRuneStats): Row {
+        return getRuneRow(item, this.state.showColGroups);
+    }
+}

@@ -5,7 +5,8 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Self
 
 STAT = Literal['S', 'A', 'R', 'I']
-RUNE_TYPE = Literal['S', 'A', 'R', 'I', '*']
+RUNE_SOCKET_TYPE = Literal['S', 'A', 'R', 'I', '*']
+RUNE_TYPE = Literal['Strength', 'Agility', 'Radiance', 'Inferno']
 SCALING_TYPE = Literal['Additive', 'Multiplicative']
 
 WEAP_CLASS_MAP: dict[str, str] = {
@@ -21,7 +22,19 @@ WEAP_CLASS_MAP: dict[str, str] = {
     'crossbows': 'Crossbows',
 }
 
-RUNE_SHAPE_MAP: dict[str, RUNE_TYPE] = {'Circle': 'S', 'Triangle': 'A', 'Square': 'R', 'Star': 'I', 'Meta': '*'}
+RUNE_SOCKET_MAP: dict[str, RUNE_SOCKET_TYPE] = {
+    'Circle': 'S',
+    'Triangle': 'A',
+    'Square': 'R',
+    'Star': 'I',
+    'Meta': '*',
+}
+RUNE_TYPE_MAP: dict[str, RUNE_TYPE] = {
+    'Circle': 'Strength',
+    'Triangle': 'Agility',
+    'Square': 'Radiance',
+    'Star': 'Inferno',
+}
 ARMOR_SLOT = Literal['Torso', 'Arms', 'Head', 'Legs']
 ARMOR_SLOT_MAP: dict[str, ARMOR_SLOT] = {
     'Body': 'Torso',
@@ -31,6 +44,11 @@ ARMOR_SLOT_MAP: dict[str, ARMOR_SLOT] = {
 }
 ARMOR_WEIGHT_CLASSES = Literal['Light', 'Medium', 'Heavy']
 ARMOR_INFO_PAT = re.compile(r'Inventory\.Category\.Equipment\.Armor\.(.*?)\.(.*?)\..*')
+
+BUFF_TARGET = Literal['Player', 'Equipment', 'Enemy']
+BE_TARGET_MAP: dict[str, str] = {
+    'Character': 'Player',
+}
 
 
 def epsilon_floor(x: float) -> int:
@@ -280,13 +298,19 @@ class Effect:
     attribute: str
     scaling_type: SCALING_TYPE
     value: float
+    app_type: str
 
     def to_dict(self) -> dict[str, Any]:
-        return {'attribute': self.attribute, 'scaling_type': self.scaling_type, 'value': self.value}
+        return {
+            'attribute': self.attribute,
+            'scaling_type': self.scaling_type,
+            'value': self.value,
+            'app_type': self.app_type,
+        }
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Self:
-        return cls(d['attribute'], d['scaling_type'], d['value'])
+        return cls(d['attribute'], d['scaling_type'], d['value'], d['app_type'])
 
 
 @dataclass(frozen=True)
@@ -309,9 +333,9 @@ class Rune:
     icon: str
     type: RUNE_TYPE
     weapon_buff: Buff
-    weapon_buff_target: Literal['Character', 'Equipment']
+    weapon_buff_target: BUFF_TARGET
     armor_buff: Buff
-    armor_buff_target: Literal['Character', 'Equipment']
+    armor_buff_target: BUFF_TARGET
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -461,11 +485,11 @@ class DamageSplit:
 
 @dataclass(frozen=True)
 class WeaponRuneSockets:
-    rune_sockets: tuple[RUNE_TYPE, ...]
+    rune_sockets: tuple[RUNE_SOCKET_TYPE, ...]
     num_by_level: Curve | None
 
     # @lru_cache(maxsize=1024)
-    def get_sockets(self, upgrade_level: int) -> tuple[RUNE_TYPE, ...]:
+    def get_sockets(self, upgrade_level: int) -> tuple[RUNE_SOCKET_TYPE, ...]:
         if not self.num_by_level:
             return ()
         num_runes = epsilon_floor(self.num_by_level.interpolate(upgrade_level))

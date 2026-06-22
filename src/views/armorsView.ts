@@ -47,27 +47,27 @@ const WeightEnum: Record<ArmorWeightClass, number> = {
 };
 const armorsSortFns: Record<ArmorsHeaderKey, SortFunction<CalculatedArmorStats>> = {
     // INFO
-    ARMR: (cas1, cas2) => cas1.armor.name.localeCompare(cas2.armor.name),
-    SLOT: (cas1, cas2) => SlotEnum[cas1.armor.slot] - SlotEnum[cas2.armor.slot],
-    WGT: (cas1, cas2) => cas1.armor.stats.weight - cas2.armor.stats.weight,
-    POIS: (cas1, cas2) => cas1.armor.stats.poise - cas2.armor.stats.poise,
+    ARMR: (a, b) => a.armor.name.localeCompare(b.armor.name),
+    SLOT: (a, b) => SlotEnum[a.armor.slot] - SlotEnum[b.armor.slot],
+    WGT: (a, b) => a.armor.stats.weight - b.armor.stats.weight,
+    POIS: (a, b) => a.armor.stats.poise - b.armor.stats.poise,
     // DEF
-    DP: (cas1, cas2) => cas1.armor.stats.defPhysical - cas2.armor.stats.defPhysical,
-    DF: (cas1, cas2) => cas1.armor.stats.defFire - cas2.armor.stats.defFire,
-    DH: (cas1, cas2) => cas1.armor.stats.defHoly - cas2.armor.stats.defHoly,
-    DW: (cas1, cas2) => cas1.armor.stats.defWither - cas2.armor.stats.defWither,
-    DT: (cas1, cas2) => cas1.defTotal - cas2.defTotal,
+    DP: (a, b) => a.armor.stats.defPhysical - b.armor.stats.defPhysical,
+    DF: (a, b) => a.armor.stats.defFire - b.armor.stats.defFire,
+    DH: (a, b) => a.armor.stats.defHoly - b.armor.stats.defHoly,
+    DW: (a, b) => a.armor.stats.defWither - b.armor.stats.defWither,
+    DT: (a, b) => a.defTotal - b.defTotal,
     // STATUS
-    BLE: (cas1, cas2) => cas1.armor.stats.resBleed - cas2.armor.stats.resBleed,
-    BRN: (cas1, cas2) => cas1.armor.stats.resBurn - cas2.armor.stats.resBurn,
-    PSN: (cas1, cas2) => cas1.armor.stats.resPoison - cas2.armor.stats.resPoison,
-    SMI: (cas1, cas2) => cas1.armor.stats.resSmite - cas2.armor.stats.resSmite,
-    IGN: (cas1, cas2) => cas1.armor.stats.resIgnite - cas2.armor.stats.resIgnite,
-    FRO: (cas1, cas2) => cas1.armor.stats.resFrost - cas2.armor.stats.resFrost,
-    RT: (cas1, cas2) => cas1.resTotal - cas2.resTotal,
+    BLE: (a, b) => a.armor.stats.resBleed - b.armor.stats.resBleed,
+    BRN: (a, b) => a.armor.stats.resBurn - b.armor.stats.resBurn,
+    PSN: (a, b) => a.armor.stats.resPoison - b.armor.stats.resPoison,
+    SMI: (a, b) => a.armor.stats.resSmite - b.armor.stats.resSmite,
+    IGN: (a, b) => a.armor.stats.resIgnite - b.armor.stats.resIgnite,
+    FRO: (a, b) => a.armor.stats.resFrost - b.armor.stats.resFrost,
+    RT: (a, b) => a.resTotal - b.resTotal,
     // MISC
-    WGTC: (cas1, cas2) => WeightEnum[cas1.armor.weightClass] - WeightEnum[cas2.armor.weightClass],
-    KDMG: (cas1, cas2) => cas1.armor.stats.kickMult - cas2.armor.stats.kickMult,
+    WGTC: (a, b) => WeightEnum[a.armor.weightClass] - WeightEnum[b.armor.weightClass],
+    KDMG: (a, b) => a.armor.stats.kickMult - b.armor.stats.kickMult,
 };
 
 // ================================

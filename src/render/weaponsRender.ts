@@ -5,7 +5,6 @@ import {
     formatRoundOpt,
     pushCell,
     type Cell,
-    type HeaderColumn,
     type HeaderGroup,
     type Row,
 } from './sharedRender.js';
@@ -66,16 +65,7 @@ export function isWeaponsSuperheaderKey(v: unknown): v is WeaponsSuperheaderKey 
     return WEAPONS_SUPERHEADER_KEYS.includes(v as WeaponsSuperheaderKey);
 }
 
-interface WeaponsHeaderColumn extends HeaderColumn<WeaponsHeaderKey> {
-    readonly key: WeaponsHeaderKey;
-}
-
-interface WeaponsHeaderGroup extends HeaderGroup<WeaponsHeaderKey, WeaponsSuperheaderKey> {
-    readonly superKey: WeaponsSuperheaderKey;
-    readonly columns: readonly WeaponsHeaderColumn[];
-}
-
-export const WEAPONS_HEADER_GROUPS: readonly WeaponsHeaderGroup[] = [
+export const WEAPONS_HEADER_GROUPS: readonly HeaderGroup<WeaponsHeaderKey, WeaponsSuperheaderKey>[] = [
     {
         superKey: 'INFO',
         superText: '',

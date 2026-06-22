@@ -1,11 +1,11 @@
 import { clampStat, calculatePlayerStats } from './calc/sharedCalc.js';
 import { loadAppData } from './loadJSONData.js';
 import { isMode, loadAppState, saveAppState, } from './state.js';
-//import { createArmorsView } from './views/armorsView.js';
+import { addClassListeners, addElemListener, getElem } from './sharedDOM.js';
 import { View } from './views/view.js';
 import { createWeaponsView } from './views/weaponsView.js';
-import { addClassListeners, addElemListener, getElem } from './sharedDOM.js';
 import { createArmorsView } from './views/armorsView.js';
+import { createRunesView } from './views/runesView.js';
 const SHARED_TOGGLE_KEYS = ['saveSettings'];
 function isSharedToggleKey(k) {
     return SHARED_TOGGLE_KEYS.includes(k);
@@ -23,6 +23,7 @@ const ctx = {
 const views = {
     weapons: createWeaponsView(state.weapons, ctx),
     armors: createArmorsView(state.armors, ctx),
+    runes: createRunesView(state.runes, ctx),
 };
 // ===================================
 // SHARED EVENT HANDLERS

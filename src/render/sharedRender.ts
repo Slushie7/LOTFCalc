@@ -32,7 +32,7 @@ export interface ImageInfo {
 }
 
 export interface Cell {
-    readonly text: string;
+    readonly text: string | string[];
     readonly images: ImageInfo[];
     readonly cls: string;
 }
@@ -189,13 +189,13 @@ function getTableBodyHtml(
             if (cell.images.length) {
                 const imageParts: string[] = [];
                 for (const imgInfo of cell.images) {
-                    imageParts.push(
-                        `<img src="${imgInfo.src}" width="${imgInfo.size}" height="${imgInfo.size}">`
-                    );
+                    imageParts.push(`<img src="${imgInfo.src}" width="${imgInfo.size}" height="${imgInfo.size}">`);
                 }
                 imgTags = imageParts.join('');
             }
-            let text = escapeHtml(cell.text);
+            let text: string;
+            if (Array.isArray(cell.text)) text = cell.text.map(escapeHtml).join('<br>');
+            else text = escapeHtml(cell.text);
             let pinBtn = '';
             if (idx === 0) {
                 // first col - pin button and url link
@@ -235,7 +235,7 @@ export function formatPercent(val: number): string {
 
 export function pushCell(
     cells: Cell[],
-    text: string | number,
+    text: string | number | string[],
     classes?: string | string[],
     images: ImageInfo[] = []
 ): void {

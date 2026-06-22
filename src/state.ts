@@ -1,5 +1,5 @@
-import type { ArmorSlot, ArmorWeightClass, PlayerStats, WeaponClass } from './model.js';
-import { isArmorSlot, isArmorWeightClass, isWeaponClass } from './model.js';
+import type { ArmorSlot, ArmorWeightClass, PlayerStats, RuneType, WeaponClass } from './model.js';
+import { isArmorSlot, isArmorWeightClass, isRuneType, isWeaponClass } from './model.js';
 import { clampStat } from './calc/sharedCalc.js';
 import type { WeaponsHeaderKey, WeaponsSuperheaderKey } from './render/weaponsRender.js';
 import { isWeaponsHeaderKey, isWeaponsSuperheaderKey } from './render/weaponsRender.js';
@@ -9,6 +9,12 @@ import {
     type ArmorsHeaderKey,
     type ArmorsSuperheaderKey,
 } from './render/armorsRender.js';
+import {
+    isRunesHeaderKey,
+    isRunesSuperheaderKey,
+    type RunesHeaderKey,
+    type RunesSuperheaderKey,
+} from './render/runesRender.js';
 
 export type BooleanKeys<T> = {
     [K in keyof T]-?: T[K] extends boolean ? K : never;
@@ -19,7 +25,7 @@ export type BooleanKeys<T> = {
 // MODES
 // =========================================
 
-const MODES = ['weapons', 'armors'] as const;
+const MODES = ['weapons', 'armors', 'runes'] as const;
 export type Mode = (typeof MODES)[number];
 export function isMode(v: unknown): v is Mode {
     return MODES.includes(v as Mode);
@@ -56,10 +62,15 @@ export interface ArmorsState extends TableState<ArmorsHeaderKey, ArmorsSuperhead
     selectedWeights: Set<ArmorWeightClass>;
 }
 
+export interface RunesState extends TableState<RunesHeaderKey, RunesSuperheaderKey> {
+    selectedTypes: Set<RuneType>;
+}
+
 export interface AppState {
     shared: SharedState;
     weapons: WeaponsState;
     armors: ArmorsState;
+    runes: RunesState;
 }
 
 function getDefaultState(): AppState {
@@ -91,7 +102,15 @@ function getDefaultState(): AppState {
         pinnedItems: new Set(),
     };
 
-    return { shared, weapons, armors };
+    const runes: RunesState = {
+        selectedTypes: new Set(['Strength', 'Agility', 'Radiance', 'Inferno']),
+        sortKey: 'RUNE',
+        ascending: true,
+        showColGroups: new Set(['INFO', 'WEAP', 'ARMR']),
+        pinnedItems: new Set(),
+    };
+
+    return { shared, weapons, armors, runes };
 }
 
 // =========================================
@@ -129,11 +148,16 @@ interface ExportedArmorsState extends ExportedTableState<ArmorsHeaderKey, Armors
     readonly selectedWeights: readonly ArmorWeightClass[];
 }
 
+interface ExportedRunesState extends ExportedTableState<RunesHeaderKey, RunesSuperheaderKey> {
+    readonly selectedTypes: readonly RuneType[];
+}
+
 interface ExportedAppState {
     readonly v: number;
     readonly shared: ExportedSharedState;
     readonly weapons: ExportedWeaponsState;
     readonly armors: ExportedArmorsState;
+    readonly runes: ExportedRunesState;
 }
 
 /**
@@ -173,7 +197,6 @@ export function loadAppState(): AppState {
         if (!Object.keys(defaultState.shared.playerStats).every((k) => typeof ps[k] === 'number')) return false;
         if (typeof p.saveSettings !== 'boolean') return false;
         if (!isMode(p.activeMode)) return false;
-
         return true;
     }
     function validateTable<HK extends string, SHK extends string>(
@@ -189,7 +212,6 @@ export function loadAppState(): AppState {
         if (!p.showColGroups.every((v) => superHeaderKeyVerif(v))) return false;
         if (!Array.isArray(p.pinnedItems)) return false;
         if (!p.pinnedItems.every((v) => typeof v === 'string')) return false;
-
         return true;
     }
     function validateWeapons(d: object): d is ExportedWeaponsState {
@@ -203,7 +225,6 @@ export function loadAppState(): AppState {
         if (typeof p.showUnwieldable !== 'boolean') return false;
         if (typeof p.showSplit !== 'boolean') return false;
         if (typeof p.showRawScaling !== 'boolean') return false;
-
         return true;
     }
     function validateArmors(d: object): d is ExportedArmorsState {
@@ -214,7 +235,14 @@ export function loadAppState(): AppState {
         if (!p.selectedSlots.every((v) => isArmorSlot(v))) return false;
         if (!Array.isArray(p.selectedWeights)) return false;
         if (!p.selectedWeights.every((v) => isArmorWeightClass(v))) return false;
-
+        return true;
+    }
+    function validateRunes(d: object): d is ExportedRunesState {
+        if (!validateTable<RunesHeaderKey, RunesSuperheaderKey>(d, isRunesHeaderKey, isRunesSuperheaderKey))
+            return false;
+        const p = d as ExportedRunesState;
+        if (!Array.isArray(p.selectedTypes)) return false;
+        if (!p.selectedTypes.every((v) => isRuneType(v))) return false;
         return true;
     }
     function validateAppState(d: unknown): d is ExportedAppState {
@@ -224,7 +252,10 @@ export function loadAppState(): AppState {
         if (typeof p.shared !== 'object' || !p.shared) return false;
         if (typeof p.weapons !== 'object' || !p.weapons) return false;
         if (typeof p.armors !== 'object' || !p.armors) return false;
-        return validateShared(p.shared) && validateWeapons(p.weapons) && validateArmors(p.armors);
+        if (typeof p.runes !== 'object' || !p.runes) return false;
+        return (
+            validateShared(p.shared) && validateWeapons(p.weapons) && validateArmors(p.armors) && validateRunes(p.runes)
+        );
     }
 
     // try to validate the format of the JSON data
@@ -300,7 +331,19 @@ export function loadAppState(): AppState {
         pinnedItems: pinnedArmors,
     };
 
-    return { shared, weapons, armors };
+    const selectedTypes = new Set(state.runes.selectedTypes);
+    const showColGroupsRunes = new Set(state.runes.showColGroups);
+    const pinnedRunes = new Set(state.runes.pinnedItems);
+
+    const runes: RunesState = {
+        selectedTypes,
+        sortKey: state.runes.sortKey,
+        ascending: state.runes.ascending,
+        showColGroups: showColGroupsRunes,
+        pinnedItems: pinnedRunes,
+    };
+
+    return { shared, weapons, armors, runes };
 }
 
 /**
@@ -334,11 +377,19 @@ export function saveAppState(state: AppState): void {
             showColGroups: [...state.armors.showColGroups],
             pinnedItems: [...state.armors.pinnedItems],
         };
+        const runes: ExportedRunesState = {
+            selectedTypes: [...state.runes.selectedTypes],
+            sortKey: state.runes.sortKey,
+            ascending: state.runes.ascending,
+            showColGroups: [...state.runes.showColGroups],
+            pinnedItems: [...state.runes.pinnedItems],
+        };
         data = {
             v: STORAGE_VER,
             shared,
             weapons,
             armors,
+            runes,
         };
     } else {
         // user doesn't want to store their settings

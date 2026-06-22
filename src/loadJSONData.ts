@@ -124,6 +124,7 @@ interface RawEffect {
     attribute: string;
     scaling_type: ScalingType;
     value: number;
+    app_type: string;
 }
 interface RawBuff {
     key: string;
@@ -331,7 +332,7 @@ function toWeapon(r: RawWeapon, curves: Map<string, Curve>, baseDamages: Map<str
 }
 
 function toEffect(r: RawEffect): Effect {
-    return { attribute: r.attribute, scalingType: r.scaling_type, value: r.value };
+    return { attribute: r.attribute, scalingType: r.scaling_type, value: r.value, appType: r.app_type };
 }
 
 function toBuff(r: RawBuff): Buff {

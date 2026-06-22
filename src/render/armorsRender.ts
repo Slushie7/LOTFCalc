@@ -1,5 +1,5 @@
 import { type CalculatedArmorStats } from '../model.js';
-import { pushCell, type Cell, type HeaderColumn, type HeaderGroup, type Row } from './sharedRender.js';
+import { pushCell, type Cell, type HeaderGroup, type Row } from './sharedRender.js';
 
 const ARMORS_HEADER_KEYS = [
     // INFO
@@ -36,16 +36,7 @@ export function isArmorsSuperheaderKey(v: unknown): v is ArmorsSuperheaderKey {
     return ARMORS_SUPERHEADER_KEYS.includes(v as ArmorsSuperheaderKey);
 }
 
-interface ArmorsHeaderColumn extends HeaderColumn<ArmorsHeaderKey> {
-    readonly key: ArmorsHeaderKey;
-}
-
-interface ArmorsHeaderGroup extends HeaderGroup<ArmorsHeaderKey, ArmorsSuperheaderKey> {
-    readonly superKey: ArmorsSuperheaderKey;
-    readonly columns: readonly ArmorsHeaderColumn[];
-}
-
-export const ARMORS_HEADER_GROUPS: readonly ArmorsHeaderGroup[] = [
+export const ARMORS_HEADER_GROUPS: readonly HeaderGroup<ArmorsHeaderKey, ArmorsSuperheaderKey>[] = [
     {
         superKey: 'INFO',
         superText: '',

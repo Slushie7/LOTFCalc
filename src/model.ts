@@ -1,13 +1,13 @@
 const STAT_KEYS = ['S', 'A', 'R', 'I'] as const;
 export type StatKey = (typeof STAT_KEYS)[number];
 
-const RUNE_TYPES = [...STAT_KEYS] as const;
+export const RUNE_TYPES = ['Strength', 'Agility', 'Radiance', 'Inferno'] as const;
 export type RuneType = (typeof RUNE_TYPES)[number];
 export function isRuneType(v: unknown): v is RuneType {
     return RUNE_TYPES.includes(v as RuneType);
 }
 
-const RUNE_SOCKET_TYPES = [...RUNE_TYPES, '*'] as const;
+const RUNE_SOCKET_TYPES = [...STAT_KEYS, '*'] as const;
 export type RuneSocketType = (typeof RUNE_SOCKET_TYPES)[number];
 export function isRuneSocketType(v: unknown): v is RuneSocketType {
     return RUNE_SOCKET_TYPES.includes(v as RuneSocketType);
@@ -46,7 +46,7 @@ export function isScalingType(v: unknown): v is ScalingType {
     return SCALING_TYPES.includes(v as ScalingType);
 }
 
-const BUFF_TARGETS = ['Character', 'Equipment'] as const;
+const BUFF_TARGETS = ['Player', 'Equipment', 'Enemy'] as const;
 export type BuffTarget = (typeof BUFF_TARGETS)[number];
 
 export const ARMOR_SLOTS = ['Head', 'Torso', 'Arms', 'Legs'] as const;
@@ -170,6 +170,7 @@ export interface Effect {
     readonly attribute: string;
     readonly scalingType: ScalingType;
     readonly value: number;
+    readonly appType: string;
 }
 
 export interface Buff {
@@ -341,4 +342,10 @@ export interface CalculatedPlayerDefenses {
     readonly ignite: number;
     readonly frost: number;
     readonly kickMult: number;
+}
+
+export interface CalculatedRuneStats extends TableData {
+    rune: Rune;
+    weaponEffects: string[];
+    armorEffects: string[];
 }
