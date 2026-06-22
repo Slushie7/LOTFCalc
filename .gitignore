@@ -10,3 +10,5 @@ ffmpeg-downscale-image.txt
 img-src/
 lotf_damage_formulas.py
 cmd.cmd
+LOTFCalcExtractor/classes_experimental.py
+LOTFCalcExtractor/extract_experimental.py
