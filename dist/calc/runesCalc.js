@@ -1,20 +1,3 @@
-const substitutions = new Map([
-    ['Faith', 'Radiance'],
-    ['Chaos', 'Inferno'],
-    ['ScalingOrder', 'ScalingRadiance'],
-    ['ScalingChaos', 'ScalingInferno'],
-    ['DamageDark', 'DamageWither'],
-    ['DefenseDark', 'DefenseWither'],
-    ['MaxBuildupBleed', 'ResistBleed'],
-    ['MaxBuildupBurn', 'ResistBurn'],
-    ['MaxBuildupPoison', 'ResistPoison'],
-    ['MaxBuildupSmite', 'ResistSmite'],
-    ['MaxBuildupIgnite', 'ResistIgnite'],
-    ['MaxBuildupFrostbite', 'ResistFrostbite'],
-    ['MagicRegenRate', 'ManaRegen'],
-    ['Magic', 'Mana'],
-    ['GlobalStaminaBlockingProtection', 'Stability'],
-]);
 export function calculateRuneStats(rune, pinnedRunes) {
     function effectToString(equipment, buffTarget, effect) {
         const target = buffTarget === 'Equipment' ? equipment : buffTarget;
@@ -32,10 +15,7 @@ export function calculateRuneStats(rune, pinnedRunes) {
         else if (op === '*' && value === 0)
             // 'x*0' -> 'x=0'
             op = '=';
-        // attribute name substitutions
-        const attrSubbed = substitutions.get(attr);
-        if (attrSubbed !== undefined)
-            attr = attrSubbed;
+        // append effect's application type, if present
         const appType = effect.appType ? ` (${effect.appType})` : '';
         return `${target}.${attr}${op}${value}${appType}`;
     }

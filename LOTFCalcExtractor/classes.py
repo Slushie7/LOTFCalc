@@ -50,6 +50,24 @@ BE_TARGET_MAP: dict[str, str] = {
     'Character': 'Player',
 }
 
+BUFF_ATTR_MAP: dict[str, str] = {
+    'Faith': 'Radiance',
+    'Chaos': 'Inferno',
+    'ScalingOrder': 'ScalingRadiance',
+    'ScalingChaos': 'ScalingInferno',
+    'DamageDark': 'DamageWither',
+    'DefenseDark': 'DefenseWither',
+    'MaxBuildupBleed': 'ResistBleed',
+    'MaxBuildupBurn': 'ResistBurn',
+    'MaxBuildupPoison': 'ResistPoison',
+    'MaxBuildupSmite': 'ResistSmite',
+    'MaxBuildupIgnite': 'ResistIgnite',
+    'MaxBuildupFrostbite': 'ResistFrostbite',
+    'MagicRegenRate': 'ManaRegen',
+    'Magic': 'Mana',
+    'GlobalStaminaBlockingProtection': 'Stability',
+}
+
 
 def epsilon_floor(x: float) -> int:
     return math.floor(x + 1e-9)

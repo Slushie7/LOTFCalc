@@ -233,6 +233,9 @@ export function formatPercent(val: number): string {
     return `${epsilonFloor(val * 100)}%`;
 }
 
+/** Add a Cell to cells containing the given data. If text is a number, it is floored. If that value
+ * is 0, the number is replaced with '-'
+ */
 export function pushCell(
     cells: Cell[],
     text: string | number | string[],

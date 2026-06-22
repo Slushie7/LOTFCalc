@@ -158,13 +158,6 @@ function formatDmg(dmg, showSplit) {
         return `${dmg.base}+${dmg.fromStats}`;
     return String(dmg.total);
 }
-/**
- *
- * @param cws
- * @param showColGroups
- * @param showSplit
- * @returns
- */
 export function getWeaponRow(cws, showColGroups, showSplit, showRawScaling) {
     const cells = [];
     const wieldable = cws.wieldability.wieldable;

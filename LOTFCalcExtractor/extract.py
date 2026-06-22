@@ -22,6 +22,7 @@ from .classes import (
     RUNE_SOCKET_MAP,
     SCALING_TYPE,
     Rune,
+    BUFF_ATTR_MAP,
     WEAP_CLASS_MAP,
     ARMOR_SLOT_MAP,
     ARMOR_INFO_PAT,
@@ -239,12 +240,14 @@ class LOTFExtractor:
                     continue
                 if attr == 'MagicRegenRate':
                     app_type = 'Per Second'
+                # map buff's attribute to a more human-readable format
+                attr = BUFF_ATTR_MAP.get(attr, attr)
                 effects.append(Effect(attr, operation, value, app_type))
             if buff_key == 'RUNE_SparkyRune':
                 effects.append(Effect('WieldRequirements', 'Multiplicative', 0, ''))
             buffs[buff_key] = Buff(buff_key, tuple(effects))
 
-        # hand-jam rune buffs that couldn't be processed
+        # hand-jam rune buffs too complicated for automatic processing
         buffs['RUNE_WeatheredWeapon'] = Buff(
             'RUNE_WeatheredWeapon', (Effect('DefensePhysical', 'Additive', -20.0, 'On Hit, 10s, 5 Stacks'),)
         )
@@ -298,9 +301,11 @@ class LOTFExtractor:
                 container = containers[0]
                 be_target: Literal['Character', 'Equipment'] = container['BattleEffectTarget'].split('::')[1]
                 target = BE_TARGET_MAP.get(be_target, be_target)
+
                 if rune_key == 'WeatheredRune':
                     # special case - re-assign target to 'Enemy'
                     target = 'Enemy'
+
                 if target not in literal_args(BUFF_TARGET):
                     raise ValueError(f'Invalid buff target "{target}"')
                 target = cast(BUFF_TARGET, target)

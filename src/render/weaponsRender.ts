@@ -176,13 +176,6 @@ function formatDmg(dmg: DamageSplit, showSplit: boolean): string {
     return String(dmg.total);
 }
 
-/**
- *
- * @param cws
- * @param showColGroups
- * @param showSplit
- * @returns
- */
 export function getWeaponRow(
     cws: CalculatedWeaponStats,
     showColGroups: Set<WeaponsSuperheaderKey>,
