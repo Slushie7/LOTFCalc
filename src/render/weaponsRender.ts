@@ -206,7 +206,12 @@ export function getWeaponRow(
 
     // INFO fields: 'WEAP', 'CLS'
     if (showColGroups.has('INFO')) {
-        pushCell(cells, `${cws.weapon.name} +${cws.upgLevel}`, ['col-first', wieldCls]);
+        pushCell(
+            cells,
+            `${cws.weapon.name} +${cws.upgLevel}`,
+            ['col-first', wieldCls],
+            [{ src: `./img/Weapons/${cws.weapon.icon}.webp`, size: 30 }]
+        );
         pushCell(cells, cws.weapon.className, 'col-divider');
     }
 
@@ -249,7 +254,7 @@ export function getWeaponRow(
 
     // RUNES fields: 'RUN'
     if (showColGroups.has('RUNES')) {
-        pushCell(cells, cws.runeSockets.join(',') || '-', ['col-starter', 'col-divider']);
+        pushCell(cells, cws.runeSockets.join(', ') || '-', ['col-starter', 'col-divider']);
     }
 
     // DEF fields: 'DP', 'DH', 'DF', 'DW', 'DS'

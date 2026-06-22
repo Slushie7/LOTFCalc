@@ -98,20 +98,28 @@ export function getHeaderHtml(groups, sortKey, ascending, headerImagePaths) {
     });
     return `<tr>${superParts.join('')}</tr><tr>${headerParts.join('')}</tr>`;
 }
-export function getTableBodyHtml(rows, firstColUrl, fadeItemWithKey) {
+function getTableBodyHtml(rows, firstColUrl, fadeItemWithKey) {
     const tableParts = [];
     for (const row of rows) {
         const rowParts = [];
         row.cells.forEach((cell, idx) => {
-            let inner = escapeHtml(cell.text);
+            let imgTags = '';
+            if (cell.images.length) {
+                const imageParts = [];
+                for (const imgInfo of cell.images) {
+                    imageParts.push(`<img src="${imgInfo.src}" width="${imgInfo.size}" height="${imgInfo.size}">`);
+                }
+                imgTags = imageParts.join('');
+            }
+            let text = escapeHtml(cell.text);
+            let pinBtn = '';
             if (idx === 0) {
                 // first col - pin button and url link
-                const pinBtn = getPinButton(row, row.itemName, row.itemKey);
+                pinBtn = getPinButton(row, row.itemName, row.itemKey);
                 if (firstColUrl)
-                    inner = `<a class="${cell.cls}" href="${escapeHtml(firstColUrl(row))}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
-                inner = pinBtn + inner;
+                    text = `<a class="${cell.cls}" href="${escapeHtml(firstColUrl(row))}" target="_blank" rel="noopener noreferrer">${text}</a>`;
             }
-            rowParts.push(`<td class="${cell.cls}">${inner}</td>`);
+            rowParts.push(`<td class="${cell.cls}">${pinBtn}${imgTags}${text}</td>`);
         });
         const trClasses = `${row.pinned ? 'pinned' : ''} ${row.itemKey === fadeItemWithKey ? 'fade-size-in' : ''}`.trim();
         const clsStr = trClasses ? ` class="${trClasses}"` : '';
@@ -134,7 +142,7 @@ export function formatRoundOpt(val) {
 export function formatPercent(val) {
     return `${epsilonFloor(val * 100)}%`;
 }
-export function pushCell(cells, text, classes) {
+export function pushCell(cells, text, classes, images = []) {
     if (classes === undefined)
         classes = [];
     else if (typeof classes === 'string')
@@ -150,6 +158,6 @@ export function pushCell(cells, text, classes) {
         classes = [...classes, 'empty'];
     }
     const cls = classes.filter((s) => s !== '').join(' ');
-    cells.push({ text, cls });
+    cells.push({ text, images, cls });
 }
 //# sourceMappingURL=sharedRender.js.map

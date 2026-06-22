@@ -48,7 +48,7 @@ export abstract class TableView<
     /** Runs at the end of show() - show/hide upgrade-level, sync toggles, etc */
     protected onShow(): void {}
     /** Mode-specific listeners (upgrade-level, etc) */
-    protected bindExtra(signal: AbortSignal): void {}
+    protected bindExtra(_signal: AbortSignal): void {}
     /** Handle any #view-toggles change events that aren't for column groups (settings, etc) */
     protected handleExtraToggle(_el: HTMLInputElement): boolean {
         return false;

@@ -27,7 +27,7 @@ const views = {
 // ===================================
 // SHARED EVENT HANDLERS
 // ===================================
-function onToggleSidebar(e) {
+function onToggleSidebar() {
     document.body.classList.toggle('sidebar-hidden');
 }
 function onSwitchMode(e) {

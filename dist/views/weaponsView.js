@@ -2,7 +2,7 @@ import { WEAPONS_HEADER_GROUPS, isWeaponsHeaderKey, getWeaponRow } from '../rend
 import { isWeaponClass, WEAPON_CLASSES } from '../model.js';
 import { calculateWeaponStats } from '../calc/weaponsCalc.js';
 import { addElemListener, getTypedElem, getElem, convertHtmlDataAttrib } from '../sharedDOM.js';
-import { getTogglesHtml, isToggleKey, } from '../render/sharedRender.js';
+import { getTogglesHtml, isToggleKey } from '../render/sharedRender.js';
 import { TableView } from './tableView.js';
 const SettingToggles = {
     htmlClass: 'weapons-setting-toggle',
@@ -143,7 +143,6 @@ class WeaponsView extends TableView {
         // weapon upgrade level dropdown
         addElemListener('weapon-level', 'change', (e) => this.onSetUpgLevel(e), { signal });
         // setting/groups toggles
-        addElemListener('view-toggles', 'change', (e) => this.onSettingToggle(e), { signal });
     }
     /**
      * Automatically selects and deselects displayed column groups based on the selected weapon classes
@@ -171,11 +170,17 @@ class WeaponsView extends TableView {
                     toRemove.add(remove);
         }
         // update the currently selected header column groups
+        let updated = false;
         for (const col of toRemove)
-            this.state.showColGroups.delete(col);
-        for (const col of toAdd)
+            updated = updated || this.state.showColGroups.delete(col);
+        for (const col of toAdd) {
+            updated = updated || this.state.showColGroups.has(col);
             this.state.showColGroups.add(col);
+        }
+        if (!updated)
+            return;
         this.syncGroupToggles(); // update the group toggles
+        this.renderHeader();
     }
     // =========================================
     // EVENT HANDLERS
@@ -192,18 +197,16 @@ class WeaponsView extends TableView {
             this.ctx.save();
         }
     }
-    onSettingToggle(e) {
-        if (!(e.target instanceof HTMLInputElement))
-            return;
-        const el = e.target;
+    handleExtraToggle(el) {
         if (el.classList.contains(SettingToggles.htmlClass)) {
             const setting = el.dataset[convertHtmlDataAttrib(SettingToggles.htmlDataKey)];
             if (isToggleKey(setting, SettingToggles)) {
                 this.state[setting] = el.checked;
                 this.renderItems();
-                this.ctx.save();
+                return true;
             }
         }
+        return false;
     }
     // =========================================
     // RENDERING - GENERATE/UPDATE HTML

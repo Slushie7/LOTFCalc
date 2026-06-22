@@ -14,13 +14,13 @@ import {
     type WeaponOffense,
     type WeaponRuneSockets,
     type WeaponClass,
-    type RuneType,
+    type RuneSocketType,
     type ScalingType,
     type BuffTarget,
     type Effect,
     type Buff,
     type Rune,
-    isRuneType,
+    isRuneSocketType,
     isWeaponClass,
     isArmorSlot,
     isArmorWeightClass,
@@ -28,6 +28,7 @@ import {
     type Armor,
     type ArmorWeightClass,
     type ArmorStats,
+    type RuneType,
 } from './model.js';
 
 // interfaces matching JSON structures
@@ -69,7 +70,7 @@ interface RawPlayerStats {
     inferno: number;
 }
 interface RawWeaponRuneSockets {
-    rune_sockets: readonly RuneType[];
+    rune_sockets: readonly RuneSocketType[];
     curve_key: string | null;
 }
 interface RawWeaponDamageAR {
@@ -244,8 +245,8 @@ function toPlayerStats(r: RawPlayerStats): PlayerStats {
 }
 
 function toWeaponRunes(r: RawWeaponRuneSockets, curves: Map<string, Curve>): WeaponRuneSockets {
-    const runeSockets = r.rune_sockets as RuneType[];
-    if (!r.rune_sockets.every((rs) => isRuneType(rs))) throw new Error(`Invalid rune socket type in ${r}`);
+    const runeSockets = r.rune_sockets as RuneSocketType[];
+    if (!r.rune_sockets.every((rs) => isRuneSocketType(rs))) throw new Error(`Invalid rune socket type in ${r}`);
 
     return {
         runeSockets,

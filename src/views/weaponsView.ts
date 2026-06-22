@@ -195,10 +195,16 @@ class WeaponsView extends TableView<WeaponsState, WeaponsHeaderKey, WeaponsSuper
         }
 
         // update the currently selected header column groups
-        for (const col of toRemove) this.state.showColGroups.delete(col);
-        for (const col of toAdd) this.state.showColGroups.add(col);
+        let updated = false;
+        for (const col of toRemove) updated = updated || this.state.showColGroups.delete(col);
+        for (const col of toAdd) {
+            updated = updated || this.state.showColGroups.has(col);
+            this.state.showColGroups.add(col);
+        }
 
+        if (!updated) return;
         this.syncGroupToggles(); // update the group toggles
+        this.renderHeader();
     }
 
     // =========================================

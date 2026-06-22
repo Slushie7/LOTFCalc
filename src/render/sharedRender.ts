@@ -26,8 +26,14 @@ export function getTogglesHtml(tg: ToggleGroup<string>): string {
     return parts.join('');
 }
 
+export interface ImageInfo {
+    src: string;
+    size: number;
+}
+
 export interface Cell {
     readonly text: string;
+    readonly images: ImageInfo[];
     readonly cls: string;
 }
 
@@ -179,15 +185,25 @@ function getTableBodyHtml(
     for (const row of rows) {
         const rowParts: string[] = [];
         row.cells.forEach((cell, idx) => {
-            let inner = escapeHtml(cell.text);
+            let imgTags = '';
+            if (cell.images.length) {
+                const imageParts: string[] = [];
+                for (const imgInfo of cell.images) {
+                    imageParts.push(
+                        `<img src="${imgInfo.src}" width="${imgInfo.size}" height="${imgInfo.size}">`
+                    );
+                }
+                imgTags = imageParts.join('');
+            }
+            let text = escapeHtml(cell.text);
+            let pinBtn = '';
             if (idx === 0) {
                 // first col - pin button and url link
-                const pinBtn = getPinButton(row, row.itemName, row.itemKey);
+                pinBtn = getPinButton(row, row.itemName, row.itemKey);
                 if (firstColUrl)
-                    inner = `<a class="${cell.cls}" href="${escapeHtml(firstColUrl(row))}" target="_blank" rel="noopener noreferrer">${inner}</a>`;
-                inner = pinBtn + inner;
+                    text = `<a class="${cell.cls}" href="${escapeHtml(firstColUrl(row))}" target="_blank" rel="noopener noreferrer">${text}</a>`;
             }
-            rowParts.push(`<td class="${cell.cls}">${inner}</td>`);
+            rowParts.push(`<td class="${cell.cls}">${pinBtn}${imgTags}${text}</td>`);
         });
         const trClasses =
             `${row.pinned ? 'pinned' : ''} ${row.itemKey === fadeItemWithKey ? 'fade-size-in' : ''}`.trim();
@@ -217,7 +233,12 @@ export function formatPercent(val: number): string {
     return `${epsilonFloor(val * 100)}%`;
 }
 
-export function pushCell(cells: Cell[], text: string | number, classes?: string | string[]): void {
+export function pushCell(
+    cells: Cell[],
+    text: string | number,
+    classes?: string | string[],
+    images: ImageInfo[] = []
+): void {
     if (classes === undefined) classes = [];
     else if (typeof classes === 'string') classes = [classes];
 
@@ -233,5 +254,5 @@ export function pushCell(cells: Cell[], text: string | number, classes?: string 
     }
 
     const cls = classes.filter((s) => s !== '').join(' ');
-    cells.push({ text, cls });
+    cells.push({ text, images, cls });
 }

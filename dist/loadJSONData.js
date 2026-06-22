@@ -1,4 +1,4 @@
-import { isRuneType, isWeaponClass, isArmorSlot, isArmorWeightClass, } from './model.js';
+import { isRuneSocketType, isWeaponClass, isArmorSlot, isArmorWeightClass, } from './model.js';
 // helpers
 function getCurveOrNull(key, curves) {
     if (key === null)
@@ -59,7 +59,7 @@ function toPlayerStats(r) {
 }
 function toWeaponRunes(r, curves) {
     const runeSockets = r.rune_sockets;
-    if (!r.rune_sockets.every((rs) => isRuneType(rs)))
+    if (!r.rune_sockets.every((rs) => isRuneSocketType(rs)))
         throw new Error(`Invalid rune socket type in ${r}`);
     return {
         runeSockets,

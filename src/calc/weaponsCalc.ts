@@ -20,6 +20,7 @@ import type {
     CalculatedWeaponStatus,
     PlayerStats,
     DamageSplit,
+    RuneSocketType,
 } from '../model.js';
 import { epsilonFloor, interpolate, getValue } from './sharedCalc.js';
 
@@ -29,7 +30,7 @@ import { epsilonFloor, interpolate, getValue } from './sharedCalc.js';
  * @param upg_level
  * @returns
  */
-function getRunes(weaponRuneSockets: WeaponRuneSockets, upg_level: number): string[] {
+function getRunes(weaponRuneSockets: WeaponRuneSockets, upg_level: number): RuneSocketType[] {
     if (weaponRuneSockets.numByLevel === null) return [];
     const numRunes = epsilonFloor(interpolate(weaponRuneSockets.numByLevel, upg_level));
     if (numRunes < 0) throw new Error(`Failed to get rune sockets: negative Curve value`);

@@ -1,4 +1,4 @@
-import { formatIntOpt, formatPercent, formatRoundOpt, getHeaderHtml, HEADER_STATUS_IMAGE_PATHS, pushCell, } from './sharedRender.js';
+import { formatIntOpt, formatPercent, formatRoundOpt, pushCell, } from './sharedRender.js';
 const WEAPONS_HEADER_KEYS = [
     // basic
     'WEAP',
@@ -171,7 +171,7 @@ export function getWeaponRow(cws, showColGroups, showSplit, showRawScaling) {
     const wieldCls = wieldable ? '' : 'unwieldable';
     // INFO fields: 'WEAP', 'CLS'
     if (showColGroups.has('INFO')) {
-        pushCell(cells, `${cws.weapon.name} +${cws.upgLevel}`, ['col-first', wieldCls]);
+        pushCell(cells, `${cws.weapon.name} +${cws.upgLevel}`, ['col-first', wieldCls], [{ src: `./img/Weapons/${cws.weapon.icon}.webp`, size: 30 }]);
         pushCell(cells, cws.weapon.className, 'col-divider');
     }
     // AR fields: 'ARP', 'ARH', 'ARF', 'ARW', 'TOT', 'SP'
@@ -209,7 +209,7 @@ export function getWeaponRow(cws, showColGroups, showSplit, showRawScaling) {
     }
     // RUNES fields: 'RUN'
     if (showColGroups.has('RUNES')) {
-        pushCell(cells, cws.runeSockets.join(',') || '-', ['col-starter', 'col-divider']);
+        pushCell(cells, cws.runeSockets.join(', ') || '-', ['col-starter', 'col-divider']);
     }
     // DEF fields: 'DP', 'DH', 'DF', 'DW', 'DS'
     if (showColGroups.has('DEF')) {

@@ -1,11 +1,5 @@
 import { type CalculatedArmorStats } from '../model.js';
-import {
-    pushCell,
-    type Cell,
-    type HeaderColumn,
-    type HeaderGroup,
-    type Row,
-} from './sharedRender.js';
+import { pushCell, type Cell, type HeaderColumn, type HeaderGroup, type Row } from './sharedRender.js';
 
 const ARMORS_HEADER_KEYS = [
     // INFO
@@ -102,7 +96,7 @@ export function getArmorRow(cas: CalculatedArmorStats, showColGroups: Set<Armors
 
     // INFO cols (ARMR, SLOT, WGT, POIS)
     if (showColGroups.has('INFO')) {
-        pushCell(cells, arm.name, 'col-first');
+        pushCell(cells, arm.name, 'col-first', [{ src: `./img/Armors/${arm.icon}.webp`, size: 30 }]);
         pushCell(cells, arm.slot);
         pushCell(cells, arm.stats.weight.toFixed(1));
         pushCell(cells, arm.stats.poise.toFixed(1), 'col-divider');

@@ -1,10 +1,16 @@
 const STAT_KEYS = ['S', 'A', 'R', 'I'] as const;
 export type StatKey = (typeof STAT_KEYS)[number];
 
-const RUNE_TYPES = [...STAT_KEYS, '*'] as const;
+const RUNE_TYPES = [...STAT_KEYS] as const;
 export type RuneType = (typeof RUNE_TYPES)[number];
 export function isRuneType(v: unknown): v is RuneType {
     return RUNE_TYPES.includes(v as RuneType);
+}
+
+const RUNE_SOCKET_TYPES = [...RUNE_TYPES, '*'] as const;
+export type RuneSocketType = (typeof RUNE_SOCKET_TYPES)[number];
+export function isRuneSocketType(v: unknown): v is RuneSocketType {
+    return RUNE_SOCKET_TYPES.includes(v as RuneSocketType);
 }
 
 export const WEAPON_CLASSES = [
@@ -56,7 +62,7 @@ export function isArmorWeightClass(v: unknown): v is ArmorWeightClass {
 }
 
 export interface TableData {
-    readonly pinned: boolean
+    readonly pinned: boolean;
 }
 
 export interface Curve {
@@ -103,7 +109,7 @@ export type PlayerStats = {
 };
 
 export interface WeaponRuneSockets {
-    readonly runeSockets: RuneType[];
+    readonly runeSockets: RuneSocketType[];
     readonly numByLevel: Curve | null;
 }
 
@@ -291,7 +297,7 @@ export interface CalculatedWeaponStats extends TableData {
     readonly weapon: Weapon;
     readonly offense: CalculatedWeaponOffense;
     readonly defense: CalculatedWeaponDefense;
-    readonly runeSockets: string[];
+    readonly runeSockets: RuneSocketType[];
     readonly upgLevel: number;
     readonly playerStats: PlayerStats;
     readonly wieldability: CalculatedCanWield;

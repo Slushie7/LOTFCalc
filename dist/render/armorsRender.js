@@ -1,5 +1,5 @@
 import {} from '../model.js';
-import { pushCell, } from './sharedRender.js';
+import { pushCell } from './sharedRender.js';
 const ARMORS_HEADER_KEYS = [
     // INFO
     'ARMR',
@@ -80,7 +80,7 @@ export function getArmorRow(cas, showColGroups) {
     const arm = cas.armor;
     // INFO cols (ARMR, SLOT, WGT, POIS)
     if (showColGroups.has('INFO')) {
-        pushCell(cells, arm.name, 'col-first');
+        pushCell(cells, arm.name, 'col-first', [{ src: `./img/Armors/${arm.icon}.webp`, size: 30 }]);
         pushCell(cells, arm.slot);
         pushCell(cells, arm.stats.weight.toFixed(1));
         pushCell(cells, arm.stats.poise.toFixed(1), 'col-divider');

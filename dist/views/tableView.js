@@ -16,7 +16,7 @@ export class TableView extends View {
     /** Runs at the end of show() - show/hide upgrade-level, sync toggles, etc */
     onShow() { }
     /** Mode-specific listeners (upgrade-level, etc) */
-    bindExtra(signal) { }
+    bindExtra(_signal) { }
     /** Handle any #view-toggles change events that aren't for column groups (settings, etc) */
     handleExtraToggle(_el) {
         return false;
@@ -54,7 +54,6 @@ export class TableView extends View {
     // SHARED EVENT HANDLERS
     // ====================================
     onSidebarChange(e) {
-        let handled = false;
         if (e.target instanceof HTMLInputElement) {
             // regular set-inclusion toggles
             const el = e.target;
@@ -131,7 +130,7 @@ export class TableView extends View {
             this.state.pinnedItems.delete(itemKey);
         else
             this.state.pinnedItems.add(itemKey);
-        this.renderItems(itemKey); // render weapons with the pinned/unpinned weapon transitioning into view
+        this.renderItems(itemKey); // render items with the pinned/unpinned item transitioning into view
         this.ctx.save();
     }
     onToggleChange(e) {
@@ -172,9 +171,9 @@ export class TableView extends View {
         getElem(`${this.mode}-header`).innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending, HEADER_STATUS_IMAGE_PATHS);
     }
     renderItems(itemKeyFadeIn = null) {
-        // sort calculated weapon stats by current sortKey
+        // collect and sort items by current sortKey
         const calcStats = this.sortCalculated(this.collectItems(), this.state.sortKey, this.state.ascending, this.sortFns);
-        // display the weapon rows
+        // display the items in the table
         const rows = calcStats.map((cst) => this.buildRow(cst));
         getElem(`${this.mode}-body`).innerHTML = getItemTableBodyHtml(rows, itemKeyFadeIn);
     }
@@ -192,7 +191,7 @@ export class TableView extends View {
     sortCalculated(calculated, sortKey, ascending, sortFns) {
         const pinned = [];
         const unpinned = [];
-        // separate pinned weapons from unpinned weapons
+        // separate pinned items from unpinned items
         for (const c of calculated)
             if (c.pinned)
                 pinned.push(c);
