@@ -31,9 +31,6 @@ export function isWeaponClass(v) {
 // stored types
 const INTERP_MODES = ['RCIM_Linear'];
 const SCALING_TYPES = ['Additive', 'Multiplicative'];
-export function isScalingType(v) {
-    return SCALING_TYPES.includes(v);
-}
 const BUFF_TARGETS = ['Player', 'Equipment', 'Enemy'];
 export const ARMOR_SLOTS = ['Head', 'Torso', 'Arms', 'Legs'];
 export function isArmorSlot(v) {

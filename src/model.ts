@@ -42,9 +42,6 @@ type InterpMode = (typeof INTERP_MODES)[number];
 
 const SCALING_TYPES = ['Additive', 'Multiplicative'] as const;
 export type ScalingType = (typeof SCALING_TYPES)[number];
-export function isScalingType(v: unknown): v is ScalingType {
-    return SCALING_TYPES.includes(v as ScalingType);
-}
 
 const BUFF_TARGETS = ['Player', 'Equipment', 'Enemy'] as const;
 export type BuffTarget = (typeof BUFF_TARGETS)[number];

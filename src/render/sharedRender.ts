@@ -245,12 +245,13 @@ export function pushCell(
     if (classes === undefined) classes = [];
     else if (typeof classes === 'string') classes = [classes];
 
-    if (typeof text === 'number') {
-        text = epsilonFloor(text);
-        if (!text)
+    if (!text) text = '-';
+    else if (typeof text === 'number') {
+        const floored = epsilonFloor(text);
+        if (!floored)
             text = '-'; // replace 0 with '-'
-        else text = String(text);
-    }
+        else text = String(floored);
+    } else if (Array.isArray(text) && !text.length) text = '-';
 
     if (!text || text === '-') {
         classes = [...classes, 'empty'];

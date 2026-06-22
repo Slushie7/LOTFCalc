@@ -47,8 +47,10 @@ export function getRuneRow(crs: CalculatedRuneStats, showColGroups: Set<RunesSup
     const rune = crs.rune;
 
     // INFO (RUNE, TYPE)
-    pushCell(cells, rune.name, 'col-first', [{ src: `./img/Runes/${rune.icon}.webp`, size: 30 }]);
-    pushCell(cells, rune.type, 'col-divider');
+    if (showColGroups.has('INFO')) {
+        pushCell(cells, rune.name, 'col-first', [{ src: `./img/Runes/${rune.icon}.webp`, size: 30 }]);
+        pushCell(cells, rune.type, 'col-divider');
+    }
 
     // WEAP (WEAPFX)
     if (showColGroups.has('WEAP')) pushCell(cells, crs.weaponEffects, ['col-starter', 'col-divider']);

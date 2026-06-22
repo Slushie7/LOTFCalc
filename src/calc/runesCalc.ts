@@ -12,7 +12,7 @@ export function calculateRuneStats(rune: Rune, pinnedRunes: Set<string>): Calcul
                 op = '';
             else if (value < 1.0)
                 // convert these numbers to percentage increases
-                value = `${value * 100}%`;
+                value = `${(value * 100).toFixed(1)}%`;
         } else if (op === '*' && value === 0)
             // 'x*0' -> 'x=0'
             op = '=';

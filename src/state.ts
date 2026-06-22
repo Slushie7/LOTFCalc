@@ -320,6 +320,7 @@ export function loadAppState(): AppState {
     const selectedSlots = new Set(state.armors.selectedSlots);
     const selectedWeights = new Set(state.armors.selectedWeights);
     const showColGroupsArmor = new Set(state.armors.showColGroups);
+    showColGroupsArmor.add('INFO');
     const pinnedArmors = new Set(state.armors.pinnedItems);
 
     const armors: ArmorsState = {
@@ -333,6 +334,7 @@ export function loadAppState(): AppState {
 
     const selectedTypes = new Set(state.runes.selectedTypes);
     const showColGroupsRunes = new Set(state.runes.showColGroups);
+    showColGroupsRunes.add('INFO');
     const pinnedRunes = new Set(state.runes.pinnedItems);
 
     const runes: RunesState = {
