@@ -172,6 +172,11 @@ body.sidebar-hidden #sidebar {
     padding: 1.05rem 0.6rem 0.3rem;
     font-size: 0.9rem;
 }
+.stats-inputs input:hover,
+.stats-inputs input:focus {
+    background: color-mix(in srgb, var(--pico-background-color), white 5%);
+    color: var(--pico-primary);
+}
 
 /* floating caption inside each stat input */
 .field {
@@ -362,6 +367,12 @@ body.sidebar-hidden #sidebar {
     width: 100%;
     border-width: 1px;
     text-align: center;
+    transition: color var(--pico-transition);
+}
+.calc-table .table-search:hover,
+.calc-table .table-search:focus {
+    background: color-mix(in srgb, var(--pico-background-color), white 5%);
+    color: var(--pico-primary);
 }
 .calc-table thead tr:first-child th {
     border-top: 1px solid var(--pico-muted-border-color);
