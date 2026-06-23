@@ -1,7 +1,7 @@
 import { WEAPONS_HEADER_GROUPS, isWeaponsHeaderKey, getWeaponRow } from '../render/weaponsRender.js';
 import { isWeaponClass, WEAPON_CLASSES } from '../model.js';
 import { calculateWeaponStats } from '../calc/weaponsCalc.js';
-import { addElemListener, getTypedElem, getElem, convertHtmlDataAttrib } from '../sharedDOM.js';
+import { addElemListener, getTypedElem, getElem, convertHtmlDataAttrib, addClassListeners } from '../sharedDOM.js';
 import { getTogglesHtml, isToggleKey } from '../render/sharedRender.js';
 import { TableView } from './tableView.js';
 const SettingToggles = {
@@ -142,7 +142,7 @@ class WeaponsView extends TableView {
     bindExtra(signal) {
         // weapon upgrade level dropdown
         addElemListener('weapon-level', 'change', (e) => this.onSetUpgLevel(e), { signal });
-        // setting/groups toggles
+        addClassListeners('stat-input', HTMLInputElement, 'input', () => this.fetchAndRender(), { signal });
     }
     /**
      * Automatically selects and deselects displayed column groups based on the selected weapon classes

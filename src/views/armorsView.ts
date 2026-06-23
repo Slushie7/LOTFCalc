@@ -6,6 +6,7 @@ import {
     isArmorsHeaderKey,
     type ArmorsSuperheaderKey,
     type ArmorsHeaderKey,
+    getPaperDollHtml,
 } from '../render/armorsRender.js';
 import {
     ARMOR_SLOTS,
@@ -20,6 +21,7 @@ import {
 import { calculateArmorStats } from '../calc/armorsCalc.js';
 import { type Row, type SidebarSection, type ToggleGroup } from '../render/sharedRender.js';
 import { TableView, type SortFunction } from './tableView.js';
+import { addClassListeners, addElemListener, getElem } from '../sharedDOM.js';
 
 const GroupToggles: ToggleGroup<ArmorsSuperheaderKey> = {
     htmlClass: 'armors-group-toggle',
@@ -48,6 +50,7 @@ const WeightEnum: Record<ArmorWeightClass, number> = {
 const armorsSortFns: Record<ArmorsHeaderKey, SortFunction<CalculatedArmorStats>> = {
     // INFO
     ARMR: (a, b) => a.item.name.localeCompare(b.item.name),
+    EQUIP: (a, b) => Number(a.equipped) - Number(b.equipped),
     SLOT: (a, b) => SlotEnum[a.item.slot] - SlotEnum[b.item.slot],
     WGT: (a, b) => a.item.stats.weight - b.item.stats.weight,
     POIS: (a, b) => a.item.stats.poise - b.item.stats.poise,
@@ -81,6 +84,7 @@ export function createArmorsView(state: ArmorsState, ctx: ViewContext) {
 class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperheaderKey, Armor, CalculatedArmorStats> {
     readonly mode = 'armors' as const;
     readonly modeBtnText = 'Armors' as const;
+    readonly armors: Map<string, Armor>;
 
     protected readonly headerGroups = ARMORS_HEADER_GROUPS;
     protected readonly colGroupToggles = GroupToggles;
@@ -107,6 +111,73 @@ class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperhead
 
     constructor(state: ArmorsState, ctx: ViewContext) {
         super(state, ctx);
+        this.armors = new Map(ctx.data.armors.map((armr) => [armr.key, armr]));
+    }
+
+    protected onShow(): void {
+        getElem('paper-doll').hidden = false;
+        getElem('derived-armor').hidden = false;
+        this.updatePaperDoll();
+    }
+
+    protected onHide(): void {
+        getElem('paper-doll').hidden = true;
+        getElem('derived-armor').hidden = true;
+    }
+
+    protected bindExtra(_signal: AbortSignal): void {
+        addClassListeners('stat-input', HTMLInputElement, 'input', () => this.updateDerivedArmor());
+        // paper doll 'X' buttons
+        addElemListener('paper-doll', 'click', (e) => this.onPaperDollClick(e));
+    }
+
+    protected onPaperDollClick(e: Event): void {
+        if (!(e.target instanceof Element)) return;
+        const el = e.target.closest<HTMLButtonElement>('button.slot-unequip');
+        if (!el) return;
+
+        // clear the paper doll slot and refresh the paper doll's HTML
+        const slot = el.dataset.slot;
+        if (!isArmorSlot(slot)) return;
+        this.state.paperDoll[slot] = null;
+        this.updatePaperDoll();
+        this.ctx.save();
+    }
+
+    protected handleExtraBodyClick(e: Event): boolean {
+        if (!(e.target instanceof HTMLButtonElement)) return false;
+        const el = e.target;
+
+        if (el.classList.contains('equip-unequip')) {
+            if (el.dataset.equipArmor) {
+                // equip the armor in the paper doll
+                const armor = this.armors.get(el.dataset.equipArmor);
+                if (!armor) return false;
+                this.state.paperDoll[armor.slot] = armor.key;
+            } else if (el.dataset.unequipArmor) {
+                // unequip the armor from the paper doll
+                const armor = this.armors.get(el.dataset.unequipArmor);
+                if (!armor) return false;
+                this.state.paperDoll[armor.slot] = null;
+            }
+            this.updatePaperDoll();
+            return true;
+        }
+
+        return false;
+    }
+
+    protected updateDerivedArmor(): void {}
+
+    protected updatePaperDoll(): void {
+        // update the 'equipped' attribute for all items in the table's CalculatedArmorStats cache
+        const equipped = new Set(Object.values(this.state.paperDoll));
+        this.calculatedItems.map((v) => (v.equipped = equipped.has(v.item.key)));
+
+        // update the DOM
+        getElem('paper-doll').innerHTML = getPaperDollHtml(this.state.paperDoll, this.armors);
+        this.updateDerivedArmor();
+        this.renderItems();
     }
 
     protected collectItems(): readonly CalculatedArmorStats[] {
@@ -115,7 +186,8 @@ class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperhead
                 (this.state.selectedSlots.has(arm.slot) && this.state.selectedWeights.has(arm.weightClass)) ||
                 this.state.pinnedItems.has(arm.key)
         );
-        const calcStats = showArmors.map((arm) => calculateArmorStats(arm, this.state.pinnedItems));
+        const equipped = new Set(Object.values(this.state.paperDoll));
+        const calcStats = showArmors.map((arm) => calculateArmorStats(arm, this.state.pinnedItems, equipped));
         return calcStats;
     }
 

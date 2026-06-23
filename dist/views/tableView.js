@@ -1,4 +1,4 @@
-import { getHeaderHtml, getItemTableBodyHtml, getSidebarHtml, getTogglesHtml, HEADER_STATUS_IMAGE_PATHS, isToggleKey, } from '../render/sharedRender.js';
+import { getHeaderHtml, getItemTableBodyHtml, getSidebarHtml, getTogglesHtml, HEADER_STATUS_IMAGES, isToggleKey, } from '../render/sharedRender.js';
 import { addElemListener, convertHtmlDataAttrib, getElem, getTypedElem, syncSidebarToggles } from '../sharedDOM.js';
 import { View } from './view.js';
 export class TableView extends View {
@@ -22,6 +22,9 @@ export class TableView extends View {
     handleExtraToggle(_el) {
         return false;
     }
+    handleExtraBodyClick(_e) {
+        return false;
+    }
     /** Additional matching function for search text */
     additionalSearchFilter(_text, _cst) {
         return false;
@@ -30,6 +33,7 @@ export class TableView extends View {
     mount() { }
     show() {
         getElem(`view-${this.mode}`).hidden = false;
+        getElem(`${this.mode}-search`).hidden = false;
         this.ac?.abort(); // guard against a double show()
         this.ac = new AbortController();
         const { signal } = this.ac;
@@ -129,6 +133,8 @@ export class TableView extends View {
         this.ctx.save();
     }
     onBodyClick(e) {
+        if (this.handleExtraBodyClick(e))
+            return;
         if (!(e.target instanceof Element))
             return;
         const el = e.target.closest('button.lock');
@@ -166,13 +172,19 @@ export class TableView extends View {
     // ====================================
     /** Filter applied when mode-search input changes */
     searchFilter(_text, _cst) {
-        if (!_text || _cst.item.name.toLowerCase().includes(_text.toLowerCase()) || this.additionalSearchFilter(_text, _cst))
+        if (!_text ||
+            _cst.item.name.toLowerCase().includes(_text.toLowerCase()) ||
+            this.additionalSearchFilter(_text, _cst))
             return true;
         return false;
     }
     fetchCalculated() {
         this.calculatedItems.length = 0;
         this.calculatedItems.push(...this.collectItems());
+    }
+    fetchAndRender() {
+        this.fetchCalculated();
+        this.renderItems();
     }
     renderSidebar() {
         if (this.sidebarSections.length)
@@ -191,7 +203,7 @@ export class TableView extends View {
         searchInput.remove();
         const header = getElem(`${this.mode}-header`);
         const groups = this.headerGroups.filter((group) => this.state.showColGroups.has(group.superKey));
-        header.innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending, HEADER_STATUS_IMAGE_PATHS);
+        header.innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending, HEADER_STATUS_IMAGES);
         // insert the search input element into the first cell of the superheader
         header.firstChild?.firstChild?.appendChild(searchInput);
     }

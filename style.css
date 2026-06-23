@@ -298,21 +298,6 @@ body.sidebar-hidden #sidebar {
     display: block;
     margin-bottom: 0.25rem;
 }
-.calc-table button.lock {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: auto;
-    margin: 0 0.1rem 0 0;
-    padding: 0.1rem;
-    vertical-align: middle;
-    background: none;
-    border: none;
-    box-shadow: none;
-    color: var(--pico-muted-color);
-    cursor: pointer;
-    transition: color var(--pico-transition);
-}
 
 /* ============================================================
    CONTENT (holds the active view: toggles row + table)
@@ -458,6 +443,17 @@ body.sidebar-hidden #sidebar {
     width: 16px;
     height: 16px;
     display: block;
+}
+.calc-table button.equip-unequip {
+    display: inline-flex;              /* block-level flex, not inline-flex */
+    align-items: center;
+    justify-content: center;
+    width: 3.2rem;
+    margin: 0 auto;            /* block elements ignore text-align: center, so center manually */
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8em;
+    line-height: 1.1;
+    white-space: nowrap;
 }
 
 /* ============================================================

@@ -5,7 +5,7 @@ import { type Weapon, type WeaponClass, isWeaponClass, type CalculatedWeaponStat
 import { calculateWeaponStats } from '../calc/weaponsCalc.js';
 
 import type { ViewContext } from './view.js';
-import { addElemListener, getTypedElem, getElem, convertHtmlDataAttrib } from '../sharedDOM.js';
+import { addElemListener, getTypedElem, getElem, convertHtmlDataAttrib, addClassListeners } from '../sharedDOM.js';
 import { getTogglesHtml, isToggleKey, type SidebarSection, type ToggleGroup } from '../render/sharedRender.js';
 import { TableView, type SortFunction } from './tableView.js';
 
@@ -128,7 +128,13 @@ export function createWeaponsView(state: WeaponsState, ctx: ViewContext) {
     return new WeaponsView(state, ctx);
 }
 
-class WeaponsView extends TableView<WeaponsState, WeaponsHeaderKey, WeaponsSuperheaderKey, Weapon, CalculatedWeaponStats> {
+class WeaponsView extends TableView<
+    WeaponsState,
+    WeaponsHeaderKey,
+    WeaponsSuperheaderKey,
+    Weapon,
+    CalculatedWeaponStats
+> {
     readonly mode = 'weapons' as const;
     readonly modeBtnText = 'Weapons' as const;
 
@@ -167,7 +173,7 @@ class WeaponsView extends TableView<WeaponsState, WeaponsHeaderKey, WeaponsSuper
     protected bindExtra(signal: AbortSignal): void {
         // weapon upgrade level dropdown
         addElemListener('weapon-level', 'change', (e) => this.onSetUpgLevel(e), { signal });
-        // setting/groups toggles
+        addClassListeners('stat-input', HTMLInputElement, 'input', () => this.fetchAndRender(), { signal });
     }
 
     /**

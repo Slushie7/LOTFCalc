@@ -10,13 +10,23 @@ export function getDefenseScalar(defense_value: number): number {
     return 600 / (600 + defense_value);
 }
 
-export function calculateArmorStats(armor: Armor, pinnedArmors: Set<string>): CalculatedArmorStats {
+export function calculateArmorStats(
+    armor: Armor,
+    pinnedArmors: Set<string>,
+    equippedArmors: Set<string | null>
+): CalculatedArmorStats {
     const stats = armor.stats;
     const defTotal = stats.defPhysical + stats.defFire + stats.defHoly + stats.defWither;
     const resTotal =
         stats.resBleed + stats.resBurn + stats.resFrost + stats.resIgnite + stats.resPoison + stats.resSmite;
 
-    return { item: armor, defTotal, resTotal, pinned: pinnedArmors.has(armor.key) };
+    return {
+        item: armor,
+        defTotal,
+        resTotal,
+        pinned: pinnedArmors.has(armor.key),
+        equipped: equippedArmors.has(armor.key),
+    };
 }
 
 export function calculatePlayerDefenses(

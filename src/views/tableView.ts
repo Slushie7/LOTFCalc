@@ -4,7 +4,7 @@ import {
     getItemTableBodyHtml,
     getSidebarHtml,
     getTogglesHtml,
-    HEADER_STATUS_IMAGE_PATHS,
+    HEADER_STATUS_IMAGES,
     isToggleKey,
     type HeaderGroup,
     type Row,
@@ -25,7 +25,7 @@ export abstract class TableView<
     CST extends TableData<I>, // calculated stats type (e.g. CalculatedWeaponStats)
 > extends View {
     private ac: AbortController | null = null;
-    private calculatedItems: CST[] = [];
+    protected calculatedItems: CST[] = [];
 
     constructor(
         protected readonly state: S,
@@ -55,6 +55,9 @@ export abstract class TableView<
     protected handleExtraToggle(_el: HTMLInputElement): boolean {
         return false;
     }
+    protected handleExtraBodyClick(_e: Event): boolean {
+        return false;
+    }
     /** Additional matching function for search text */
     protected additionalSearchFilter(_text: string, _cst: CST): boolean {
         return false;
@@ -65,6 +68,7 @@ export abstract class TableView<
 
     show(): void {
         getElem(`view-${this.mode}`).hidden = false;
+        getElem(`${this.mode}-search`).hidden = false;
         this.ac?.abort(); // guard against a double show()
         this.ac = new AbortController();
         const { signal } = this.ac;
@@ -171,6 +175,8 @@ export abstract class TableView<
     }
 
     protected onBodyClick(e: Event): void {
+        if (this.handleExtraBodyClick(e)) return;
+
         if (!(e.target instanceof Element)) return;
 
         const el = e.target.closest<HTMLButtonElement>('button.lock');
@@ -205,7 +211,11 @@ export abstract class TableView<
 
     /** Filter applied when mode-search input changes */
     protected searchFilter(_text: string, _cst: CST): boolean {
-        if (!_text || _cst.item.name.toLowerCase().includes(_text.toLowerCase()) || this.additionalSearchFilter(_text, _cst))
+        if (
+            !_text ||
+            _cst.item.name.toLowerCase().includes(_text.toLowerCase()) ||
+            this.additionalSearchFilter(_text, _cst)
+        )
             return true;
         return false;
     }
@@ -213,6 +223,11 @@ export abstract class TableView<
     protected fetchCalculated(): void {
         this.calculatedItems.length = 0;
         this.calculatedItems.push(...this.collectItems());
+    }
+    
+    protected fetchAndRender():void{
+        this.fetchCalculated();
+        this.renderItems();
     }
 
     protected renderSidebar(): void {
@@ -234,7 +249,7 @@ export abstract class TableView<
 
         const header = getElem(`${this.mode}-header`);
         const groups = this.headerGroups.filter((group) => this.state.showColGroups.has(group.superKey));
-        header.innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending, HEADER_STATUS_IMAGE_PATHS);
+        header.innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending, HEADER_STATUS_IMAGES);
 
         // insert the search input element into the first cell of the superheader
         header.firstChild?.firstChild?.appendChild(searchInput);

@@ -14,27 +14,20 @@ export function isToggleKey<T extends string>(k: unknown, tg: ToggleGroup<T>): k
     return typeof k === 'string' && Object.hasOwn(tg.toggles, k);
 }
 
-export function getTogglesHtml(tg: ToggleGroup<string>): string {
-    const parts: string[] = [];
-
-    for (const [key, setting] of Object.entries(tg.toggles))
-        if (setting !== undefined)
-            parts.push(
-                `<label title="${setting.hover}"><input type="checkbox" class="${tg.htmlClass}" data-${tg.htmlDataKey}="${key}" />${setting.text}</label>`
-            );
-
-    return parts.join('');
-}
-
 export interface ImageInfo {
     src: string;
     size: number;
 }
 
 export interface Cell {
-    readonly text: string | string[];
-    readonly images: ImageInfo[];
+    readonly htmlText: string;
+    readonly images: ImageInfo[] | undefined;
     readonly cls: string;
+}
+
+export interface CellButton {
+    classes: string | string[] | undefined;
+    data: { htmlDataKey: string; htmlDataValue: string } | undefined;
 }
 
 export interface HeaderColumn<HK extends string> {
@@ -61,7 +54,7 @@ const SELECT_NONE_SVG = `<svg viewBox="0 0 509 512.123"><path fill-rule="nonzero
 const LOCKED_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14.2" height="10" rx="2"/><path d="M 8 11 V 6 a 4 4 0 0 1 8 0 v 5"/><circle cx="12.1" cy="15.2" r="1.2" fill="currentColor" stroke="none"/><line x1="12.1" y1="16.1" x2="12.1" y2="17.6" stroke="currentColor" stroke-width="1.5"/></svg>`;
 const UNLOCKED_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14.2" height="10" rx="2"/><path d="M 8 11 V 5 a 4 4 0 0 1 7.9 -0.9"/><circle cx="12.1" cy="15.2" r="1.2" fill="currentColor" stroke="none"/><line x1="12.1" y1="16.1" x2="12.1" y2="17.6" stroke="currentColor" stroke-width="1.5"/></svg>`;
 
-export const HEADER_STATUS_IMAGE_PATHS: Record<string, string> = {
+export const HEADER_STATUS_IMAGES: Record<string, string> = {
     BLE: './img/Header/Bleed.webp',
     BRN: './img/Header/Burn.webp',
     PSN: './img/Header/Poison.webp',
@@ -75,7 +68,7 @@ export const HEADER_STATUS_IMAGE_PATHS: Record<string, string> = {
  * @param s
  * @returns
  */
-function escapeHtml(s: string): string {
+export function escapeHtml(s: string): string {
     return s
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -92,6 +85,18 @@ function getPinButton(row: Row, text: string, data: string): string {
 // ===============================
 // HTML GENERATION
 // ===============================
+
+export function getTogglesHtml(tg: ToggleGroup<string>): string {
+    const parts: string[] = [];
+
+    for (const [key, setting] of Object.entries(tg.toggles))
+        if (setting !== undefined)
+            parts.push(
+                `<label title="${setting.hover}"><input type="checkbox" class="${tg.htmlClass}" data-${tg.htmlDataKey}="${key}" />${setting.text}</label>`
+            );
+
+    return parts.join('');
+}
 
 export type SidebarSection<T extends string> = {
     text: string;
@@ -185,17 +190,7 @@ function getTableBodyHtml(
     for (const row of rows) {
         const rowParts: string[] = [];
         row.cells.forEach((cell, idx) => {
-            let imgTags = '';
-            if (cell.images.length) {
-                const imageParts: string[] = [];
-                for (const imgInfo of cell.images) {
-                    imageParts.push(`<img src="${imgInfo.src}" width="${imgInfo.size}" height="${imgInfo.size}">`);
-                }
-                imgTags = imageParts.join('');
-            }
-            let text: string;
-            if (Array.isArray(cell.text)) text = cell.text.map(escapeHtml).join('<br>');
-            else text = escapeHtml(cell.text);
+            let text = cell.htmlText;
             let pinBtn = '';
             if (idx === 0) {
                 // first col - pin button and url link
@@ -203,7 +198,7 @@ function getTableBodyHtml(
                 if (firstColUrl)
                     text = `<a class="${cell.cls}" href="${escapeHtml(firstColUrl(row))}" target="_blank" rel="noopener noreferrer">${text}</a>`;
             }
-            rowParts.push(`<td class="${cell.cls}">${pinBtn}${imgTags}${text}</td>`);
+            rowParts.push(`<td class="${cell.cls}">${pinBtn}${text}</td>`);
         });
         const trClasses =
             `${row.pinned ? 'pinned' : ''} ${row.itemKey === fadeItemWithKey ? 'fade-size-in' : ''}`.trim();
@@ -240,23 +235,60 @@ export function pushCell(
     cells: Cell[],
     text: string | number | string[],
     classes?: string | string[],
-    images: ImageInfo[] = []
+    images?: ImageInfo[],
+    button?: CellButton
 ): void {
     if (classes === undefined) classes = [];
     else if (typeof classes === 'string') classes = [classes];
 
-    if (!text) text = '-';
-    else if (typeof text === 'number') {
+    // convert number to string
+    if (typeof text === 'number') {
         const floored = epsilonFloor(text);
         if (!floored)
-            text = '-'; // replace 0 with '-'
+            // replace 0 with '-'
+            text = '-';
         else text = String(floored);
-    } else if (Array.isArray(text) && !text.length) text = '-';
-
-    if (!text || text === '-') {
-        classes = [...classes, 'empty'];
     }
 
+    // HTML-escape text and convert array to string
+    let htmlText: string;
+    if (Array.isArray(text))
+        if (text.length) htmlText = text.map(escapeHtml).join('<br>');
+        else htmlText = '-';
+    else htmlText = text ? escapeHtml(text) : '-';
+
+    // create HTML class string for table cell
+    if (!htmlText || htmlText === '-') {
+        classes = [...classes, 'empty'];
+    }
     const cls = classes.filter((s) => s !== '').join(' ');
-    cells.push({ text, images, cls });
+
+    // parse images
+    if (images) {
+        const imgTags = images.map((img) => `<img src="${img.src}" width="${img.size}" height="${img.size}">`).join();
+        htmlText = imgTags + htmlText;
+    }
+
+    if (button) {
+        // convert htmlText into a button tag
+        // parse the button's class attribute
+        let buttonClass: string;
+        if (!button.classes) buttonClass = '';
+        else {
+            if (Array.isArray(button.classes)) button.classes = button.classes.filter((s) => s !== '').join(' ');
+            buttonClass = ` class="${button.classes}"`;
+        }
+        // parse the button's data attribute
+        let buttonData: string;
+        if (!button.data) buttonData = '';
+        else {
+            let dataKey = button.data.htmlDataKey;
+            if (dataKey.startsWith('data-')) dataKey = dataKey.slice(5);
+            buttonData = ` data-${dataKey}="${escapeHtml(button.data.htmlDataValue)}"`;
+        }
+
+        htmlText = `<button${buttonClass}${buttonData}>${htmlText}</button>`;
+    }
+
+    cells.push({ htmlText, images, cls });
 }

@@ -1,8 +1,9 @@
-import {} from '../model.js';
-import { pushCell } from './sharedRender.js';
+import { ARMOR_SLOTS } from '../model.js';
+import { escapeHtml, pushCell } from './sharedRender.js';
 const ARMORS_HEADER_KEYS = [
     // INFO
     'ARMR',
+    'EQUIP',
     'SLOT',
     'WGT',
     'POIS',
@@ -37,6 +38,7 @@ export const ARMORS_HEADER_GROUPS = [
         superText: '',
         columns: [
             { key: 'ARMR', text: 'Armor', hover: 'Armor Name' },
+            { key: 'EQUIP', text: 'Equip', hover: 'Equip Armor In Paper Doll' },
             { key: 'SLOT', text: 'Slot', hover: 'Equipment Slot' },
             { key: 'WGT', text: 'Weight', hover: 'Weight' },
             { key: 'POIS', text: 'Poise', hover: 'Poise' },
@@ -75,12 +77,53 @@ export const ARMORS_HEADER_GROUPS = [
         ],
     },
 ];
+const SLOT_PLACEHOLDER_PATHS = {
+    Head: './img/ArmorSlots/Head.webp',
+    Torso: './img/ArmorSlots/Torso.webp',
+    Arms: './img/ArmorSlots/Arms.webp',
+    Legs: './img/ArmorSlots/Legs.webp',
+};
+function getSlotInnerHtml(slot, equipped) {
+    if (equipped === null) {
+        return `<img class="slot-icon" src="${SLOT_PLACEHOLDER_PATHS[slot]}" alt="${slot} slot (empty)" title="Equip an armor in the table below">`;
+    }
+    const src = `./img/Armors/${escapeHtml(equipped.icon)}.webp`;
+    const name = escapeHtml(equipped.name);
+    return (`<img class="slot-icon" src="${src}" alt="${name}" title="${name}">` +
+        `<button class="slot-unequip" type="button" data-slot="${slot}" title="Unequip ${name}" aria-label="Unequip ${name}">&times;</button>`);
+}
+export function getPaperDollHtml(equipped, armors) {
+    const parts = [];
+    for (const slot of ARMOR_SLOTS) {
+        let armor = null;
+        if (equipped[slot] !== null) {
+            const _armor = armors.get(equipped[slot]);
+            if (_armor) {
+                armor = _armor;
+            }
+            else
+                console.log(`Failed to retrieve armor with key "${equipped[slot]}"`);
+        }
+        parts.push(`<div class="armor-slot${armor ? ' equipped' : ''}" data-slot="${slot}">${getSlotInnerHtml(slot, armor)}</div>`);
+    }
+    return parts.join('');
+}
 export function getArmorRow(cas, showColGroups) {
     const cells = [];
     const arm = cas.item;
-    // INFO cols (ARMR, SLOT, WGT, POIS)
+    // INFO cols (ARMR, EQUIP, SLOT, WGT, POIS)
     if (showColGroups.has('INFO')) {
         pushCell(cells, arm.name, 'col-first', [{ src: `./img/Armors/${arm.icon}.webp`, size: 30 }]);
+        if (cas.equipped)
+            pushCell(cells, 'Unequip', '', undefined, {
+                classes: 'btn-unequip equip-unequip',
+                data: { htmlDataKey: 'unequip-armor', htmlDataValue: arm.key },
+            });
+        else
+            pushCell(cells, 'Equip', '', undefined, {
+                classes: 'btn-equip equip-unequip',
+                data: { htmlDataKey: 'equip-armor', htmlDataValue: arm.key },
+            });
         pushCell(cells, arm.slot);
         pushCell(cells, arm.stats.weight.toFixed(1));
         pushCell(cells, arm.stats.poise.toFixed(1), 'col-divider');

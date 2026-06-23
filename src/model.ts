@@ -320,6 +320,7 @@ export interface CalculatedPlayerStats {
 export interface CalculatedArmorStats extends TableData<Armor> {
     readonly defTotal: number;
     readonly resTotal: number;
+    equipped: boolean;
 }
 
 export interface CalculatedPlayerDefenses {
