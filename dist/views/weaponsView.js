@@ -39,8 +39,8 @@ const GroupToggles = {
 };
 const weaponsSortFns = {
     // INFO
-    WEAP: (a, b) => a.weapon.name.localeCompare(b.weapon.name),
-    CLS: (a, b) => a.weapon.className.localeCompare(b.weapon.className),
+    WEAP: (a, b) => a.item.name.localeCompare(b.item.name),
+    CLS: (a, b) => a.item.className.localeCompare(b.item.className),
     // AR
     ARP: (a, b) => a.offense.ar.physical.total - b.offense.ar.physical.total,
     ARH: (a, b) => a.offense.ar.holy.total - b.offense.ar.holy.total,
@@ -58,7 +58,7 @@ const weaponsSortFns = {
     IGN: (a, b) => a.offense.status.ignite - b.offense.status.ignite,
     FRO: (a, b) => a.offense.status.frost - b.offense.status.frost,
     // MISC
-    WGT: (a, b) => a.weapon.weight - b.weapon.weight,
+    WGT: (a, b) => a.item.weight - b.item.weight,
     PD: (a, b) => a.offense.extras.poiseDamage - b.offense.extras.poiseDamage,
     STAG: (a, b) => a.offense.extras.staggerDamage - b.offense.extras.staggerDamage,
     STAD: (a, b) => a.offense.extras.staminaDamage - b.offense.extras.staminaDamage,
@@ -77,10 +77,10 @@ const weaponsSortFns = {
     SR: (a, b) => a.offense.scaling.radVal - b.offense.scaling.radVal,
     SI: (a, b) => a.offense.scaling.infVal - b.offense.scaling.infVal,
     // REQS
-    RS: (a, b) => a.weapon.wieldReqs.strength - b.weapon.wieldReqs.strength,
-    RA: (a, b) => a.weapon.wieldReqs.agility - b.weapon.wieldReqs.agility,
-    RR: (a, b) => a.weapon.wieldReqs.radiance - b.weapon.wieldReqs.radiance,
-    RI: (a, b) => a.weapon.wieldReqs.inferno - b.weapon.wieldReqs.inferno,
+    RS: (a, b) => a.item.wieldReqs.strength - b.item.wieldReqs.strength,
+    RA: (a, b) => a.item.wieldReqs.agility - b.item.wieldReqs.agility,
+    RR: (a, b) => a.item.wieldReqs.radiance - b.item.wieldReqs.radiance,
+    RI: (a, b) => a.item.wieldReqs.inferno - b.item.wieldReqs.inferno,
 };
 const _melee = { add: ['AR'], remove: ['MAGIC'], indiff: ['STATUS', 'DEF'] };
 const _ranged = { add: ['AR'], remove: ['MAGIC', 'DEF'], indiff: ['STATUS'] };

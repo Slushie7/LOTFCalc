@@ -23,8 +23,8 @@ function compareArrays(a, b) {
 }
 const runesSortFns = {
     // INFO
-    RUNE: (a, b) => a.rune.name.localeCompare(b.rune.name),
-    TYPE: (a, b) => a.rune.type.localeCompare(b.rune.type),
+    RUNE: (a, b) => a.item.name.localeCompare(b.item.name),
+    TYPE: (a, b) => a.item.type.localeCompare(b.item.type),
     WEAPFX: (a, b) => compareArrays(a.weaponEffects, b.weaponEffects),
     ARMRFX: (a, b) => compareArrays(a.armorEffects, b.armorEffects),
 };
@@ -53,6 +53,11 @@ class RunesView extends TableView {
     ];
     constructor(state, ctx) {
         super(state, ctx);
+    }
+    additionalSearchFilter(_text, _cst) {
+        const textLower = _text.toLowerCase();
+        return (_cst.weaponEffects.some((v) => v.toLowerCase().includes(textLower)) ||
+            _cst.armorEffects.some((v) => v.toLowerCase().includes(textLower)));
     }
     collectItems() {
         const showRunes = this.ctx.data.runes.filter((rune) => this.state.selectedTypes.has(rune.type) || this.state.pinnedItems.has(rune.key));

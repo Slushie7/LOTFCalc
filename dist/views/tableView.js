@@ -1,9 +1,10 @@
 import { getHeaderHtml, getItemTableBodyHtml, getSidebarHtml, getTogglesHtml, HEADER_STATUS_IMAGE_PATHS, isToggleKey, } from '../render/sharedRender.js';
-import { addElemListener, convertHtmlDataAttrib, getElem, syncSidebarToggles } from '../sharedDOM.js';
+import { addElemListener, convertHtmlDataAttrib, getElem, getTypedElem, syncSidebarToggles } from '../sharedDOM.js';
 import { View } from './view.js';
 export class TableView extends View {
     state;
     ac = null;
+    calculatedItems = [];
     constructor(state, ctx) {
         super(ctx);
         this.state = state;
@@ -21,6 +22,10 @@ export class TableView extends View {
     handleExtraToggle(_el) {
         return false;
     }
+    /** Additional matching function for search text */
+    additionalSearchFilter(_text, _cst) {
+        return false;
+    }
     // lifecycle
     mount() { }
     show() {
@@ -33,11 +38,13 @@ export class TableView extends View {
         addElemListener(`${this.mode}-header`, 'click', (e) => this.onHeaderClick(e), { signal });
         addElemListener(`${this.mode}-body`, 'click', (e) => this.onBodyClick(e), { signal });
         addElemListener('view-toggles', 'change', (e) => this.onToggleChange(e), { signal });
+        addElemListener(`${this.mode}-search`, 'input', () => this.renderItems(), { signal });
         this.bindExtra(signal);
         this.renderSidebar();
         this.renderGroupToggles();
         this.syncGroupToggles();
         this.onShow();
+        this.fetchCalculated();
         this.refresh();
     }
     hide() {
@@ -67,6 +74,7 @@ export class TableView extends View {
                     else
                         checkedSet.delete(val);
                     this.processSidebarSelection();
+                    this.fetchCalculated();
                     this.renderItems();
                     this.ctx.save();
                     return;
@@ -95,6 +103,7 @@ export class TableView extends View {
                     if (handled) {
                         syncSidebarToggles(section.sectionKey, checkedSet, section.itemVerifyFn);
                         this.processSidebarSelection();
+                        this.fetchCalculated();
                         this.renderItems();
                         this.ctx.save();
                         return;
@@ -155,6 +164,16 @@ export class TableView extends View {
     // ====================================
     // SHARED RENDERING
     // ====================================
+    /** Filter applied when mode-search input changes */
+    searchFilter(_text, _cst) {
+        if (!_text || _cst.item.name.toLowerCase().includes(_text.toLowerCase()) || this.additionalSearchFilter(_text, _cst))
+            return true;
+        return false;
+    }
+    fetchCalculated() {
+        this.calculatedItems.length = 0;
+        this.calculatedItems.push(...this.collectItems());
+    }
     renderSidebar() {
         if (this.sidebarSections.length)
             document.body.classList.remove('sidebar-hidden');
@@ -167,12 +186,21 @@ export class TableView extends View {
         getElem('view-toggles').innerHTML = getTogglesHtml(this.colGroupToggles);
     }
     renderHeader() {
+        // temporarily remove the search input element from the DOM
+        const searchInput = getTypedElem(`${this.mode}-search`, HTMLInputElement);
+        searchInput.remove();
+        const header = getElem(`${this.mode}-header`);
         const groups = this.headerGroups.filter((group) => this.state.showColGroups.has(group.superKey));
-        getElem(`${this.mode}-header`).innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending, HEADER_STATUS_IMAGE_PATHS);
+        header.innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending, HEADER_STATUS_IMAGE_PATHS);
+        // insert the search input element into the first cell of the superheader
+        header.firstChild?.firstChild?.appendChild(searchInput);
     }
     renderItems(itemKeyFadeIn = null) {
-        // collect and sort items by current sortKey
-        const calcStats = this.sortCalculated(this.collectItems(), this.state.sortKey, this.state.ascending, this.sortFns);
+        // sort items by current search input
+        const searchText = getTypedElem(`${this.mode}-search`, HTMLInputElement).value.trim();
+        const displayItems = this.calculatedItems.filter((v) => this.searchFilter(searchText, v));
+        // sort items by current sortKey
+        const calcStats = this.sortCalculated(displayItems, this.state.sortKey, this.state.ascending, this.sortFns);
         // display the items in the table
         const rows = calcStats.map((cst) => this.buildRow(cst));
         getElem(`${this.mode}-body`).innerHTML = getItemTableBodyHtml(rows, itemKeyFadeIn);

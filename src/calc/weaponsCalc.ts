@@ -294,5 +294,5 @@ export function calculateWeaponStats(
     const runeSockets = getRunes(weapon.runeSockets, upgLevel);
     const pinned = pinnedWeapons.has(weapon.key);
 
-    return { weapon, offense, defense, runeSockets, upgLevel, playerStats, wieldability, pinned };
+    return { item: weapon, offense, defense, runeSockets, upgLevel, playerStats, wieldability, pinned };
 }

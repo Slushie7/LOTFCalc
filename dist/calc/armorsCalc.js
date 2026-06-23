@@ -11,7 +11,7 @@ export function calculateArmorStats(armor, pinnedArmors) {
     const stats = armor.stats;
     const defTotal = stats.defPhysical + stats.defFire + stats.defHoly + stats.defWither;
     const resTotal = stats.resBleed + stats.resBurn + stats.resFrost + stats.resIgnite + stats.resPoison + stats.resSmite;
-    return { armor, defTotal, resTotal, pinned: pinnedArmors.has(armor.key) };
+    return { item: armor, defTotal, resTotal, pinned: pinnedArmors.has(armor.key) };
 }
 export function calculatePlayerDefenses(playerStats, head, torso, arms, legs, curves) {
     const ps = calculatePlayerStats(playerStats, curves);

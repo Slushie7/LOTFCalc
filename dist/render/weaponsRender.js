@@ -164,8 +164,8 @@ export function getWeaponRow(cws, showColGroups, showSplit, showRawScaling) {
     const wieldCls = wieldable ? '' : 'unwieldable';
     // INFO fields: 'WEAP', 'CLS'
     if (showColGroups.has('INFO')) {
-        pushCell(cells, `${cws.weapon.name} +${cws.upgLevel}`, ['col-first', wieldCls], [{ src: `./img/Weapons/${cws.weapon.icon}.webp`, size: 30 }]);
-        pushCell(cells, cws.weapon.className, 'col-divider');
+        pushCell(cells, `${cws.item.name} +${cws.upgLevel}`, ['col-first', wieldCls], [{ src: `./img/Weapons/${cws.item.icon}.webp`, size: 30 }]);
+        pushCell(cells, cws.item.className, 'col-divider');
     }
     // AR fields: 'ARP', 'ARH', 'ARF', 'ARW', 'TOT', 'SP'
     if (showColGroups.has('AR')) {
@@ -194,7 +194,7 @@ export function getWeaponRow(cws, showColGroups, showSplit, showRawScaling) {
     // MISC fields: 'WGT', 'PD', 'STAG', 'STAD', 'PVP'
     if (showColGroups.has('MISC')) {
         const ex = cws.offense.extras;
-        pushCell(cells, cws.weapon.weight.toFixed(1), 'col-starter');
+        pushCell(cells, cws.item.weight.toFixed(1), 'col-starter');
         pushCell(cells, ex.poiseDamage.toFixed(0));
         pushCell(cells, ex.staggerDamage.toFixed(1));
         pushCell(cells, formatPercent(ex.staminaDamage));
@@ -231,13 +231,13 @@ export function getWeaponRow(cws, showColGroups, showSplit, showRawScaling) {
     }
     // REQS fields: 'RS', 'RA', 'RR', 'RI'
     if (showColGroups.has('REQS')) {
-        const reqs = cws.weapon.wieldReqs;
+        const reqs = cws.item.wieldReqs;
         const wield = cws.wieldability;
         pushCell(cells, formatIntOpt(reqs.strength), wield.strength ? 'col-starter' : ['col-starter', wieldCls]);
         pushCell(cells, formatIntOpt(reqs.agility), wield.agility ? '' : wieldCls);
         pushCell(cells, formatIntOpt(reqs.radiance), wield.radiance ? '' : wieldCls);
         pushCell(cells, formatIntOpt(reqs.inferno), wield.inferno ? 'col-divider' : [wieldCls, 'col-divider']);
     }
-    return { itemName: cws.weapon.name, itemKey: cws.weapon.key, wieldable, pinned: cws.pinned, cells };
+    return { itemName: cws.item.name, itemKey: cws.item.key, wieldable, pinned: cws.pinned, cells };
 }
 //# sourceMappingURL=weaponsRender.js.map

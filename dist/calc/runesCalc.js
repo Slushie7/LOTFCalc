@@ -21,6 +21,6 @@ export function calculateRuneStats(rune, pinnedRunes) {
     }
     const weaponEffects = rune.weaponBuff.effects.map((v) => effectToString('Weapon', rune.weaponBuffTarget, v));
     const armorEffects = rune.armorBuff.effects.map((v) => effectToString('Shield', rune.armorBuffTarget, v));
-    return { rune, pinned: pinnedRunes.has(rune.key), weaponEffects, armorEffects };
+    return { item: rune, pinned: pinnedRunes.has(rune.key), weaponEffects, armorEffects };
 }
 //# sourceMappingURL=runesCalc.js.map

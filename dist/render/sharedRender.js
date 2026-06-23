@@ -71,7 +71,7 @@ export function getHeaderHtml(groups, sortKey, ascending, headerImagePaths) {
     const superParts = [];
     const headerParts = [];
     groups.forEach((group, superIdx) => {
-        const superCls = superIdx === 0 ? `col-first col-divider` : `col-starter col-divider`;
+        const superCls = superIdx === 0 ? `col-first-super col-divider` : `col-starter col-divider`;
         superParts.push(`<th class="${superCls}" colspan="${group.columns.length}">${escapeHtml(group.superText)}</th>`);
         group.columns.forEach((col, idx) => {
             let text = col.text;

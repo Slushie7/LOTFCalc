@@ -83,7 +83,7 @@ export const ARMORS_HEADER_GROUPS: readonly HeaderGroup<ArmorsHeaderKey, ArmorsS
 
 export function getArmorRow(cas: CalculatedArmorStats, showColGroups: Set<ArmorsSuperheaderKey>): Row {
     const cells: Cell[] = [];
-    const arm = cas.armor;
+    const arm = cas.item;
 
     // INFO cols (ARMR, SLOT, WGT, POIS)
     if (showColGroups.has('INFO')) {

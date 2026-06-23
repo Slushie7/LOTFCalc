@@ -1,4 +1,4 @@
-import type { ArmorSlot, ArmorWeightClass, PlayerStats, RuneType, WeaponClass } from './model.js';
+import type { ArmorSlot, ArmorWeightClass, PaperDoll, PlayerStats, RuneType, WeaponClass } from './model.js';
 import { isArmorSlot, isArmorWeightClass, isRuneType, isWeaponClass } from './model.js';
 import { clampStat } from './calc/sharedCalc.js';
 import type { WeaponsHeaderKey, WeaponsSuperheaderKey } from './render/weaponsRender.js';
@@ -60,6 +60,7 @@ export interface WeaponsState extends TableState<WeaponsHeaderKey, WeaponsSuperh
 export interface ArmorsState extends TableState<ArmorsHeaderKey, ArmorsSuperheaderKey> {
     selectedSlots: Set<ArmorSlot>;
     selectedWeights: Set<ArmorWeightClass>;
+    paperDoll: PaperDoll;
 }
 
 export interface RunesState extends TableState<RunesHeaderKey, RunesSuperheaderKey> {
@@ -100,6 +101,7 @@ function getDefaultState(): AppState {
         ascending: true,
         showColGroups: new Set(['INFO', 'DEF', 'STATUS']),
         pinnedItems: new Set(),
+        paperDoll: { Head: null, Torso: null, Arms: null, Legs: null },
     };
 
     const runes: RunesState = {
@@ -146,6 +148,7 @@ interface ExportedWeaponsState extends ExportedTableState<WeaponsHeaderKey, Weap
 interface ExportedArmorsState extends ExportedTableState<ArmorsHeaderKey, ArmorsSuperheaderKey> {
     readonly selectedSlots: ArmorSlot[];
     readonly selectedWeights: readonly ArmorWeightClass[];
+    readonly paperDoll: PaperDoll;
 }
 
 interface ExportedRunesState extends ExportedTableState<RunesHeaderKey, RunesSuperheaderKey> {
@@ -235,6 +238,15 @@ export function loadAppState(): AppState {
         if (!p.selectedSlots.every((v) => isArmorSlot(v))) return false;
         if (!Array.isArray(p.selectedWeights)) return false;
         if (!p.selectedWeights.every((v) => isArmorWeightClass(v))) return false;
+
+        if (typeof p.paperDoll !== 'object' || !p.paperDoll) return false;
+        const pd = p.paperDoll as Record<ArmorSlot, string | null>;
+        if (
+            !Object.keys(defaultState.armors.paperDoll).every(
+                (k) => isArmorSlot(k) && (pd[k] === null || typeof pd[k] === 'string')
+            )
+        )
+            return false;
         return true;
     }
     function validateRunes(d: object): d is ExportedRunesState {
@@ -330,6 +342,7 @@ export function loadAppState(): AppState {
         ascending: state.armors.ascending,
         showColGroups: showColGroupsArmor,
         pinnedItems: pinnedArmors,
+        paperDoll: state.armors.paperDoll,
     };
 
     const selectedTypes = new Set(state.runes.selectedTypes);
@@ -378,6 +391,7 @@ export function saveAppState(state: AppState): void {
             ascending: state.armors.ascending,
             showColGroups: [...state.armors.showColGroups],
             pinnedItems: [...state.armors.pinnedItems],
+            paperDoll: state.armors.paperDoll,
         };
         const runes: ExportedRunesState = {
             selectedTypes: [...state.runes.selectedTypes],

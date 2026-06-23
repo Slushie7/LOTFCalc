@@ -37,7 +37,7 @@ export const RUNES_HEADER_GROUPS = [
 ];
 export function getRuneRow(crs, showColGroups) {
     const cells = [];
-    const rune = crs.rune;
+    const rune = crs.item;
     // INFO (RUNE, TYPE)
     if (showColGroups.has('INFO')) {
         pushCell(cells, rune.name, 'col-first', [{ src: `./img/Runes/${rune.icon}.webp`, size: 30 }]);

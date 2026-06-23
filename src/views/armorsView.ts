@@ -47,27 +47,27 @@ const WeightEnum: Record<ArmorWeightClass, number> = {
 };
 const armorsSortFns: Record<ArmorsHeaderKey, SortFunction<CalculatedArmorStats>> = {
     // INFO
-    ARMR: (a, b) => a.armor.name.localeCompare(b.armor.name),
-    SLOT: (a, b) => SlotEnum[a.armor.slot] - SlotEnum[b.armor.slot],
-    WGT: (a, b) => a.armor.stats.weight - b.armor.stats.weight,
-    POIS: (a, b) => a.armor.stats.poise - b.armor.stats.poise,
+    ARMR: (a, b) => a.item.name.localeCompare(b.item.name),
+    SLOT: (a, b) => SlotEnum[a.item.slot] - SlotEnum[b.item.slot],
+    WGT: (a, b) => a.item.stats.weight - b.item.stats.weight,
+    POIS: (a, b) => a.item.stats.poise - b.item.stats.poise,
     // DEF
-    DP: (a, b) => a.armor.stats.defPhysical - b.armor.stats.defPhysical,
-    DF: (a, b) => a.armor.stats.defFire - b.armor.stats.defFire,
-    DH: (a, b) => a.armor.stats.defHoly - b.armor.stats.defHoly,
-    DW: (a, b) => a.armor.stats.defWither - b.armor.stats.defWither,
+    DP: (a, b) => a.item.stats.defPhysical - b.item.stats.defPhysical,
+    DF: (a, b) => a.item.stats.defFire - b.item.stats.defFire,
+    DH: (a, b) => a.item.stats.defHoly - b.item.stats.defHoly,
+    DW: (a, b) => a.item.stats.defWither - b.item.stats.defWither,
     DT: (a, b) => a.defTotal - b.defTotal,
     // STATUS
-    BLE: (a, b) => a.armor.stats.resBleed - b.armor.stats.resBleed,
-    BRN: (a, b) => a.armor.stats.resBurn - b.armor.stats.resBurn,
-    PSN: (a, b) => a.armor.stats.resPoison - b.armor.stats.resPoison,
-    SMI: (a, b) => a.armor.stats.resSmite - b.armor.stats.resSmite,
-    IGN: (a, b) => a.armor.stats.resIgnite - b.armor.stats.resIgnite,
-    FRO: (a, b) => a.armor.stats.resFrost - b.armor.stats.resFrost,
+    BLE: (a, b) => a.item.stats.resBleed - b.item.stats.resBleed,
+    BRN: (a, b) => a.item.stats.resBurn - b.item.stats.resBurn,
+    PSN: (a, b) => a.item.stats.resPoison - b.item.stats.resPoison,
+    SMI: (a, b) => a.item.stats.resSmite - b.item.stats.resSmite,
+    IGN: (a, b) => a.item.stats.resIgnite - b.item.stats.resIgnite,
+    FRO: (a, b) => a.item.stats.resFrost - b.item.stats.resFrost,
     RT: (a, b) => a.resTotal - b.resTotal,
     // MISC
-    WGTC: (a, b) => WeightEnum[a.armor.weightClass] - WeightEnum[b.armor.weightClass],
-    KDMG: (a, b) => a.armor.stats.kickMult - b.armor.stats.kickMult,
+    WGTC: (a, b) => WeightEnum[a.item.weightClass] - WeightEnum[b.item.weightClass],
+    KDMG: (a, b) => a.item.stats.kickMult - b.item.stats.kickMult,
 };
 
 // ================================
@@ -78,7 +78,7 @@ export function createArmorsView(state: ArmorsState, ctx: ViewContext) {
     return new ArmorsView(state, ctx);
 }
 
-class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperheaderKey, CalculatedArmorStats> {
+class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperheaderKey, Armor, CalculatedArmorStats> {
     readonly mode = 'armors' as const;
     readonly modeBtnText = 'Armors' as const;
 

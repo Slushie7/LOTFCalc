@@ -51,6 +51,7 @@ export type ArmorSlot = (typeof ARMOR_SLOTS)[number];
 export function isArmorSlot(v: unknown): v is ArmorSlot {
     return ARMOR_SLOTS.includes(v as ArmorSlot);
 }
+export type PaperDoll = Record<ArmorSlot, string | null>;
 
 export const ARMOR_WEIGHT_CLASSES = ['Light', 'Medium', 'Heavy'] as const;
 export type ArmorWeightClass = (typeof ARMOR_WEIGHT_CLASSES)[number];
@@ -58,7 +59,14 @@ export function isArmorWeightClass(v: unknown): v is ArmorWeightClass {
     return ARMOR_WEIGHT_CLASSES.includes(v as ArmorWeightClass);
 }
 
-export interface TableData {
+export interface Item {
+    key: string;
+    name: string;
+    icon: string;
+}
+
+export interface TableData<T extends Item> {
+    readonly item: T;
     readonly pinned: boolean;
 }
 
@@ -150,10 +158,7 @@ export interface WeaponDefense {
     readonly stability: LeveledValue;
 }
 
-export interface Weapon {
-    readonly key: string;
-    readonly name: string;
-    readonly icon: string;
+export interface Weapon extends Item {
     readonly className: WeaponClass;
     readonly weight: number;
     readonly maxUpgLevel: number;
@@ -175,10 +180,7 @@ export interface Buff {
     readonly effects: readonly Effect[];
 }
 
-export interface Rune {
-    readonly key: string;
-    readonly name: string;
-    readonly icon: string;
+export interface Rune extends Item {
     readonly type: RuneType;
     readonly weaponBuff: Buff;
     readonly weaponBuffTarget: BuffTarget;
@@ -202,10 +204,7 @@ export interface ArmorStats {
     readonly kickMult: number;
 }
 
-export interface Armor {
-    readonly key: string;
-    readonly name: string;
-    readonly icon: string;
+export interface Armor extends Item {
     readonly slot: ArmorSlot;
     readonly weightClass: ArmorWeightClass;
     readonly set: string;
@@ -291,8 +290,7 @@ export interface CalculatedWeaponDefense {
 /**
  * Calculated weapon stats for displaying in the app
  */
-export interface CalculatedWeaponStats extends TableData {
-    readonly weapon: Weapon;
+export interface CalculatedWeaponStats extends TableData<Weapon> {
     readonly offense: CalculatedWeaponOffense;
     readonly defense: CalculatedWeaponDefense;
     readonly runeSockets: RuneSocketType[];
@@ -319,8 +317,7 @@ export interface CalculatedPlayerStats {
     readonly resFrost: number;
 }
 
-export interface CalculatedArmorStats extends TableData {
-    readonly armor: Armor;
+export interface CalculatedArmorStats extends TableData<Armor> {
     readonly defTotal: number;
     readonly resTotal: number;
 }
@@ -341,8 +338,7 @@ export interface CalculatedPlayerDefenses {
     readonly kickMult: number;
 }
 
-export interface CalculatedRuneStats extends TableData {
-    rune: Rune;
+export interface CalculatedRuneStats extends TableData<Rune> {
     weaponEffects: string[];
     armorEffects: string[];
 }

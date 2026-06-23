@@ -1,4 +1,4 @@
-import type { TableData } from '../model.js';
+import type { Item, TableData } from '../model.js';
 import {
     getHeaderHtml,
     getItemTableBodyHtml,
@@ -11,7 +11,7 @@ import {
     type SidebarSection,
     type ToggleGroup,
 } from '../render/sharedRender.js';
-import { addElemListener, convertHtmlDataAttrib, getElem, syncSidebarToggles } from '../sharedDOM.js';
+import { addElemListener, convertHtmlDataAttrib, getElem, getTypedElem, syncSidebarToggles } from '../sharedDOM.js';
 import type { TableState } from '../state.js';
 import { View, type ViewContext } from './view.js';
 
@@ -21,9 +21,11 @@ export abstract class TableView<
     S extends TableState<HK, SHK>, // state type (e.g. WeaponsState)
     HK extends string, // header key type (e.g. WeaponsHeaderKey)
     SHK extends string, // superheader key type (e.g. WeaponsSuperheaderKey)
-    CST extends TableData, // calculated stats type (e.g. CalculatedWeaponStats)
+    I extends Item,
+    CST extends TableData<I>, // calculated stats type (e.g. CalculatedWeaponStats)
 > extends View {
     private ac: AbortController | null = null;
+    private calculatedItems: CST[] = [];
 
     constructor(
         protected readonly state: S,
@@ -53,6 +55,10 @@ export abstract class TableView<
     protected handleExtraToggle(_el: HTMLInputElement): boolean {
         return false;
     }
+    /** Additional matching function for search text */
+    protected additionalSearchFilter(_text: string, _cst: CST): boolean {
+        return false;
+    }
 
     // lifecycle
     mount(): void {}
@@ -68,6 +74,7 @@ export abstract class TableView<
         addElemListener(`${this.mode}-header`, 'click', (e) => this.onHeaderClick(e), { signal });
         addElemListener(`${this.mode}-body`, 'click', (e) => this.onBodyClick(e), { signal });
         addElemListener('view-toggles', 'change', (e) => this.onToggleChange(e), { signal });
+        addElemListener(`${this.mode}-search`, 'input', () => this.renderItems(), { signal });
 
         this.bindExtra(signal);
 
@@ -75,6 +82,7 @@ export abstract class TableView<
         this.renderGroupToggles();
         this.syncGroupToggles();
         this.onShow();
+        this.fetchCalculated();
         this.refresh();
     }
 
@@ -107,6 +115,7 @@ export abstract class TableView<
                     else checkedSet.delete(val);
 
                     this.processSidebarSelection();
+                    this.fetchCalculated();
                     this.renderItems();
                     this.ctx.save();
                     return;
@@ -135,6 +144,7 @@ export abstract class TableView<
                     if (handled) {
                         syncSidebarToggles(section.sectionKey, checkedSet, section.itemVerifyFn);
                         this.processSidebarSelection();
+                        this.fetchCalculated();
                         this.renderItems();
                         this.ctx.save();
                         return;
@@ -193,6 +203,18 @@ export abstract class TableView<
     // SHARED RENDERING
     // ====================================
 
+    /** Filter applied when mode-search input changes */
+    protected searchFilter(_text: string, _cst: CST): boolean {
+        if (!_text || _cst.item.name.toLowerCase().includes(_text.toLowerCase()) || this.additionalSearchFilter(_text, _cst))
+            return true;
+        return false;
+    }
+
+    protected fetchCalculated(): void {
+        this.calculatedItems.length = 0;
+        this.calculatedItems.push(...this.collectItems());
+    }
+
     protected renderSidebar(): void {
         if (this.sidebarSections.length) document.body.classList.remove('sidebar-hidden');
         else
@@ -206,23 +228,25 @@ export abstract class TableView<
     }
 
     protected renderHeader(): void {
+        // temporarily remove the search input element from the DOM
+        const searchInput = getTypedElem(`${this.mode}-search`, HTMLInputElement);
+        searchInput.remove();
+
+        const header = getElem(`${this.mode}-header`);
         const groups = this.headerGroups.filter((group) => this.state.showColGroups.has(group.superKey));
-        getElem(`${this.mode}-header`).innerHTML = getHeaderHtml(
-            groups,
-            this.state.sortKey,
-            this.state.ascending,
-            HEADER_STATUS_IMAGE_PATHS
-        );
+        header.innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending, HEADER_STATUS_IMAGE_PATHS);
+
+        // insert the search input element into the first cell of the superheader
+        header.firstChild?.firstChild?.appendChild(searchInput);
     }
 
     protected renderItems(itemKeyFadeIn: string | null = null): void {
-        // collect and sort items by current sortKey
-        const calcStats = this.sortCalculated(
-            this.collectItems(),
-            this.state.sortKey,
-            this.state.ascending,
-            this.sortFns
-        );
+        // sort items by current search input
+        const searchText = getTypedElem(`${this.mode}-search`, HTMLInputElement).value.trim();
+        const displayItems = this.calculatedItems.filter((v) => this.searchFilter(searchText, v));
+
+        // sort items by current sortKey
+        const calcStats = this.sortCalculated(displayItems, this.state.sortKey, this.state.ascending, this.sortFns);
         // display the items in the table
         const rows = calcStats.map((cst) => this.buildRow(cst));
         getElem(`${this.mode}-body`).innerHTML = getItemTableBodyHtml(rows, itemKeyFadeIn);

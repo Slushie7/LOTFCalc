@@ -168,9 +168,9 @@ function wireShared(): void {
     // mode toggles
     addElemListener('mode-buttons', 'click', onSwitchMode);
     // shared settings toggles
-    addClassListeners('shared-setting-toggle', HTMLInputElement, 'change', onSetSharedSetting);
+    addClassListeners('shared-setting-toggle', HTMLInputElement, 'input', onSetSharedSetting);
     // player stats inputs
-    addClassListeners('stat-input', HTMLInputElement, 'change', onSetPlayerStat);
+    addClassListeners('stat-input', HTMLInputElement, 'input', onSetPlayerStat);
 }
 
 function init(): void {

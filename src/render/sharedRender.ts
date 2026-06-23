@@ -146,7 +146,7 @@ export function getHeaderHtml<HK extends string, SHK extends string>(
     const headerParts: string[] = [];
 
     groups.forEach((group, superIdx) => {
-        const superCls = superIdx === 0 ? `col-first col-divider` : `col-starter col-divider`;
+        const superCls = superIdx === 0 ? `col-first-super col-divider` : `col-starter col-divider`;
         superParts.push(
             `<th class="${superCls}" colspan="${group.columns.length}">${escapeHtml(group.superText)}</th>`
         );

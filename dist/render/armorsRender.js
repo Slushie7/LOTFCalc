@@ -77,7 +77,7 @@ export const ARMORS_HEADER_GROUPS = [
 ];
 export function getArmorRow(cas, showColGroups) {
     const cells = [];
-    const arm = cas.armor;
+    const arm = cas.item;
     // INFO cols (ARMR, SLOT, WGT, POIS)
     if (showColGroups.has('INFO')) {
         pushCell(cells, arm.name, 'col-first', [{ src: `./img/Armors/${arm.icon}.webp`, size: 30 }]);

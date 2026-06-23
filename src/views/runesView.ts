@@ -33,8 +33,8 @@ function compareArrays(a: readonly string[], b: readonly string[]): number {
 }
 const runesSortFns: Record<RunesHeaderKey, SortFunction<CalculatedRuneStats>> = {
     // INFO
-    RUNE: (a, b) => a.rune.name.localeCompare(b.rune.name),
-    TYPE: (a, b) => a.rune.type.localeCompare(b.rune.type),
+    RUNE: (a, b) => a.item.name.localeCompare(b.item.name),
+    TYPE: (a, b) => a.item.type.localeCompare(b.item.type),
     WEAPFX: (a, b) => compareArrays(a.weaponEffects, b.weaponEffects),
     ARMRFX: (a, b) => compareArrays(a.armorEffects, b.armorEffects),
 };
@@ -47,7 +47,7 @@ export function createRunesView(state: RunesState, ctx: ViewContext) {
     return new RunesView(state, ctx);
 }
 
-class RunesView extends TableView<RunesState, RunesHeaderKey, RunesSuperheaderKey, CalculatedRuneStats> {
+class RunesView extends TableView<RunesState, RunesHeaderKey, RunesSuperheaderKey, Rune, CalculatedRuneStats> {
     readonly mode = 'runes' as const;
     readonly modeBtnText = 'Runes' as const;
 
@@ -69,6 +69,14 @@ class RunesView extends TableView<RunesState, RunesHeaderKey, RunesSuperheaderKe
 
     constructor(state: RunesState, ctx: ViewContext) {
         super(state, ctx);
+    }
+
+    protected additionalSearchFilter(_text: string, _cst: CalculatedRuneStats): boolean {
+        const textLower = _text.toLowerCase();
+        return (
+            _cst.weaponEffects.some((v) => v.toLowerCase().includes(textLower)) ||
+            _cst.armorEffects.some((v) => v.toLowerCase().includes(textLower))
+        );
     }
 
     protected collectItems(): readonly CalculatedRuneStats[] {

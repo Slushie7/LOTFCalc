@@ -44,7 +44,7 @@ export const RUNES_HEADER_GROUPS: readonly HeaderGroup<RunesHeaderKey, RunesSupe
 
 export function getRuneRow(crs: CalculatedRuneStats, showColGroups: Set<RunesSuperheaderKey>): Row {
     const cells: Cell[] = [];
-    const rune = crs.rune;
+    const rune = crs.item;
 
     // INFO (RUNE, TYPE)
     if (showColGroups.has('INFO')) {

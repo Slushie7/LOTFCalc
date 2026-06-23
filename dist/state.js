@@ -35,6 +35,7 @@ function getDefaultState() {
         ascending: true,
         showColGroups: new Set(['INFO', 'DEF', 'STATUS']),
         pinnedItems: new Set(),
+        paperDoll: { Head: null, Torso: null, Arms: null, Legs: null },
     };
     const runes = {
         selectedTypes: new Set(['Strength', 'Agility', 'Radiance', 'Inferno']),
@@ -144,6 +145,11 @@ export function loadAppState() {
             return false;
         if (!p.selectedWeights.every((v) => isArmorWeightClass(v)))
             return false;
+        if (typeof p.paperDoll !== 'object' || !p.paperDoll)
+            return false;
+        const pd = p.paperDoll;
+        if (!Object.keys(defaultState.armors.paperDoll).every((k) => isArmorSlot(k) && (pd[k] === null || typeof pd[k] === 'string')))
+            return false;
         return true;
     }
     function validateRunes(d) {
@@ -237,6 +243,7 @@ export function loadAppState() {
         ascending: state.armors.ascending,
         showColGroups: showColGroupsArmor,
         pinnedItems: pinnedArmors,
+        paperDoll: state.armors.paperDoll,
     };
     const selectedTypes = new Set(state.runes.selectedTypes);
     const showColGroupsRunes = new Set(state.runes.showColGroups);
@@ -281,6 +288,7 @@ export function saveAppState(state) {
             ascending: state.armors.ascending,
             showColGroups: [...state.armors.showColGroups],
             pinnedItems: [...state.armors.pinnedItems],
+            paperDoll: state.armors.paperDoll,
         };
         const runes = {
             selectedTypes: [...state.runes.selectedTypes],

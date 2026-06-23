@@ -216,6 +216,6 @@ export function calculateWeaponStats(weapon, upgLevel, playerStats, twoHanding, 
     const defense = calculateDefense(weapon.defense, upgLevel, wieldability.wieldable);
     const runeSockets = getRunes(weapon.runeSockets, upgLevel);
     const pinned = pinnedWeapons.has(weapon.key);
-    return { weapon, offense, defense, runeSockets, upgLevel, playerStats, wieldability, pinned };
+    return { item: weapon, offense, defense, runeSockets, upgLevel, playerStats, wieldability, pinned };
 }
 //# sourceMappingURL=weaponsCalc.js.map

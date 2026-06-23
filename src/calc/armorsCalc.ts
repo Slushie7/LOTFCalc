@@ -16,7 +16,7 @@ export function calculateArmorStats(armor: Armor, pinnedArmors: Set<string>): Ca
     const resTotal =
         stats.resBleed + stats.resBurn + stats.resFrost + stats.resIgnite + stats.resPoison + stats.resSmite;
 
-    return { armor, defTotal, resTotal, pinned: pinnedArmors.has(armor.key) };
+    return { item: armor, defTotal, resTotal, pinned: pinnedArmors.has(armor.key) };
 }
 
 export function calculatePlayerDefenses(
