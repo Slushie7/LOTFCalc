@@ -170,7 +170,12 @@ export function pushCell(cells, text, classes, images, button) {
     const cls = classes.filter((s) => s !== '').join(' ');
     // parse images
     if (images) {
-        const imgTags = images.map((img) => `<img src="${img.src}" width="${img.size}" height="${img.size}">`).join();
+        const imgTags = images
+            .map((img, idx) => {
+            const imgCls = idx === images.length - 1 && htmlText ? ' class="image-last"' : '';
+            return `<img${imgCls} src="${img.src}" width="${img.size}" height="${img.size}">`;
+        })
+            .join('');
         htmlText = imgTags + htmlText;
     }
     if (button) {

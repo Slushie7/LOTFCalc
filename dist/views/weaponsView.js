@@ -173,9 +173,11 @@ class WeaponsView extends TableView {
         // update the currently selected header column groups
         let updated = false;
         for (const col of toRemove)
-            updated = updated || this.state.showColGroups.delete(col);
+            if (this.state.showColGroups.delete(col))
+                updated = true;
         for (const col of toAdd) {
-            updated = updated || this.state.showColGroups.has(col);
+            if (!this.state.showColGroups.has(col))
+                updated = true;
             this.state.showColGroups.add(col);
         }
         if (!updated)

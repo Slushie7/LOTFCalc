@@ -127,11 +127,11 @@ class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperhead
         getElem('derived-armor').hidden = true;
     }
 
-    protected bindExtra(_signal: AbortSignal): void {
+    protected bindExtra(signal: AbortSignal): void {
         // changes to player's stats should update derived armor display
-        addClassListeners('stat-input', HTMLInputElement, 'input', () => this.updateDerivedArmor());
+        addClassListeners('stat-input', HTMLInputElement, 'input', () => this.updateDerivedArmor(), { signal });
         // paper doll 'X' buttons for unequipping armors
-        addElemListener('paper-doll', 'click', (e) => this.onPaperDollClick(e));
+        addElemListener('paper-doll', 'click', (e) => this.onPaperDollClick(e), { signal });
     }
 
     protected onPaperDollClick(e: Event): void {

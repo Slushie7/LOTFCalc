@@ -490,8 +490,8 @@ body.sidebar-hidden #sidebar {
     align-items: center;
     justify-content: center;
     width: auto;
-    margin: 0 0.1rem 0 0;
-    padding: 0.1rem;
+    margin: 0;
+    padding: 0.1rem 0 0.1rem 0.1rem;
     vertical-align: middle;
     background: none;
     border: none;
@@ -525,6 +525,9 @@ body.sidebar-hidden #sidebar {
     font-size: 0.8em;
     line-height: 1.1;
     white-space: nowrap;
+}
+.calc-table .image-last {
+    margin-right: 0.2rem;
 }
 
 /* ============================================================
