@@ -193,7 +193,7 @@ class WeaponsView extends TableView {
         const num = Number.parseInt(val, 10);
         if (!Number.isNaN(num)) {
             this.state.upgLevel = num;
-            this.renderItems();
+            this.fetchAndRender();
             this.ctx.save();
         }
     }
@@ -202,7 +202,7 @@ class WeaponsView extends TableView {
             const setting = el.dataset[convertHtmlDataAttrib(SettingToggles.htmlDataKey)];
             if (isToggleKey(setting, SettingToggles)) {
                 this.state[setting] = el.checked;
-                this.renderItems();
+                this.fetchAndRender();
                 return true;
             }
         }

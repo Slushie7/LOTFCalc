@@ -1,4 +1,11 @@
-import { ARMOR_SLOTS, type Armor, type ArmorSlot, type CalculatedArmorStats, type PaperDoll } from '../model.js';
+import {
+    ARMOR_SLOTS,
+    type Armor,
+    type ArmorSlot,
+    type CalculatedArmorStats,
+    type CalculatedPlayerDefenses,
+    type PaperDoll,
+} from '../model.js';
 import { escapeHtml, pushCell, type Cell, type HeaderGroup, type Row } from './sharedRender.js';
 
 const ARMORS_HEADER_KEYS = [
@@ -100,6 +107,10 @@ function getSlotInnerHtml(slot: ArmorSlot, equipped: Armor | null): string {
         `<img class="slot-icon" src="${src}" alt="${name}" title="${name}">` +
         `<button class="slot-unequip" type="button" data-slot="${slot}" title="Unequip ${name}" aria-label="Unequip ${name}">&times;</button>`
     );
+}
+
+export function getDerivedArmorHtml(_stats: CalculatedPlayerDefenses): string {
+    return '';
 }
 
 export function getPaperDollHtml(equipped: PaperDoll, armors: Map<string, Armor>): string {

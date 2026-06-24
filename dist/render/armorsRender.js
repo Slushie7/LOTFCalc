@@ -1,4 +1,4 @@
-import { ARMOR_SLOTS } from '../model.js';
+import { ARMOR_SLOTS, } from '../model.js';
 import { escapeHtml, pushCell } from './sharedRender.js';
 const ARMORS_HEADER_KEYS = [
     // INFO
@@ -91,6 +91,9 @@ function getSlotInnerHtml(slot, equipped) {
     const name = escapeHtml(equipped.name);
     return (`<img class="slot-icon" src="${src}" alt="${name}" title="${name}">` +
         `<button class="slot-unequip" type="button" data-slot="${slot}" title="Unequip ${name}" aria-label="Unequip ${name}">&times;</button>`);
+}
+export function getDerivedArmorHtml(_stats) {
+    return '';
 }
 export function getPaperDollHtml(equipped, armors) {
     const parts = [];

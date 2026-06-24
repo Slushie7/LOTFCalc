@@ -7,6 +7,7 @@ import {
     type ArmorsSuperheaderKey,
     type ArmorsHeaderKey,
     getPaperDollHtml,
+    getDerivedArmorHtml,
 } from '../render/armorsRender.js';
 import {
     ARMOR_SLOTS,
@@ -18,7 +19,7 @@ import {
     type ArmorWeightClass,
     type CalculatedArmorStats,
 } from '../model.js';
-import { calculateArmorStats } from '../calc/armorsCalc.js';
+import { calculateArmorStats, calculatePlayerDefenses } from '../calc/armorsCalc.js';
 import { type Row, type SidebarSection, type ToggleGroup } from '../render/sharedRender.js';
 import { TableView, type SortFunction } from './tableView.js';
 import { addClassListeners, addElemListener, getElem } from '../sharedDOM.js';
@@ -167,8 +168,6 @@ class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperhead
         return false;
     }
 
-    protected updateDerivedArmor(): void {}
-
     protected updatePaperDoll(): void {
         // update the 'equipped' attribute for all items in the table's CalculatedArmorStats cache
         const equipped = new Set(Object.values(this.state.paperDoll));
@@ -178,6 +177,23 @@ class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperhead
         getElem('paper-doll').innerHTML = getPaperDollHtml(this.state.paperDoll, this.armors);
         this.updateDerivedArmor();
         this.renderItems();
+    }
+
+    protected updateDerivedArmor(): void {
+        const pd = this.state.paperDoll;
+        const head = pd.Head ? this.armors.get(pd.Head) || null : null;
+        const torso = pd.Torso ? this.armors.get(pd.Torso) || null : null;
+        const arms = pd.Arms ? this.armors.get(pd.Arms) || null : null;
+        const legs = pd.Legs ? this.armors.get(pd.Legs) || null : null;
+        const derivedArmor = calculatePlayerDefenses(
+            this.ctx.shared.playerStats,
+            head,
+            torso,
+            arms,
+            legs,
+            this.ctx.data.curves
+        );
+        getElem('derived-armor').innerHTML = getDerivedArmorHtml(derivedArmor);
     }
 
     protected collectItems(): readonly CalculatedArmorStats[] {
