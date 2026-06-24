@@ -10,6 +10,10 @@ export function getDefenseScalar(defense_value: number): number {
     return 600 / (600 + defense_value);
 }
 
+export function getMitigation(defense_value: number): number {
+    return 1 - getDefenseScalar(defense_value);
+}
+
 export function calculateArmorStats(
     armor: Armor,
     pinnedArmors: Set<string>,
@@ -57,5 +61,20 @@ export function calculatePlayerDefenses(
 
     const kickMult = pieces.reduce((acc, cur) => acc + cur.stats.kickMult, 0);
 
-    return { weight, poise, physical, fire, holy, wither, bleed, burn, poison, smite, ignite, frost, kickMult };
+    return {
+        playerStats: ps,
+        weight,
+        poise,
+        physical,
+        fire,
+        holy,
+        wither,
+        bleed,
+        burn,
+        poison,
+        smite,
+        ignite,
+        frost,
+        kickMult,
+    };
 }

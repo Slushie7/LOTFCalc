@@ -159,6 +159,7 @@ class WeaponsView extends TableView<
     }
 
     protected onShow(): void {
+        getElem('view-toggles').hidden = false;
         // initialize weapon upgrade <select> element value
         getElem('weapon-level-div').hidden = false;
         getTypedElem('weapon-level', HTMLSelectElement).value = `+${this.state.upgLevel}`;

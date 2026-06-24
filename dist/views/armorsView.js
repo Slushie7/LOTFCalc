@@ -88,6 +88,7 @@ class ArmorsView extends TableView {
         this.armors = new Map(ctx.data.armors.map((armr) => [armr.key, armr]));
     }
     onShow() {
+        getElem('view-toggles').hidden = true;
         getElem('paper-doll').hidden = false;
         getElem('derived-armor').hidden = false;
         this.updatePaperDoll();
@@ -97,8 +98,9 @@ class ArmorsView extends TableView {
         getElem('derived-armor').hidden = true;
     }
     bindExtra(_signal) {
+        // changes to player's stats should update derived armor display
         addClassListeners('stat-input', HTMLInputElement, 'input', () => this.updateDerivedArmor());
-        // paper doll 'X' buttons
+        // paper doll 'X' buttons for unequipping armors
         addElemListener('paper-doll', 'click', (e) => this.onPaperDollClick(e));
     }
     onPaperDollClick(e) {
@@ -135,6 +137,7 @@ class ArmorsView extends TableView {
                 this.state.paperDoll[armor.slot] = null;
             }
             this.updatePaperDoll();
+            this.ctx.save();
             return true;
         }
         return false;

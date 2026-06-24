@@ -136,12 +136,12 @@ export interface WeaponDamageExtras {
 }
 
 export interface WeaponDamageStatus {
+    readonly dmgStatusSmite: LeveledValue;
     readonly dmgStatusBleed: LeveledValue;
     readonly dmgStatusBurn: LeveledValue;
-    readonly dmgStatusPoison: LeveledValue;
-    readonly dmgStatusSmite: LeveledValue;
     readonly dmgStatusIgnite: LeveledValue;
     readonly dmgStatusFrost: LeveledValue;
+    readonly dmgStatusPoison: LeveledValue;
 }
 
 export interface WeaponOffense {
@@ -194,12 +194,12 @@ export interface ArmorStats {
     readonly defFire: number;
     readonly defHoly: number;
     readonly defWither: number;
+    readonly resSmite: number;
     readonly resBleed: number;
     readonly resBurn: number;
-    readonly resPoison: number;
-    readonly resSmite: number;
     readonly resIgnite: number;
     readonly resFrost: number;
+    readonly resPoison: number;
     readonly poise: number;
     readonly kickMult: number;
 }
@@ -245,12 +245,12 @@ export interface CalculatedWeaponExtras {
 }
 
 export interface CalculatedWeaponStatus {
+    readonly smite: number;
     readonly bleed: number;
     readonly burn: number;
-    readonly poison: number;
-    readonly smite: number;
     readonly ignite: number;
     readonly frost: number;
+    readonly poison: number;
 }
 
 export interface CalculatedWeaponScaling {
@@ -309,12 +309,12 @@ export interface CalculatedPlayerStats {
     readonly defFire: number;
     readonly defHoly: number;
     readonly defWither: number;
+    readonly resSmite: number;
     readonly resBleed: number;
     readonly resBurn: number;
-    readonly resPoison: number;
-    readonly resSmite: number;
     readonly resIgnite: number;
     readonly resFrost: number;
+    readonly resPoison: number;
 }
 
 export interface CalculatedArmorStats extends TableData<Armor> {
@@ -324,18 +324,19 @@ export interface CalculatedArmorStats extends TableData<Armor> {
 }
 
 export interface CalculatedPlayerDefenses {
+    readonly playerStats: CalculatedPlayerStats;
     readonly weight: number;
     readonly poise: number;
     readonly physical: number;
     readonly fire: number;
     readonly holy: number;
     readonly wither: number;
+    readonly smite: number;
     readonly bleed: number;
     readonly burn: number;
-    readonly poison: number;
-    readonly smite: number;
     readonly ignite: number;
     readonly frost: number;
+    readonly poison: number;
     readonly kickMult: number;
 }
 

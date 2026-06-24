@@ -23,12 +23,12 @@ const WEAPONS_HEADER_KEYS = [
     'SP',
     'SLOTS',
     // status
+    'SMI',
     'BLE',
     'BRN',
-    'PSN',
-    'SMI',
     'IGN',
     'FRO',
+    'PSN',
     // extras
     'WGT',
     'PD',
@@ -100,8 +100,8 @@ export const WEAPONS_HEADER_GROUPS: readonly HeaderGroup<WeaponsHeaderKey, Weapo
             { key: 'SMI', text: 'Smi', hover: 'Smite Status Buildup' },
             { key: 'BLE', text: 'Ble', hover: 'Bleed Status Buildup' },
             { key: 'BRN', text: 'Brn', hover: 'Burn Status Buildup' },
-            { key: 'FRO', text: 'Fro', hover: 'Frostbite Status Buildup' },
             { key: 'IGN', text: 'Ign', hover: 'Ignite Status Buildup' },
+            { key: 'FRO', text: 'Fro', hover: 'Frostbite Status Buildup' },
             { key: 'PSN', text: 'Psn', hover: 'Poison Status Buildup' },
         ],
     },
@@ -214,14 +214,14 @@ export function getWeaponRow(
         pushCell(cells, formatIntOpt(cws.offense.extras.spellSlots), 'col-divider');
     }
 
-    // STATUS fields: 'SMI', 'BLE', 'BRN', 'FRO', 'IGN', 'PSN'
+    // STATUS fields: 'SMI', 'BLE', 'BRN', 'IGN', 'FRO', 'PSN'
     if (showColGroups.has('STATUS')) {
         const status = cws.offense.status;
         pushCell(cells, formatIntOpt(status.smite), 'col-starter');
         pushCell(cells, formatIntOpt(status.bleed));
         pushCell(cells, formatIntOpt(status.burn));
-        pushCell(cells, formatIntOpt(status.frost));
         pushCell(cells, formatIntOpt(status.ignite));
+        pushCell(cells, formatIntOpt(status.frost));
         pushCell(cells, formatIntOpt(status.poison), 'col-divider');
     }
 

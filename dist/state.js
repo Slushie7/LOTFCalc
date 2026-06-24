@@ -51,7 +51,7 @@ function getDefaultState() {
 // =========================================
 // for localStorage
 const STORAGE_KEY = 'lotfcalc.settings';
-const STORAGE_VER = 3;
+const STORAGE_VER = 4;
 /**
  * Try to load the previous AppState from localStorage
  * @returns

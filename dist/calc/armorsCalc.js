@@ -7,6 +7,9 @@ import { calculatePlayerStats } from './sharedCalc.js';
 export function getDefenseScalar(defense_value) {
     return 600 / (600 + defense_value);
 }
+export function getMitigation(defense_value) {
+    return 1 - getDefenseScalar(defense_value);
+}
 export function calculateArmorStats(armor, pinnedArmors, equippedArmors) {
     const stats = armor.stats;
     const defTotal = stats.defPhysical + stats.defFire + stats.defHoly + stats.defWither;
@@ -35,6 +38,21 @@ export function calculatePlayerDefenses(playerStats, head, torso, arms, legs, cu
     const ignite = pieces.reduce((acc, cur) => acc + cur.stats.resIgnite, ps.resIgnite);
     const frost = pieces.reduce((acc, cur) => acc + cur.stats.resFrost, ps.resFrost);
     const kickMult = pieces.reduce((acc, cur) => acc + cur.stats.kickMult, 0);
-    return { weight, poise, physical, fire, holy, wither, bleed, burn, poison, smite, ignite, frost, kickMult };
+    return {
+        playerStats: ps,
+        weight,
+        poise,
+        physical,
+        fire,
+        holy,
+        wither,
+        bleed,
+        burn,
+        poison,
+        smite,
+        ignite,
+        frost,
+        kickMult,
+    };
 }
 //# sourceMappingURL=armorsCalc.js.map

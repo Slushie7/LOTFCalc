@@ -87,12 +87,12 @@ function toWeaponDamageExtras(r, curves) {
 }
 function toWeaponDamageStatus(r, curves) {
     return {
+        dmgStatusSmite: toLeveledValue(r.dmg_status_smite, curves),
         dmgStatusBleed: toLeveledValue(r.dmg_status_bleed, curves),
         dmgStatusBurn: toLeveledValue(r.dmg_status_burn, curves),
-        dmgStatusPoison: toLeveledValue(r.dmg_status_poison, curves),
-        dmgStatusSmite: toLeveledValue(r.dmg_status_smite, curves),
         dmgStatusIgnite: toLeveledValue(r.dmg_status_ignite, curves),
         dmgStatusFrost: toLeveledValue(r.dmg_status_frost, curves),
+        dmgStatusPoison: toLeveledValue(r.dmg_status_poison, curves),
     };
 }
 function toWeaponOffense(r, curves, baseDamages) {
@@ -159,12 +159,12 @@ function toArmorStats(r) {
         defFire: r.def_fire,
         defHoly: r.def_holy,
         defWither: r.def_wither,
+        resSmite: r.res_smite,
         resBleed: r.res_bleed,
         resBurn: r.res_burn,
-        resPoison: r.res_poison,
-        resSmite: r.res_smite,
         resIgnite: r.res_ignite,
         resFrost: r.res_frost,
+        resPoison: r.res_poison,
         poise: r.poise,
         kickMult: r.kick_mult,
     };

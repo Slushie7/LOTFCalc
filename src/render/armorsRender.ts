@@ -1,3 +1,4 @@
+import { getDefenseScalar } from '../calc/armorsCalc.js';
 import {
     ARMOR_SLOTS,
     type Armor,
@@ -22,12 +23,12 @@ const ARMORS_HEADER_KEYS = [
     'DW',
     'DT',
     // STATUS
+    'SMI',
     'BLE',
     'BRN',
-    'PSN',
-    'SMI',
     'IGN',
     'FRO',
+    'PSN',
     'RT',
     // MISC
     'WGTC',
@@ -74,8 +75,8 @@ export const ARMORS_HEADER_GROUPS: readonly HeaderGroup<ArmorsHeaderKey, ArmorsS
             { key: 'SMI', text: 'Smi', hover: 'Smite Resistance' },
             { key: 'BLE', text: 'Ble', hover: 'Bleed Resistance' },
             { key: 'BRN', text: 'Brn', hover: 'Burn Resistance' },
-            { key: 'FRO', text: 'Fro', hover: 'Frostbite Resistance' },
             { key: 'IGN', text: 'Ign', hover: 'Ignite Resistance' },
+            { key: 'FRO', text: 'Fro', hover: 'Frostbite Resistance' },
             { key: 'PSN', text: 'Psn', hover: 'Poison Resistance' },
             { key: 'RT', text: 'Total', hover: 'Total Resistances' },
         ],
@@ -109,8 +110,39 @@ function getSlotInnerHtml(slot: ArmorSlot, equipped: Armor | null): string {
     );
 }
 
-export function getDerivedArmorHtml(_stats: CalculatedPlayerDefenses): string {
-    return '';
+export function getDerivedArmorHtml(stats: CalculatedPlayerDefenses): string {
+    function pushRow(h1: string, d1: string, h2: string, d2: string): void {
+        rows.push(`<tr><th class="col-starter">${h1}</th><td>${d1}</td><th>${h2}</th><td>${d2}</td></tr>`);
+    }
+    function mitigation(defVal: number): string {
+        const dr = 1 - getDefenseScalar(defVal);
+        return `${Math.round(defVal)} (${(dr * 100).toFixed(1)}% DR)`;
+    }
+
+    const rows: string[] = [];
+
+    rows.push(
+        '<table class="defense-table"><thead>' +
+            '<tr><th colspan="2">Defensive Stats</th><th colspan="2">Resistances</th></tr>' +
+            '</thead>'
+    );
+
+    pushRow('Physical', mitigation(stats.physical), 'Smite', stats.smite.toFixed());
+    pushRow('Fire', mitigation(stats.fire), 'Bleed', stats.bleed.toFixed());
+    pushRow('Holy', mitigation(stats.holy), 'Burn', stats.burn.toFixed());
+    pushRow('Wither', mitigation(stats.wither), 'Ignite', stats.ignite.toFixed());
+    pushRow('Poise', stats.poise.toFixed(1), 'Frostbite', stats.frost.toFixed());
+
+    const weightPer = stats.weight / stats.playerStats.weight + 1e-9;
+    let weightClass: string;
+    if (weightPer <= 0.4) weightClass = 'Light';
+    else if (weightPer <= 0.75) weightClass = 'Medium';
+    else if (weightPer <= 1.0) weightClass = 'Heavy';
+    else weightClass = 'Overburdened';
+    const weight = `${stats.weight.toFixed(1)} / ${stats.playerStats.weight.toFixed(1)} (${weightClass})`;
+    pushRow('Weight Load', weight, 'Poison', stats.poison.toFixed());
+
+    return `<tbody>${rows.join('')}</tbody></table>`;
 }
 
 export function getPaperDollHtml(equipped: PaperDoll, armors: Map<string, Armor>): string {
@@ -161,13 +193,13 @@ export function getArmorRow(cas: CalculatedArmorStats, showColGroups: Set<Armors
         pushCell(cells, cas.defTotal, 'col-divider');
     }
 
-    // STATUS cols (SMI, BLE, BRN, FRO, IGN, PSN, DT)
+    // STATUS cols (SMI, BLE, BRN, IGN, FRO, PSN, DT)
     if (showColGroups.has('STATUS')) {
         pushCell(cells, arm.stats.resSmite, 'col-starter');
         pushCell(cells, arm.stats.resBleed);
         pushCell(cells, arm.stats.resBurn);
-        pushCell(cells, arm.stats.resFrost);
         pushCell(cells, arm.stats.resIgnite);
+        pushCell(cells, arm.stats.resFrost);
         pushCell(cells, arm.stats.resPoison);
         pushCell(cells, cas.resTotal, 'col-divider');
     }

@@ -121,7 +121,7 @@ function getDefaultState(): AppState {
 
 // for localStorage
 const STORAGE_KEY = 'lotfcalc.settings';
-const STORAGE_VER = 3;
+const STORAGE_VER = 4;
 
 interface ExportedSharedState {
     readonly playerStats: PlayerStats;

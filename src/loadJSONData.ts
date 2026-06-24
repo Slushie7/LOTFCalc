@@ -89,12 +89,12 @@ interface RawWeaponDamageExtras {
     spell_slots: number;
 }
 interface RawWeaponDamageStatus {
+    dmg_status_smite: RawLeveledValue;
     dmg_status_bleed: RawLeveledValue;
     dmg_status_burn: RawLeveledValue;
-    dmg_status_poison: RawLeveledValue;
-    dmg_status_smite: RawLeveledValue;
     dmg_status_ignite: RawLeveledValue;
     dmg_status_frost: RawLeveledValue;
+    dmg_status_poison: RawLeveledValue;
 }
 interface RawWeaponOffense {
     damage_ar: RawWeaponDamageAR;
@@ -146,12 +146,12 @@ interface RawArmorStats {
     readonly def_fire: number;
     readonly def_holy: number;
     readonly def_wither: number;
+    readonly res_smite: number;
     readonly res_bleed: number;
     readonly res_burn: number;
-    readonly res_poison: number;
-    readonly res_smite: number;
     readonly res_ignite: number;
     readonly res_frost: number;
+    readonly res_poison: number;
     readonly poise: number;
     readonly kick_mult: number;
 }
@@ -282,12 +282,12 @@ function toWeaponDamageExtras(r: RawWeaponDamageExtras, curves: Map<string, Curv
 
 function toWeaponDamageStatus(r: RawWeaponDamageStatus, curves: Map<string, Curve>): WeaponDamageStatus {
     return {
+        dmgStatusSmite: toLeveledValue(r.dmg_status_smite, curves),
         dmgStatusBleed: toLeveledValue(r.dmg_status_bleed, curves),
         dmgStatusBurn: toLeveledValue(r.dmg_status_burn, curves),
-        dmgStatusPoison: toLeveledValue(r.dmg_status_poison, curves),
-        dmgStatusSmite: toLeveledValue(r.dmg_status_smite, curves),
         dmgStatusIgnite: toLeveledValue(r.dmg_status_ignite, curves),
         dmgStatusFrost: toLeveledValue(r.dmg_status_frost, curves),
+        dmgStatusPoison: toLeveledValue(r.dmg_status_poison, curves),
     };
 }
 
@@ -364,12 +364,12 @@ function toArmorStats(r: RawArmorStats): ArmorStats {
         defFire: r.def_fire,
         defHoly: r.def_holy,
         defWither: r.def_wither,
+        resSmite: r.res_smite,
         resBleed: r.res_bleed,
         resBurn: r.res_burn,
-        resPoison: r.res_poison,
-        resSmite: r.res_smite,
         resIgnite: r.res_ignite,
         resFrost: r.res_frost,
+        resPoison: r.res_poison,
         poise: r.poise,
         kickMult: r.kick_mult,
     };
