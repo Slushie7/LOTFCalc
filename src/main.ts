@@ -90,7 +90,6 @@ function onSetPlayerStat(e: Event): void {
     ctx.shared.playerStats = { ...ctx.shared.playerStats, [field]: value };
 
     updateDerivedStats();
-    views[ctx.shared.activeMode].refresh();
     ctx.save();
 }
 

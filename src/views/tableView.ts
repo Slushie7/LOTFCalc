@@ -86,8 +86,8 @@ export abstract class TableView<
         this.renderGroupToggles();
         this.syncGroupToggles();
         this.onShow();
-        this.fetchCalculated();
-        this.refresh();
+        this.fetchAndRender();
+        this.renderHeader();
     }
 
     hide(): void {
@@ -119,8 +119,7 @@ export abstract class TableView<
                     else checkedSet.delete(val);
 
                     this.processSidebarSelection();
-                    this.fetchCalculated();
-                    this.renderItems();
+                    this.fetchAndRender();
                     this.ctx.save();
                     return;
                 }
@@ -148,8 +147,7 @@ export abstract class TableView<
                     if (handled) {
                         syncSidebarToggles(section.sectionKey, checkedSet, section.itemVerifyFn);
                         this.processSidebarSelection();
-                        this.fetchCalculated();
-                        this.renderItems();
+                        this.fetchAndRender();
                         this.ctx.save();
                         return;
                     }
@@ -170,6 +168,7 @@ export abstract class TableView<
             this.state.ascending = this.ascendingByDefault.has(colKey);
         }
 
+        this.sort();
         this.refresh();
         this.ctx.save();
     }
@@ -209,6 +208,18 @@ export abstract class TableView<
     // SHARED RENDERING
     // ====================================
 
+    protected sort(): void {
+        // sort items by current sortKey
+        const sorted = this.sortCalculated(
+            this.calculatedItems,
+            this.state.sortKey,
+            this.state.ascending,
+            this.sortFns
+        );
+        this.calculatedItems.length = 0;
+        this.calculatedItems.push(...sorted);
+    }
+
     /** Filter applied when mode-search input changes */
     protected searchFilter(_text: string, _cst: CST): boolean {
         if (
@@ -223,9 +234,10 @@ export abstract class TableView<
     protected fetchCalculated(): void {
         this.calculatedItems.length = 0;
         this.calculatedItems.push(...this.collectItems());
+        this.sort();
     }
-    
-    protected fetchAndRender():void{
+
+    protected fetchAndRender(): void {
         this.fetchCalculated();
         this.renderItems();
     }
@@ -249,6 +261,8 @@ export abstract class TableView<
 
         const header = getElem(`${this.mode}-header`);
         const groups = this.headerGroups.filter((group) => this.state.showColGroups.has(group.superKey));
+
+        // rebuild the header
         header.innerHTML = getHeaderHtml(groups, this.state.sortKey, this.state.ascending, HEADER_STATUS_IMAGES);
 
         // insert the search input element into the first cell of the superheader
@@ -256,14 +270,12 @@ export abstract class TableView<
     }
 
     protected renderItems(itemKeyFadeIn: string | null = null): void {
-        // sort items by current search input
+        // filter items by current search input
         const searchText = getTypedElem(`${this.mode}-search`, HTMLInputElement).value.trim();
         const displayItems = this.calculatedItems.filter((v) => this.searchFilter(searchText, v));
 
-        // sort items by current sortKey
-        const calcStats = this.sortCalculated(displayItems, this.state.sortKey, this.state.ascending, this.sortFns);
         // display the items in the table
-        const rows = calcStats.map((cst) => this.buildRow(cst));
+        const rows = displayItems.map((cst) => this.buildRow(cst));
         getElem(`${this.mode}-body`).innerHTML = getItemTableBodyHtml(rows, itemKeyFadeIn);
     }
 
