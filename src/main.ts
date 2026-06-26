@@ -50,7 +50,7 @@ function onToggleSidebar(): void {
 function onSwitchMode(e: Event): void {
     const el = e.target;
     if (!(el instanceof HTMLButtonElement) || !isMode(el.dataset.mode)) return;
-    const next: Mode = el.dataset.mode;
+    const next = el.dataset.mode;
 
     if (next === state.shared.activeMode) return;
     views[state.shared.activeMode].hide();
@@ -180,11 +180,10 @@ function init(): void {
     syncSharedElements();
     updateDerivedStats();
 
-    for (const view of Object.values(views)) {
-        if (state.shared.activeMode === view.mode) view.show();
-        else view.hide();
-    }
+    // ensure all mode-specific elements are hidden
+    for (const view of Object.values(views)) view.hide();
 
+    views[state.shared.activeMode].show();
     syncModeButtons();
 }
 

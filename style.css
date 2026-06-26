@@ -78,7 +78,7 @@ body.sidebar-hidden #sidebar {
     justify-content: center;
     width: auto;
     margin: 0;
-    padding: 0.25rem 0.5rem;
+    padding: 0.25rem 0.25rem;
     background: none;
     border: none;
     color: var(--pico-color);
@@ -104,15 +104,14 @@ body.sidebar-hidden #sidebar {
 .appbar .appbar-setting input {
     margin: 0;
 }
-.appbar .github {
-    font-size: 0.85rem;
-}
-.appbar .github svg,
-.appbar .github img {
+.appbar .iconbtn svg {
     width: 1.4rem;
     height: 1.4rem;
     display: block;
     fill: currentColor; /* SVG inherits the button's color */
+}
+#download-btn {
+    padding-right: 0;
 }
 #github-btn a {
     all: inherit;
@@ -486,34 +485,34 @@ body.sidebar-hidden #sidebar {
     font-weight: 600;
 }
 .calc-table button.lock {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: auto;
-    margin: 0;
-    padding: 0.1rem 0 0.1rem 0.1rem;
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin: 0 0.1rem 0 0;
+    padding: 0;
     vertical-align: middle;
-    background: none;
     border: none;
     box-shadow: none;
-    color: var(--pico-muted-color);
     cursor: pointer;
-    transition: color var(--pico-transition);
+    background-color: var(--pico-muted-color); /* this is the icon color now */
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='11' width='14.2' height='10' rx='2'/%3E%3Cpath d='M 8 11 V 5 a 4 4 0 0 1 7.9 -0.9'/%3E%3Ccircle cx='12.1' cy='15.2' r='1.2' fill='%23000' stroke='none'/%3E%3Cline x1='12.1' y1='16.1' x2='12.1' y2='17.6' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E")
+        center / 16px 16px no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='11' width='14.2' height='10' rx='2'/%3E%3Cpath d='M 8 11 V 5 a 4 4 0 0 1 7.9 -0.9'/%3E%3Ccircle cx='12.1' cy='15.2' r='1.2' fill='%23000' stroke='none'/%3E%3Cline x1='12.1' y1='16.1' x2='12.1' y2='17.6' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E")
+        center / 16px 16px no-repeat;
+    transition: background-color var(--pico-transition);
 }
 .calc-table button.lock:hover,
 .calc-table button.lock:focus-visible {
-    color: var(--pico-primary);
+    background-color: var(--pico-primary);
 }
 .calc-table button.lock.pinned {
-    color: var(--pico-primary);
+    background-color: var(--pico-primary);
+    /* only swap the shape; position/size/repeat carry over from the base shorthand */
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='11' width='14.2' height='10' rx='2'/%3E%3Cpath d='M 8 11 V 6 a 4 4 0 0 1 8 0 v 5'/%3E%3Ccircle cx='12.1' cy='15.2' r='1.2' fill='%23000' stroke='none'/%3E%3Cline x1='12.1' y1='16.1' x2='12.1' y2='17.6' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='11' width='14.2' height='10' rx='2'/%3E%3Cpath d='M 8 11 V 6 a 4 4 0 0 1 8 0 v 5'/%3E%3Ccircle cx='12.1' cy='15.2' r='1.2' fill='%23000' stroke='none'/%3E%3Cline x1='12.1' y1='16.1' x2='12.1' y2='17.6' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 .calc-table button.lock.pinned:hover {
-    color: var(--pico-primary-hover);
-}
-.calc-table button.lock svg {
-    width: 16px;
-    height: 16px;
-    display: block;
+    background-color: var(--pico-primary-hover);
 }
 .calc-table button.equip-unequip {
     display: inline-flex; /* block-level flex, not inline-flex */

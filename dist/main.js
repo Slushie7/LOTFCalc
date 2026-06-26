@@ -150,12 +150,10 @@ function init() {
     wireShared();
     syncSharedElements();
     updateDerivedStats();
-    for (const view of Object.values(views)) {
-        if (state.shared.activeMode === view.mode)
-            view.show();
-        else
-            view.hide();
-    }
+    // ensure all mode-specific elements are hidden
+    for (const view of Object.values(views))
+        view.hide();
+    views[state.shared.activeMode].show();
     syncModeButtons();
 }
 init();

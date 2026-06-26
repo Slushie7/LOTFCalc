@@ -34,6 +34,8 @@ export class TableView extends View {
     show() {
         getElem(`view-${this.mode}`).hidden = false;
         getElem(`${this.mode}-search`).hidden = false;
+        getElem('download-btn').hidden = false;
+        // bind event listeners
         this.ac?.abort(); // guard against a double show()
         this.ac = new AbortController();
         const { signal } = this.ac;
@@ -43,7 +45,9 @@ export class TableView extends View {
         addElemListener(`${this.mode}-body`, 'click', (e) => this.onBodyClick(e), { signal });
         addElemListener('view-toggles', 'change', (e) => this.onToggleChange(e), { signal });
         addElemListener(`${this.mode}-search`, 'input', () => this.renderItems(), { signal });
+        addElemListener('download-btn', 'click', () => this.downloadAsCSV());
         this.bindExtra(signal);
+        // render the initial table
         this.renderSidebar();
         this.renderGroupToggles();
         this.syncGroupToggles();
@@ -55,6 +59,8 @@ export class TableView extends View {
         this.ac?.abort(); // removed any attached event listeners
         this.ac = null;
         getElem(`view-${this.mode}`).hidden = true;
+        getElem(`${this.mode}-search`).hidden = true;
+        getElem('download-btn').hidden = true;
         this.onHide();
     }
     refresh() {
@@ -167,13 +173,29 @@ export class TableView extends View {
             this.ctx.save();
     }
     // ====================================
-    // SHARED RENDERING
+    // DATA MANIPULATION
     // ====================================
     sort() {
         // sort items by current sortKey
-        const sorted = this.sortCalculated(this.calculatedItems, this.state.sortKey, this.state.ascending, this.sortFns);
+        const pinned = [];
+        const unpinned = [];
+        // separate pinned items from unpinned items
+        for (const c of this.calculatedItems)
+            if (c.pinned)
+                pinned.push(c);
+            else
+                unpinned.push(c);
+        const fn = this.sortFns[this.state.sortKey];
+        if (this.state.ascending) {
+            pinned.sort(fn);
+            unpinned.sort(fn);
+        }
+        else {
+            pinned.sort((a, b) => -fn(a, b));
+            unpinned.sort((a, b) => -fn(a, b));
+        }
         this.calculatedItems.length = 0;
-        this.calculatedItems.push(...sorted);
+        this.calculatedItems.push(...pinned, ...unpinned);
     }
     /** Filter applied when mode-search input changes */
     searchFilter(_text, _cst) {
@@ -192,6 +214,38 @@ export class TableView extends View {
         this.fetchCalculated();
         this.renderItems();
     }
+    downloadAsCSV() {
+        function escapeCsvField(field) {
+            // Quote only when the field contains a delimiter, quote, or newline.
+            if (/[",\r\n]/.test(field)) {
+                return `"${field.replace(/"/g, '""')}"`;
+            }
+            return field;
+        }
+        const visibleGroups = this.headerGroups.filter((group) => this.state.showColGroups.has(group.superKey));
+        const csvHeaders = [];
+        visibleGroups.forEach((g) => g.columns.forEach((c) => csvHeaders.push(c.text)));
+        const tableRows = this.calculatedItems.map((cst) => this.buildRow(cst));
+        const csvRows = [csvHeaders];
+        for (const r of tableRows) {
+            const row = [];
+            for (const c of r.cells)
+                row.push(c.rawText);
+            csvRows.push(row);
+        }
+        const csvText = csvRows.map((r) => r.map(escapeCsvField).join(',')).join('\r\n');
+        const blob = new Blob(['\uFEFF' + csvText], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = this.mode + '.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+        a.remove();
+    }
+    // ====================================
+    // SHARED RENDERING
+    // ====================================
     renderSidebar() {
         if (this.sidebarSections.length)
             document.body.classList.remove('sidebar-hidden');
@@ -232,26 +286,6 @@ export class TableView extends View {
             if (isToggleKey(elDataKey, this.colGroupToggles))
                 el.checked = this.state.showColGroups.has(elDataKey);
         }
-    }
-    sortCalculated(calculated, sortKey, ascending, sortFns) {
-        const pinned = [];
-        const unpinned = [];
-        // separate pinned items from unpinned items
-        for (const c of calculated)
-            if (c.pinned)
-                pinned.push(c);
-            else
-                unpinned.push(c);
-        const fn = sortFns[sortKey];
-        if (ascending) {
-            pinned.sort(fn);
-            unpinned.sort(fn);
-        }
-        else {
-            pinned.sort((a, b) => -fn(a, b));
-            unpinned.sort((a, b) => -fn(a, b));
-        }
-        return [...pinned, ...unpinned];
     }
 }
 //# sourceMappingURL=tableView.js.map
