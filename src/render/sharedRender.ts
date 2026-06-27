@@ -62,18 +62,17 @@ export const HEADER_STATUS_IMAGES: Record<string, string> = {
     PSN: './img/Header/Poison.webp',
 } as const;
 
-/**
- * Replaces all special characters '&', '<', '>', '"', and "'" with HTML-safe sequences
- * @param s
- * @returns
- */
+/** Replaces all special characters '&', '<', '>', '"', and "'" with HTML-safe sequences */
+const NEEDS_ESCAPE = /[&<>"']/;
 export function escapeHtml(s: string): string {
-    return s
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#x27;');
+    if (NEEDS_ESCAPE.test(s))
+        return s
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#x27;');
+    return s;
 }
 
 // ===============================
@@ -152,7 +151,7 @@ export function getHeaderHtml<HK extends string, SHK extends string>(
         group.columns.forEach((col, idx) => {
             let text = col.text;
             if (col.key === sortKey)
-                // add ▲ / ▼ to identify sorting column
+                // add up/down arrow to identify sorting column
                 text += ascending ? ' \u25b2' : ' \u25bc';
             // calculate HTML classes for the header cell
             const classes = ['sortable'];
@@ -160,7 +159,7 @@ export function getHeaderHtml<HK extends string, SHK extends string>(
             if (idx === group.columns.length - 1) classes.push('col-divider');
             const cls = classes.join(' ');
             // determine content - image or text
-            let content: string = '';
+            let content: string;
             const imagePath = headerImagePaths[col.key];
             if (imagePath)
                 // image exists for this HeaderKey
@@ -184,17 +183,18 @@ function getTableBodyHtml(
     for (const row of rows) {
         const rowParts: string[] = [];
         row.cells.forEach((cell, idx) => {
+            const cellClass = cell.cls ? ` class=${cell.cls}` : '';
             let text = cell.htmlText;
-            let pinBtn = '';
+            let pinBtn: string;
             if (idx === 0) {
                 // first col - pin button and url link
                 const action = row.pinned ? 'Unpin from top of list' : 'Pin to top of list';
                 pinBtn = `<button class="lock${row.pinned ? ' pinned' : ''}" data-item="${escapeHtml(row.itemKey)}" title="${action}"></button>`;
 
                 if (firstColUrl)
-                    text = `<a class="${cell.cls}" href="${escapeHtml(firstColUrl(row))}" target="_blank" rel="noopener noreferrer">${text}</a>`;
-            }
-            rowParts.push(`<td class="${cell.cls}">${pinBtn}${text}</td>`);
+                    text = `<a${cellClass} href="${escapeHtml(firstColUrl(row))}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+            } else pinBtn = '';
+            rowParts.push(`<td${cellClass}>${pinBtn}${text}</td>`);
         });
         const trClasses =
             `${row.pinned ? 'pinned' : ''} ${row.itemKey === fadeItemWithKey ? 'fade-size-in' : ''}`.trim();
@@ -230,12 +230,11 @@ export function formatPercent(val: number): string {
 export function pushCell(
     cells: Cell[],
     text: string | number | string[],
-    classes?: string | string[],
+    classes?: string,
     images?: ImageInfo[],
     button?: CellButton
 ): void {
-    if (classes === undefined) classes = [];
-    else if (typeof classes === 'string') classes = [classes];
+    if (classes === undefined) classes = '';
 
     // convert number to string
     if (typeof text === 'number') {
@@ -264,16 +263,19 @@ export function pushCell(
     }
 
     // create HTML class string for table cell
-    if (!htmlText || htmlText === '-') {
-        classes = [...classes, 'empty'];
-    }
-    const cls = classes.filter((s) => s !== '').join(' ');
+    if (htmlText === '-') classes += ' empty';
 
     // parse images
     if (images) {
         const imgTags = images
             .map((img, idx) => {
-                const imgCls = idx === images.length - 1 && htmlText ? ' class="image-last"' : '';
+                let imgCls: string;
+                if (htmlText) {
+                    if (idx === 0 && idx === images.length - 1) imgCls = ' class="image-first image-last"';
+                    else if (idx === 0) imgCls = ' class="image-first"';
+                    else if (idx === images.length - 1) imgCls = ' class="image-last"';
+                    else imgCls = '';
+                } else imgCls = '';
                 return `<img${imgCls} src="${img.src}" width="${img.size}" height="${img.size}">`;
             })
             .join('');
@@ -286,7 +288,7 @@ export function pushCell(
         let buttonClass: string;
         if (!button.classes) buttonClass = '';
         else {
-            if (Array.isArray(button.classes)) button.classes = button.classes.filter((s) => s !== '').join(' ');
+            if (Array.isArray(button.classes)) button.classes = button.classes.filter(Boolean).join(' ');
             buttonClass = ` class="${button.classes}"`;
         }
         // parse the button's data attribute
@@ -301,5 +303,5 @@ export function pushCell(
         htmlText = `<button${buttonClass}${buttonData}>${htmlText}</button>`;
     }
 
-    cells.push({ htmlText, rawText, images, cls });
+    cells.push({ htmlText, rawText, images, cls: classes.trim() });
 }

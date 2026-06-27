@@ -305,10 +305,6 @@ body.sidebar-hidden #sidebar {
 .defense-table .col-first-header {
     padding-left: 0.5rem;
 }
-.defense-table .unwieldable:not(.empty) {
-    color: var(--pico-form-element-invalid-active-border-color);
-    text-decoration-color: var(--pico-form-element-invalid-active-border-color);
-}
 
 /* weapons table body: bold values + pin (lock) buttons */
 .defense-table th {
@@ -488,7 +484,7 @@ body.sidebar-hidden #sidebar {
     display: inline-block;
     width: 16px;
     height: 16px;
-    margin: 0 0.1rem 0 0;
+    margin: 0;
     padding: 0;
     vertical-align: middle;
     border: none;
@@ -525,8 +521,11 @@ body.sidebar-hidden #sidebar {
     line-height: 1.1;
     white-space: nowrap;
 }
+.calc-table .image-first {
+    margin-left: -0.1rem;
+}
 .calc-table .image-last {
-    margin-right: 0.2rem;
+    margin-right: 0.3rem;
 }
 
 /* ============================================================

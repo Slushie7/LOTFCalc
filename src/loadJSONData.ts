@@ -113,10 +113,12 @@ interface RawWeaponDefense {
     def_wither: RawLeveledValue;
     stability: RawLeveledValue;
 }
-interface RawWeapon {
+interface RawItem {
     key: string;
     name: string;
     icon: string;
+}
+interface RawWeapon extends RawItem {
     class_name: string;
     weight: number;
     max_upg_level: number;
@@ -135,10 +137,7 @@ interface RawBuff {
     key: string;
     effects: RawEffect[];
 }
-interface RawRune {
-    key: string;
-    name: string;
-    icon: string;
+interface RawRune extends RawItem {
     type: RuneType;
     weapon_buff_key: string;
     weapon_buff_target: BuffTarget;
@@ -160,10 +159,7 @@ interface RawArmorStats {
     readonly poise: number;
     readonly kick_mult: number;
 }
-interface RawArmor {
-    key: string;
-    name: string;
-    icon: string;
+interface RawArmor extends RawItem {
     slot: ArmorSlot;
     weight_class: ArmorWeightClass;
     set: string;
@@ -400,7 +396,15 @@ function toArmor(r: RawArmor): Armor {
     if (!isArmorWeightClass(weightClass)) throw new Error(`Invalid armor weightClass: ${weightClass}`);
     const stats = toArmorStats(r.stats);
 
-    return { key: r.key, name: r.name, icon: r.icon, slot, weightClass, set: r.set, stats };
+    return {
+        key: r.key,
+        name: r.name,
+        icon: r.icon,
+        slot,
+        weightClass,
+        set: r.set,
+        stats,
+    };
 }
 
 /**

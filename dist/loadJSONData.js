@@ -186,7 +186,15 @@ function toArmor(r) {
     if (!isArmorWeightClass(weightClass))
         throw new Error(`Invalid armor weightClass: ${weightClass}`);
     const stats = toArmorStats(r.stats);
-    return { key: r.key, name: r.name, icon: r.icon, slot, weightClass, set: r.set, stats };
+    return {
+        key: r.key,
+        name: r.name,
+        icon: r.icon,
+        slot,
+        weightClass,
+        set: r.set,
+        stats,
+    };
 }
 /**
  * data.json data loader

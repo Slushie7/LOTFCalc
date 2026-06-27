@@ -12,18 +12,17 @@ export const HEADER_STATUS_IMAGES = {
     FRO: './img/Header/Frostbite.webp',
     PSN: './img/Header/Poison.webp',
 };
-/**
- * Replaces all special characters '&', '<', '>', '"', and "'" with HTML-safe sequences
- * @param s
- * @returns
- */
+/** Replaces all special characters '&', '<', '>', '"', and "'" with HTML-safe sequences */
+const NEEDS_ESCAPE = /[&<>"']/;
 export function escapeHtml(s) {
-    return s
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#x27;');
+    if (NEEDS_ESCAPE.test(s))
+        return s
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#x27;');
+    return s;
 }
 // ===============================
 // HTML GENERATION
@@ -73,7 +72,7 @@ export function getHeaderHtml(groups, sortKey, ascending, headerImagePaths) {
         group.columns.forEach((col, idx) => {
             let text = col.text;
             if (col.key === sortKey)
-                // add ▲ / ▼ to identify sorting column
+                // add up/down arrow to identify sorting column
                 text += ascending ? ' \u25b2' : ' \u25bc';
             // calculate HTML classes for the header cell
             const classes = ['sortable'];
@@ -83,7 +82,7 @@ export function getHeaderHtml(groups, sortKey, ascending, headerImagePaths) {
                 classes.push('col-divider');
             const cls = classes.join(' ');
             // determine content - image or text
-            let content = '';
+            let content;
             const imagePath = headerImagePaths[col.key];
             if (imagePath)
                 // image exists for this HeaderKey
@@ -100,16 +99,19 @@ function getTableBodyHtml(rows, firstColUrl, fadeItemWithKey) {
     for (const row of rows) {
         const rowParts = [];
         row.cells.forEach((cell, idx) => {
+            const cellClass = cell.cls ? ` class=${cell.cls}` : '';
             let text = cell.htmlText;
-            let pinBtn = '';
+            let pinBtn;
             if (idx === 0) {
                 // first col - pin button and url link
                 const action = row.pinned ? 'Unpin from top of list' : 'Pin to top of list';
                 pinBtn = `<button class="lock${row.pinned ? ' pinned' : ''}" data-item="${escapeHtml(row.itemKey)}" title="${action}"></button>`;
                 if (firstColUrl)
-                    text = `<a class="${cell.cls}" href="${escapeHtml(firstColUrl(row))}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+                    text = `<a${cellClass} href="${escapeHtml(firstColUrl(row))}" target="_blank" rel="noopener noreferrer">${text}</a>`;
             }
-            rowParts.push(`<td class="${cell.cls}">${pinBtn}${text}</td>`);
+            else
+                pinBtn = '';
+            rowParts.push(`<td${cellClass}>${pinBtn}${text}</td>`);
         });
         const trClasses = `${row.pinned ? 'pinned' : ''} ${row.itemKey === fadeItemWithKey ? 'fade-size-in' : ''}`.trim();
         const clsStr = trClasses ? ` class="${trClasses}"` : '';
@@ -137,9 +139,7 @@ export function formatPercent(val) {
  */
 export function pushCell(cells, text, classes, images, button) {
     if (classes === undefined)
-        classes = [];
-    else if (typeof classes === 'string')
-        classes = [classes];
+        classes = '';
     // convert number to string
     if (typeof text === 'number') {
         const floored = epsilonFloor(text);
@@ -168,15 +168,25 @@ export function pushCell(cells, text, classes, images, button) {
         rawText = htmlText = '-';
     }
     // create HTML class string for table cell
-    if (!htmlText || htmlText === '-') {
-        classes = [...classes, 'empty'];
-    }
-    const cls = classes.filter((s) => s !== '').join(' ');
+    if (htmlText === '-')
+        classes += ' empty';
     // parse images
     if (images) {
         const imgTags = images
             .map((img, idx) => {
-            const imgCls = idx === images.length - 1 && htmlText ? ' class="image-last"' : '';
+            let imgCls;
+            if (htmlText) {
+                if (idx === 0 && idx === images.length - 1)
+                    imgCls = ' class="image-first image-last"';
+                else if (idx === 0)
+                    imgCls = ' class="image-first"';
+                else if (idx === images.length - 1)
+                    imgCls = ' class="image-last"';
+                else
+                    imgCls = '';
+            }
+            else
+                imgCls = '';
             return `<img${imgCls} src="${img.src}" width="${img.size}" height="${img.size}">`;
         })
             .join('');
@@ -190,7 +200,7 @@ export function pushCell(cells, text, classes, images, button) {
             buttonClass = '';
         else {
             if (Array.isArray(button.classes))
-                button.classes = button.classes.filter((s) => s !== '').join(' ');
+                button.classes = button.classes.filter(Boolean).join(' ');
             buttonClass = ` class="${button.classes}"`;
         }
         // parse the button's data attribute
@@ -205,6 +215,6 @@ export function pushCell(cells, text, classes, images, button) {
         }
         htmlText = `<button${buttonClass}${buttonData}>${htmlText}</button>`;
     }
-    cells.push({ htmlText, rawText, images, cls });
+    cells.push({ htmlText, rawText, images, cls: classes.trim() });
 }
 //# sourceMappingURL=sharedRender.js.map

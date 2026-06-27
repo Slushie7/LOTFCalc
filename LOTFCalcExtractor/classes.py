@@ -284,10 +284,21 @@ class Buff:
 
 
 @dataclass(frozen=True)
-class Rune:
+class Item:
     key: str
     name: str
     icon: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {'key': self.key, 'name': self.name, 'icon': self.icon}
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any], *args, **kwargs) -> Self:
+        return cls(d['key'], d['name'], d['icon'])
+
+
+@dataclass(frozen=True)
+class Rune(Item):
     type: RUNE_TYPE
     weapon_buff: Buff
     weapon_buff_target: BUFF_TARGET
@@ -295,10 +306,7 @@ class Rune:
     armor_buff_target: BUFF_TARGET
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            'key': self.key,
-            'name': self.name,
-            'icon': self.icon,
+        return super().to_dict() | {
             'type': self.type,
             'weapon_buff_key': self.weapon_buff.key,
             'weapon_buff_target': self.weapon_buff_target,
@@ -373,20 +381,14 @@ class ArmorStats:
 
 
 @dataclass(frozen=True)
-class Armor:
-    key: str
-    name: str
-    icon: str
+class Armor(Item):
     slot: ARMOR_SLOT
     weight_class: ARMOR_WEIGHT_CLASSES
     set: str
     stats: ArmorStats
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            'key': self.key,
-            'name': self.name,
-            'icon': self.icon,
+        return super().to_dict() | {
             'slot': self.slot,
             'weight_class': self.weight_class,
             'set': self.set,
@@ -579,10 +581,7 @@ class WeaponDefense:
 
 
 @dataclass(frozen=True)
-class Weapon:
-    key: str
-    name: str
-    icon: str
+class Weapon(Item):
     class_name: str
     weight: float
     max_upg_level: int
@@ -593,10 +592,7 @@ class Weapon:
     _stat_grade_ranges: tuple[StatScalarGradeRange, ...] = field(repr=False)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            'key': self.key,
-            'name': self.name,
-            'icon': self.icon,
+        return super().to_dict() | {
             'class_name': self.class_name,
             'weight': self.weight,
             'max_upg_level': self.max_upg_level,

@@ -189,28 +189,25 @@ export function getWeaponRow(
 
     // INFO fields: 'WEAP', 'CLS'
     if (showColGroups.has('INFO')) {
-        pushCell(
-            cells,
-            `${cws.item.name} +${cws.upgLevel}`,
-            ['col-first', wieldCls],
-            [{ src: `./img/Weapons/${cws.item.icon}.webp`, size: 30 }]
-        );
+        pushCell(cells, `${cws.item.name} +${cws.upgLevel}`, `col-first ${wieldCls}`, [
+            { src: `./img/Weapons/${cws.item.icon}.webp`, size: 30 },
+        ]);
         pushCell(cells, cws.item.className, 'col-divider');
     }
 
     // AR fields: 'ARP', 'ARH', 'ARF', 'ARW', 'TOT', 'SP'
     if (showColGroups.has('AR')) {
         const ar = cws.offense.ar;
-        pushCell(cells, formatDmg(ar.physical, showSplit), ['col-starter', wieldCls]);
+        pushCell(cells, formatDmg(ar.physical, showSplit), `col-starter ${wieldCls}`);
         pushCell(cells, formatDmg(ar.fire, showSplit), wieldCls);
         pushCell(cells, formatDmg(ar.holy, showSplit), wieldCls);
         pushCell(cells, formatDmg(ar.wither, showSplit), wieldCls);
-        pushCell(cells, formatIntOpt(ar.totalDamage), [wieldCls, 'col-divider']);
+        pushCell(cells, formatIntOpt(ar.totalDamage), `${wieldCls} col-divider`);
     }
 
     // MAGIC fields: 'SP', 'SLOTS'
     if (showColGroups.has('MAGIC')) {
-        pushCell(cells, formatDmg(cws.offense.ar.spellPower, showSplit), ['col-starter', wieldCls]);
+        pushCell(cells, formatDmg(cws.offense.ar.spellPower, showSplit), `col-starter ${wieldCls}`);
         pushCell(cells, formatIntOpt(cws.offense.extras.spellSlots), 'col-divider');
     }
 
@@ -237,17 +234,17 @@ export function getWeaponRow(
 
     // RUNES fields: 'RUN'
     if (showColGroups.has('RUNES')) {
-        pushCell(cells, cws.runeSockets.join(', ') || '-', ['col-starter', 'col-divider']);
+        pushCell(cells, cws.runeSockets.join(', ') || '-', 'col-starter col-divider');
     }
 
     // DEF fields: 'DP', 'DH', 'DF', 'DW', 'DS'
     if (showColGroups.has('DEF')) {
         const def = cws.defense;
-        pushCell(cells, formatPercent(def.physical), ['col-starter', wieldCls]);
+        pushCell(cells, formatPercent(def.physical), `col-starter ${wieldCls}`);
         pushCell(cells, formatPercent(def.fire), wieldCls);
         pushCell(cells, formatPercent(def.holy), wieldCls);
         pushCell(cells, formatPercent(def.wither), wieldCls);
-        pushCell(cells, formatPercent(def.stability), [wieldCls, 'col-divider']);
+        pushCell(cells, formatPercent(def.stability), `${wieldCls} col-divider`);
     }
 
     // SCALE fields: 'SS', 'SA', 'SR', 'SI'
@@ -270,10 +267,10 @@ export function getWeaponRow(
     if (showColGroups.has('REQS')) {
         const reqs = cws.item.wieldReqs;
         const wield = cws.wieldability;
-        pushCell(cells, formatIntOpt(reqs.strength), wield.strength ? 'col-starter' : ['col-starter', wieldCls]);
+        pushCell(cells, formatIntOpt(reqs.strength), wield.strength ? 'col-starter' : `col-starter ${wieldCls}`);
         pushCell(cells, formatIntOpt(reqs.agility), wield.agility ? '' : wieldCls);
         pushCell(cells, formatIntOpt(reqs.radiance), wield.radiance ? '' : wieldCls);
-        pushCell(cells, formatIntOpt(reqs.inferno), wield.inferno ? 'col-divider' : [wieldCls, 'col-divider']);
+        pushCell(cells, formatIntOpt(reqs.inferno), wield.inferno ? 'col-divider' : `${wieldCls} col-divider`);
     }
     return { itemName: cws.item.name, itemKey: cws.item.key, wieldable, pinned: cws.pinned, cells };
 }

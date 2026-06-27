@@ -45,10 +45,10 @@ export function getRuneRow(crs, showColGroups) {
     }
     // WEAP (WEAPFX)
     if (showColGroups.has('WEAP'))
-        pushCell(cells, crs.weaponEffects, ['col-starter', 'col-divider']);
+        pushCell(cells, crs.weaponEffects, 'col-starter col-divider');
     // ARMR (ARMRFX)
     if (showColGroups.has('ARMR'))
-        pushCell(cells, crs.armorEffects, ['col-starter', 'col-divider']);
+        pushCell(cells, crs.armorEffects, 'col-starter col-divider');
     return { itemName: rune.name, itemKey: rune.key, cells, pinned: crs.pinned };
 }
 //# sourceMappingURL=runesRender.js.map
