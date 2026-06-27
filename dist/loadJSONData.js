@@ -57,6 +57,15 @@ function toPlayerStats(r) {
         inferno: r.inferno,
     };
 }
+function toStartingClass(r) {
+    const stats = toPlayerStats(r.stats);
+    const level = stats.strength + stats.agility + stats.endurance + stats.vitality + stats.radiance + stats.inferno - 53;
+    return {
+        name: r.name,
+        stats,
+        level,
+    };
+}
 function toWeaponRunes(r, curves) {
     const runeSockets = r.rune_sockets;
     if (!r.rune_sockets.every((rs) => isRuneSocketType(rs)))
@@ -206,7 +215,8 @@ export async function loadAppData() {
     const gradeRanges = data.stat_grade_ranges.map(toStatScalarGradeRange);
     const weapons = data.weapons.map((w) => toWeapon(w, curves, baseDamages));
     const runes = data.runes.map((r) => toRune(r, buffs));
-    const armor = data.armor.map((arm) => toArmor(arm));
-    return { weapons, gradeRanges, curves, runes, armors: armor };
+    const armors = data.armor.map((arm) => toArmor(arm));
+    const startingClasses = data.starting_classes.map((sc) => toStartingClass(sc));
+    return { weapons, gradeRanges, curves, runes, armors, startingClasses };
 }
 //# sourceMappingURL=loadJSONData.js.map

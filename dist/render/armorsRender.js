@@ -91,7 +91,7 @@ function getSlotInnerHtml(slot, equipped) {
     const src = `./img/Armors/${escapeHtml(equipped.icon)}.webp`;
     const name = escapeHtml(equipped.name);
     return (`<img class="slot-icon" src="${src}" alt="${name}" title="${name}">` +
-        `<button class="slot-unequip" type="button" data-slot="${slot}" title="Unequip ${name}" aria-label="Unequip ${name}">&times;</button>`);
+        `<button class="slot-unequip" type="button" data-slot="${slot}" title="Unequip ${name}">&times;</button>`);
 }
 export function getDerivedArmorHtml(stats) {
     function pushRow(h1, d1, h2, d2) {

@@ -1,4 +1,4 @@
-import type { Curve, StatScalarGradeRange, Weapon, Rune, Armor } from '../model.js';
+import type { Curve, StatScalarGradeRange, Weapon, Rune, Armor, StartingClass } from '../model.js';
 import type { Mode, SharedState } from '../state.js';
 
 export type GameData = {
@@ -7,6 +7,7 @@ export type GameData = {
     readonly weapons: readonly Weapon[];
     readonly runes: readonly Rune[];
     readonly armors: readonly Armor[];
+    readonly startingClasses: readonly StartingClass[];
 };
 
 export interface ViewContext {

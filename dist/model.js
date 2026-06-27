@@ -40,4 +40,12 @@ export const ARMOR_WEIGHT_CLASSES = ['Light', 'Medium', 'Heavy'];
 export function isArmorWeightClass(v) {
     return ARMOR_WEIGHT_CLASSES.includes(v);
 }
+export const PLAYER_STATS_KEYS = [
+    'strength',
+    'agility',
+    'endurance',
+    'vitality',
+    'radiance',
+    'inferno',
+];
 //# sourceMappingURL=model.js.map

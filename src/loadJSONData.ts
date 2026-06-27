@@ -29,6 +29,7 @@ import {
     type ArmorWeightClass,
     type ArmorStats,
     type RuneType,
+    type StartingClass,
 } from './model.js';
 
 // interfaces matching JSON structures
@@ -68,6 +69,10 @@ interface RawPlayerStats {
     vitality: number;
     radiance: number;
     inferno: number;
+}
+interface RawStartingClass {
+    name: string;
+    stats: RawPlayerStats;
 }
 interface RawWeaponRuneSockets {
     rune_sockets: readonly RuneSocketType[];
@@ -174,6 +179,7 @@ interface RawDataJSON {
     buffs: readonly RawBuff[];
     runes: readonly RawRune[];
     armor: readonly RawArmor[];
+    starting_classes: readonly RawStartingClass[];
 }
 
 // helpers
@@ -242,6 +248,18 @@ function toPlayerStats(r: RawPlayerStats): PlayerStats {
         vitality: r.vitality,
         radiance: r.radiance,
         inferno: r.inferno,
+    };
+}
+
+function toStartingClass(r: RawStartingClass): StartingClass {
+    const stats = toPlayerStats(r.stats);
+    const level =
+        stats.strength + stats.agility + stats.endurance + stats.vitality + stats.radiance + stats.inferno - 53;
+
+    return {
+        name: r.name,
+        stats,
+        level,
     };
 }
 
@@ -395,6 +413,7 @@ export async function loadAppData(): Promise<{
     curves: Map<string, Curve>;
     runes: Rune[];
     armors: Armor[];
+    startingClasses: StartingClass[];
 }> {
     const res = await fetch('data/data.json');
     if (!res.ok) throw new Error(`Failed to load data.json: ${res.status}`);
@@ -421,7 +440,8 @@ export async function loadAppData(): Promise<{
     const gradeRanges = data.stat_grade_ranges.map(toStatScalarGradeRange);
     const weapons = data.weapons.map((w) => toWeapon(w, curves, baseDamages));
     const runes = data.runes.map((r) => toRune(r, buffs));
-    const armor = data.armor.map((arm) => toArmor(arm));
+    const armors = data.armor.map((arm) => toArmor(arm));
+    const startingClasses = data.starting_classes.map((sc) => toStartingClass(sc));
 
-    return { weapons, gradeRanges, curves, runes, armors: armor };
+    return { weapons, gradeRanges, curves, runes, armors, startingClasses };
 }

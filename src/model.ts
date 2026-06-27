@@ -112,6 +112,20 @@ export type PlayerStats = {
     readonly radiance: number;
     readonly inferno: number;
 };
+export const PLAYER_STATS_KEYS: (keyof PlayerStats)[] = [
+    'strength',
+    'agility',
+    'endurance',
+    'vitality',
+    'radiance',
+    'inferno',
+] as const;
+
+export type StartingClass = {
+    name: string;
+    stats: PlayerStats;
+    level: number;
+};
 
 export interface WeaponRuneSockets {
     readonly runeSockets: RuneSocketType[];

@@ -1,12 +1,27 @@
 import json
 from pathlib import Path
 
-from .classes import BaseDamage, Curve, StatScalarGradeRange, Weapon, Buff, Rune, Armor
+from .classes import (
+    BaseDamage,
+    Curve,
+    StatScalarGradeRange,
+    Weapon,
+    Buff,
+    Rune,
+    Armor,
+    StartingClass,
+)
 
 
 def load_json_data(
     path: Path | str | None = None,
-) -> tuple[tuple[Weapon, ...], dict[str, Curve], tuple[Rune, ...], tuple[Armor, ...]]:
+) -> tuple[
+    tuple[Weapon, ...],
+    dict[str, Curve],
+    tuple[Rune, ...],
+    tuple[Armor, ...],
+    tuple[StartingClass, ...],
+]:
     """Read the weapons data from JSON into a tuple of Weapons usable by LOTFCalc."""
 
     if path is not None:
@@ -34,7 +49,9 @@ def load_json_data(
 
     weapons: list[Weapon] = []
     for weapon_d in data_d['weapons']:
-        weapon = Weapon.from_dict(weapon_d, curves_d, base_damages_d, tuple(grade_ranges))
+        weapon = Weapon.from_dict(
+            weapon_d, curves_d, base_damages_d, tuple(grade_ranges)
+        )
         weapons.append(weapon)
 
     buffs_d: dict[str, Buff] = {}
@@ -52,4 +69,9 @@ def load_json_data(
         armor_piece = Armor.from_dict(armor_d)
         armor.append(armor_piece)
 
-    return tuple(weapons), curves_d, tuple(runes), tuple(armor)
+    starting_classes: list[StartingClass] = []
+    for sc_d in data_d['starting_classes']:
+        sc = StartingClass.from_dict(sc_d)
+        starting_classes.append(sc)
+
+    return tuple(weapons), curves_d, tuple(runes), tuple(armor), tuple(starting_classes)
