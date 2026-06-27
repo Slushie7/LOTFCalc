@@ -183,7 +183,7 @@ function getTableBodyHtml(
     for (const row of rows) {
         const rowParts: string[] = [];
         row.cells.forEach((cell, idx) => {
-            const cellClass = cell.cls ? ` class=${cell.cls}` : '';
+            const cellClass = cell.cls ? ` class="${cell.cls}"` : '';
             let text = cell.htmlText;
             let pinBtn: string;
             if (idx === 0) {

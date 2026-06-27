@@ -72,10 +72,6 @@ class RunesView extends TableView<RunesState, RunesHeaderKey, RunesSuperheaderKe
         super(state, ctx);
     }
 
-    protected onShow(): void {
-        getElem('view-toggles').hidden = true;
-    }
-
     protected additionalSearchFilter(_text: string, _cst: CalculatedRuneStats): boolean {
         const textLower = _text.toLowerCase();
         return (

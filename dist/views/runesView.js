@@ -55,9 +55,6 @@ class RunesView extends TableView {
     constructor(state, ctx) {
         super(state, ctx);
     }
-    onShow() {
-        getElem('view-toggles').hidden = true;
-    }
     additionalSearchFilter(_text, _cst) {
         const textLower = _text.toLowerCase();
         return (_cst.weaponEffects.some((v) => v.toLowerCase().includes(textLower)) ||

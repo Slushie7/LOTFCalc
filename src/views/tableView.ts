@@ -68,7 +68,7 @@ export abstract class TableView<
 
     show(): void {
         getElem(`view-${this.mode}`).hidden = false;
-        getElem(`${this.mode}-search`).hidden = false;
+        getElem('search-input').hidden = false;
         getElem('download-btn').hidden = false;
 
         // bind event listeners
@@ -81,7 +81,7 @@ export abstract class TableView<
         addElemListener(`${this.mode}-header`, 'click', (e) => this.onHeaderClick(e), { signal });
         addElemListener(`${this.mode}-body`, 'click', (e) => this.onBodyClick(e), { signal });
         addElemListener('view-toggles', 'change', (e) => this.onToggleChange(e), { signal });
-        addElemListener(`${this.mode}-search`, 'input', () => this.renderItems(), { signal });
+        addElemListener('search-input', 'input', () => this.renderItems(), { signal });
         addElemListener('download-btn', 'click', () => this.downloadAsCSV());
 
         this.bindExtra(signal);
@@ -100,7 +100,7 @@ export abstract class TableView<
         this.ac = null;
 
         getElem(`view-${this.mode}`).hidden = true;
-        getElem(`${this.mode}-search`).hidden = true;
+        getElem('search-input').hidden = true;
         getElem('download-btn').hidden = true;
 
         this.onHide();
@@ -240,7 +240,7 @@ export abstract class TableView<
         this.calculatedItems.push(...pinned, ...unpinned);
     }
 
-    /** Filter applied when mode-search input changes */
+    /** Filter applied when search-input changes */
     protected searchFilter(_text: string, _cst: CST): boolean {
         if (
             !_text ||
@@ -312,7 +312,7 @@ export abstract class TableView<
 
     protected renderHeader(): void {
         // temporarily remove the search input element from the DOM
-        const searchInput = getTypedElem(`${this.mode}-search`, HTMLInputElement);
+        const searchInput = getTypedElem('search-input', HTMLInputElement);
         searchInput.remove();
 
         const header = getElem(`${this.mode}-header`);
@@ -327,7 +327,7 @@ export abstract class TableView<
 
     protected renderItems(itemKeyFadeIn: string | null = null): void {
         // filter items by current search input
-        const searchText = getTypedElem(`${this.mode}-search`, HTMLInputElement).value.trim();
+        const searchText = getTypedElem('search-input', HTMLInputElement).value.trim();
         const displayItems = this.calculatedItems.filter((v) => this.searchFilter(searchText, v));
 
         // display the items in the table

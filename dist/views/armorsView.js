@@ -88,12 +88,13 @@ class ArmorsView extends TableView {
         this.armors = new Map(ctx.data.armors.map((armr) => [armr.key, armr]));
     }
     onShow() {
-        getElem('view-toggles').hidden = true;
+        getElem('player-stats').hidden = false;
         getElem('paper-doll').hidden = false;
         getElem('derived-armor').hidden = false;
         this.updatePaperDoll();
     }
     onHide() {
+        getElem('player-stats').hidden = true;
         getElem('paper-doll').hidden = true;
         getElem('derived-armor').hidden = true;
     }

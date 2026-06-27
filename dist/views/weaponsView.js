@@ -130,14 +130,17 @@ class WeaponsView extends TableView {
         super(state, ctx);
     }
     onShow() {
+        getElem('player-stats').hidden = false;
         getElem('view-toggles').hidden = false;
-        // initialize weapon upgrade <select> element value
         getElem('weapon-level-div').hidden = false;
+        // initialize weapon upgrade <select> element value
         getTypedElem('weapon-level', HTMLSelectElement).value = `+${this.state.upgLevel}`;
         getElem('view-toggles').insertAdjacentHTML('afterbegin', getTogglesHtml(SettingToggles));
         this.syncSettingsToggles();
     }
     onHide() {
+        getElem('player-stats').hidden = true;
+        getElem('view-toggles').hidden = true;
         getElem('weapon-level-div').hidden = true;
     }
     bindExtra(signal) {

@@ -79,7 +79,7 @@
         </header>
 
         <!-- ================= PLAYER STATS ================= -->
-        <header class="player-stats">
+        <header id="player-stats" class="player-stats" hidden>
             <div class="player-row">
                 <div class="stats-inputs">
                     <label class="field">
@@ -149,7 +149,7 @@
                             max="99"
                     /></label>
                     <!-- Weapon upgrade level -->
-                    <div id="weapon-level-div">
+                    <div id="weapon-level-div" hidden>
                         <label class="field">
                             <span class="cap">Weapon Level</span>
                             <select id="weapon-level">
@@ -204,12 +204,12 @@
         <!-- ================= MAIN CONTENT ================= -->
         <main class="content">
             <div id="derived-armor" hidden></div>
-            <div id="view-toggles"></div>
-            <section id="view-weapons" class="view">
+            <div id="view-toggles" hidden></div>
+            <section id="view-weapons" class="view" hidden>
                 <div class="table-wrap">
                     <table id="weapons-table" class="calc-table">
                         <thead id="weapons-header">
-                            <input id="weapons-search" class="table-search" type="text" placeholder="Search" hidden />
+                            <input id="search-input" class="table-search" type="text" placeholder="Search" hidden />
                         </thead>
                         <tbody id="weapons-body"></tbody>
                     </table>
@@ -219,9 +219,7 @@
             <section id="view-armors" class="view" hidden>
                 <div class="table-wrap">
                     <table id="armors-table" class="calc-table">
-                        <thead id="armors-header">
-                            <input id="armors-search" class="table-search" type="text" placeholder="Search" />
-                        </thead>
+                        <thead id="armors-header"></thead>
                         <tbody id="armors-body"></tbody>
                     </table>
                 </div>
@@ -230,9 +228,7 @@
             <section id="view-runes" class="view" hidden>
                 <div class="table-wrap">
                     <table id="runes-table" class="calc-table">
-                        <thead id="runes-header">
-                            <input id="runes-search" class="table-search" type="text" placeholder="Search" />
-                        </thead>
+                        <thead id="runes-header"></thead>
                         <tbody id="runes-body"></tbody>
                     </table>
                 </div>

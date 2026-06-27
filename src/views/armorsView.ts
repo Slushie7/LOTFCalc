@@ -116,13 +116,14 @@ class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperhead
     }
 
     protected onShow(): void {
-        getElem('view-toggles').hidden = true;
+        getElem('player-stats').hidden = false;
         getElem('paper-doll').hidden = false;
         getElem('derived-armor').hidden = false;
         this.updatePaperDoll();
     }
 
     protected onHide(): void {
+        getElem('player-stats').hidden = true;
         getElem('paper-doll').hidden = true;
         getElem('derived-armor').hidden = true;
     }

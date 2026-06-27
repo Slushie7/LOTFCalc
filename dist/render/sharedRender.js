@@ -99,7 +99,7 @@ function getTableBodyHtml(rows, firstColUrl, fadeItemWithKey) {
     for (const row of rows) {
         const rowParts = [];
         row.cells.forEach((cell, idx) => {
-            const cellClass = cell.cls ? ` class=${cell.cls}` : '';
+            const cellClass = cell.cls ? ` class="${cell.cls}"` : '';
             let text = cell.htmlText;
             let pinBtn;
             if (idx === 0) {

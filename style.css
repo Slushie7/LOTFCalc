@@ -410,7 +410,7 @@ body.sidebar-hidden #sidebar {
     top: 0;
     z-index: 1;
 }
-.calc-table .table-search {
+#search-input {
     margin: 0;
     padding: 0.1rem 0;
     font-size: 1em;
@@ -420,8 +420,8 @@ body.sidebar-hidden #sidebar {
     text-align: center;
     transition: color var(--pico-transition);
 }
-.calc-table .table-search:hover,
-.calc-table .table-search:focus {
+#search-input:hover,
+#search-input:focus {
     background: color-mix(in srgb, var(--pico-background-color), white 5%);
     color: var(--pico-primary);
 }
@@ -526,6 +526,9 @@ body.sidebar-hidden #sidebar {
 }
 .calc-table .image-last {
     margin-right: 0.3rem;
+}
+#runes-header:first-child th {
+    border-top: none;
 }
 
 /* ============================================================
