@@ -180,7 +180,7 @@ class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperhead
         // update the DOM
         getElem('paper-doll').innerHTML = getPaperDollHtml(this.state.paperDoll, this.armors);
         this.updateDerivedArmor();
-        this.renderItems();
+        this.renderItems(); // to update 'equip'/'unequip' buttons in table
     }
 
     protected updateDerivedArmor(): void {
@@ -197,6 +197,7 @@ class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperhead
             legs,
             this.ctx.data.curves
         );
+        // move the paper doll into the derived-armor table
         const pdEl = getElem('paper-doll');
         pdEl.remove();
         getElem('derived-armor').innerHTML = getDerivedArmorHtml(derivedArmor);
