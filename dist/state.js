@@ -1,12 +1,13 @@
-import { isArmorSlot, isArmorWeightClass, isRuneType, isWeaponClass } from './model.js';
+import { isArmorSlot, isArmorWeightClass, isClassType, isRuneType, isWeaponClass } from './model.js';
 import { clampStat } from './calc/sharedCalc.js';
 import { isWeaponsHeaderKey, isWeaponsSuperheaderKey } from './render/weaponsRender.js';
 import { isArmorsHeaderKey, isArmorsSuperheaderKey, } from './render/armorsRender.js';
 import { isRunesHeaderKey, isRunesSuperheaderKey, } from './render/runesRender.js';
+import { isClassesHeaderKey, isClassesSuperheaderKey, } from './render/classesRender.js';
 // =========================================
 // MODES
 // =========================================
-const MODES = ['weapons', 'armors', 'runes'];
+const MODES = ['weapons', 'armors', 'runes', 'classes'];
 export function isMode(v) {
     return MODES.includes(v);
 }
@@ -44,14 +45,21 @@ function getDefaultState() {
         showColGroups: new Set(['INFO', 'WEAP', 'ARMR']),
         pinnedItems: new Set(),
     };
-    return { shared, weapons, armors, runes };
+    const classes = {
+        selectedTypes: new Set(['Normal', 'Hidden']),
+        sortKey: 'CLASS',
+        ascending: true,
+        showColGroups: new Set(['INFO', 'STATS', 'GEAR']),
+        pinnedItems: new Set(),
+    };
+    return { shared, weapons, armors, runes, classes };
 }
 // =========================================
 // STATE LOAD/SAVE
 // =========================================
 // for localStorage
 const STORAGE_KEY = 'lotfcalc.settings';
-const STORAGE_VER = 4;
+const STORAGE_VER = 5;
 /**
  * Try to load the previous AppState from localStorage
  * @returns
@@ -162,6 +170,16 @@ export function loadAppState() {
             return false;
         return true;
     }
+    function validateClasses(d) {
+        if (!validateTable(d, isClassesHeaderKey, isClassesSuperheaderKey))
+            return false;
+        const p = d;
+        if (!Array.isArray(p.selectedTypes))
+            return false;
+        if (!p.selectedTypes.every((v) => isClassType(v)))
+            return false;
+        return true;
+    }
     function validateAppState(d) {
         if (typeof d !== 'object' || !d)
             return false;
@@ -176,7 +194,13 @@ export function loadAppState() {
             return false;
         if (typeof p.runes !== 'object' || !p.runes)
             return false;
-        return (validateShared(p.shared) && validateWeapons(p.weapons) && validateArmors(p.armors) && validateRunes(p.runes));
+        if (typeof p.classes !== 'object' || !p.classes)
+            return false;
+        return (validateShared(p.shared) &&
+            validateWeapons(p.weapons) &&
+            validateArmors(p.armors) &&
+            validateRunes(p.runes) &&
+            validateClasses(p.classes));
     }
     // try to validate the format of the JSON data
     if (typeof parsed === 'boolean' && !parsed) {
@@ -256,7 +280,18 @@ export function loadAppState() {
         showColGroups: showColGroupsRunes,
         pinnedItems: pinnedRunes,
     };
-    return { shared, weapons, armors, runes };
+    const selectedClassTypes = new Set(state.classes.selectedTypes);
+    const showColGroupsClasses = new Set(state.classes.showColGroups);
+    showColGroupsClasses.add('INFO');
+    const pinnedClasses = new Set(state.classes.pinnedItems);
+    const classes = {
+        selectedTypes: selectedClassTypes,
+        sortKey: state.classes.sortKey,
+        ascending: state.classes.ascending,
+        showColGroups: showColGroupsClasses,
+        pinnedItems: pinnedClasses,
+    };
+    return { shared, weapons, armors, runes, classes };
 }
 /**
  * Save the current AppState to localStorage
@@ -297,12 +332,20 @@ export function saveAppState(state) {
             showColGroups: [...state.runes.showColGroups],
             pinnedItems: [...state.runes.pinnedItems],
         };
+        const classes = {
+            selectedTypes: [...state.classes.selectedTypes],
+            sortKey: state.classes.sortKey,
+            ascending: state.classes.ascending,
+            showColGroups: [...state.classes.showColGroups],
+            pinnedItems: [...state.classes.pinnedItems],
+        };
         data = {
             v: STORAGE_VER,
             shared,
             weapons,
             armors,
             runes,
+            classes,
         };
     }
     else {

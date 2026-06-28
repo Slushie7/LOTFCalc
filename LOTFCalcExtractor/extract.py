@@ -34,6 +34,7 @@ from .classes import (
     RUNE_TYPE_MAP,
     RUNE_SOCKET_TYPE,
     StartingClass,
+    CLASS_TYPE,
 )
 from .load_weapons import load_json_data
 
@@ -88,7 +89,10 @@ class LOTFExtractor:
                 curves, stat_grade_ranges, ranged_ammo, buffs
             )
             armor = self._extract_armor()
-            starting_classes = self._extract_starting_classes()
+
+            weapons_d = {w.key: w for w in weapons}
+            armors_d = {a.key: a for a in armor}
+            starting_classes = self._extract_starting_classes(weapons_d, armors_d)
             self._export_json(
                 curves,
                 stat_grade_ranges,
@@ -623,7 +627,7 @@ class LOTFExtractor:
 
         armor: list[Armor] = []
 
-        # load all of the armor stats data tables
+        # load all of the armor stats data tables into one
         master_stats_d: dict[str, Any] = {}
         for stats_file in (
             'DT_ArmorBootsStats.json',
@@ -647,9 +651,14 @@ class LOTFExtractor:
                     continue
 
                 with open(file, encoding='utf-8') as f:
-                    d = json.load(f)[0]['Properties']
+                    d = json.load(f)[0]
 
-                key = d['StatsRow']['RowName']
+                key = d['Class'].split('/')[-1].split('.')[0]
+                if not key.startswith('ARM_Armor_'):
+                    raise ValueError(f'Incorrect prefix for armor {key}')
+                key = key[len('ARM_Armor_') :]
+                d = d['Properties']
+                stats_key = d['StatsRow']['RowName']
                 name = d['ItemName']['SourceString'].strip()
 
                 # get the path to the armor's thumbnail and clean the path up
@@ -662,11 +671,13 @@ class LOTFExtractor:
                 _info_str = d['itemCategory']['TagName']
                 m = ARMOR_INFO_PAT.match(_info_str)
                 if m is None:
-                    raise ValueError(f'Failed to parse armor info string for {key}')
+                    raise ValueError(
+                        f'Failed to parse armor info string for {stats_key}'
+                    )
                 slot, weight_class = m.groups()
                 armor_set = ''
 
-                stats_d = master_stats_d[key]
+                stats_d = master_stats_d[stats_key]
 
                 stats = ArmorStats(
                     stats_d['Weight'],
@@ -694,7 +705,9 @@ class LOTFExtractor:
         print(f'Extracted data for {len(armor)} armor pieces')
         return tuple(armor)
 
-    def _extract_starting_classes(self) -> tuple[StartingClass, ...]:
+    def _extract_starting_classes(
+        self, weapons_d: dict[str, Weapon], armors_d: dict[str, Armor]
+    ) -> tuple[StartingClass, ...]:
         print('Extracting starting classes...')
 
         starting_classes: list[StartingClass] = []
@@ -714,6 +727,9 @@ class LOTFExtractor:
 
             name = cls_d['Name']['SourceString']
             class_key = cls_d['StatsRow']['RowName']
+            if not class_key.startswith('Class_'):
+                raise ValueError(f'Invalid prefix for class_key {class_key}')
+            icon = class_key[len('Class_') :]
             cls_stats_d = stats_d[class_key]
             stats = PlayerStats(
                 cls_stats_d['Strength'],
@@ -723,7 +739,55 @@ class LOTFExtractor:
                 cls_stats_d['Faith'],
                 cls_stats_d['Chaos'],
             )
-            starting_classes.append(StartingClass(name, stats))
+            unlock_type = cls_d['UnlockInfo']['UnlockType'].split('::')[1]
+            hidden = unlock_type != 'None'
+            class_type: CLASS_TYPE = 'Hidden' if hidden else 'Normal'
+
+            equip_cfg = cls_d['EquipmentConfig']
+
+            def get_weapon(slot_key: str) -> Weapon | None:
+                slot_d = equip_cfg[slot_key]
+                if slot_d is None:
+                    return None
+                obj_path = slot_d['ObjectPath']
+                weap_key = obj_path.split('/')[-1]
+                if not weap_key.endswith('.0'):
+                    raise ValueError(f'Incorrect weapon key suffix for {weap_key}')
+                weap_key = weap_key[:-2]
+                if weap_key == 'WPN_PLA_TH_HandBase':
+                    return None
+                return weapons_d[weap_key]
+
+            def get_armor(slot_key: str) -> Armor:
+                obj_path = equip_cfg[slot_key]['AssetPathName']
+                armor_key = obj_path.split('/')[-1].split('.')[0]
+                if not armor_key.startswith('ARM_Armor_'):
+                    raise ValueError(f'Incorrect armor key prefix for {armor_key}')
+                armor_key = armor_key[len('ARM_Armor_') :]
+                return armors_d[armor_key]
+
+            weapons: list[Weapon] = []
+            for key in (
+                'PrimaryWeaponDataClass',
+                'SecondaryWeaponDataClass',
+                'RangedWeaponDataClass',
+            ):
+                weapon = get_weapon(key)
+                if weapon:
+                    weapons.append(weapon)
+
+            armor: list[Armor] = []
+            for key in (
+                'HeadDataClass',
+                'BodyDataClass',
+                'ArmsDataClass',
+                'LegsDataClass',
+            ):
+                armor.append(get_armor(key))
+
+            starting_classes.append(
+                StartingClass(class_key, name, icon, class_type, stats, weapons, armor)
+            )
 
         print(f'Extracted {len(starting_classes)} starting classes')
         return tuple(starting_classes)

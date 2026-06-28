@@ -8,7 +8,6 @@ import {
     type RunesSuperheaderKey,
 } from '../render/runesRender.js';
 import type { Row, SidebarSection, ToggleGroup } from '../render/sharedRender.js';
-import { getElem } from '../sharedDOM.js';
 import type { RunesState } from '../state.js';
 import { TableView, type SortFunction } from './tableView.js';
 import type { ViewContext } from './view.js';

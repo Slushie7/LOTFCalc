@@ -48,10 +48,12 @@ def load_json_data(
         grade_ranges.append(grade_range)
 
     weapons: list[Weapon] = []
+    weapons_d: dict[str, Weapon] = {}
     for weapon_d in data_d['weapons']:
         weapon = Weapon.from_dict(
             weapon_d, curves_d, base_damages_d, tuple(grade_ranges)
         )
+        weapons_d[weapon.key] = weapon
         weapons.append(weapon)
 
     buffs_d: dict[str, Buff] = {}
@@ -64,14 +66,22 @@ def load_json_data(
         rune = Rune.from_dict(rune_d, buffs_d)
         runes.append(rune)
 
-    armor: list[Armor] = []
+    armors: list[Armor] = []
+    armors_d: dict[str, Armor] = {}
     for armor_d in data_d['armor']:
         armor_piece = Armor.from_dict(armor_d)
-        armor.append(armor_piece)
+        armors_d[armor_piece.key] = armor_piece
+        armors.append(armor_piece)
 
     starting_classes: list[StartingClass] = []
     for sc_d in data_d['starting_classes']:
-        sc = StartingClass.from_dict(sc_d)
+        sc = StartingClass.from_dict(sc_d, weapons_d, armors_d)
         starting_classes.append(sc)
 
-    return tuple(weapons), curves_d, tuple(runes), tuple(armor), tuple(starting_classes)
+    return (
+        tuple(weapons),
+        curves_d,
+        tuple(runes),
+        tuple(armors),
+        tuple(starting_classes),
+    )

@@ -6,6 +6,7 @@ import { View } from './views/view.js';
 import { createWeaponsView } from './views/weaponsView.js';
 import { createArmorsView } from './views/armorsView.js';
 import { createRunesView } from './views/runesView.js';
+import { createClassesView } from './views/classesView.js';
 const SHARED_TOGGLE_KEYS = ['saveSettings'];
 function isSharedToggleKey(k) {
     return SHARED_TOGGLE_KEYS.includes(k);
@@ -24,6 +25,7 @@ const views = {
     weapons: createWeaponsView(state.weapons, ctx),
     armors: createArmorsView(state.armors, ctx),
     runes: createRunesView(state.runes, ctx),
+    classes: createClassesView(state.classes, ctx),
 };
 // ===================================
 // SHARED EVENT HANDLERS

@@ -13,6 +13,12 @@ export function isRuneSocketType(v: unknown): v is RuneSocketType {
     return RUNE_SOCKET_TYPES.includes(v as RuneSocketType);
 }
 
+export const CLASS_TYPES = ['Normal', 'Hidden'] as const;
+export type ClassType = (typeof CLASS_TYPES)[number];
+export function isClassType(v: unknown): v is ClassType {
+    return CLASS_TYPES.includes(v as ClassType);
+}
+
 export const WEAPON_CLASSES = [
     'Axes',
     'Bows',
@@ -121,11 +127,13 @@ export const PLAYER_STATS_KEYS: (keyof PlayerStats)[] = [
     'inferno',
 ] as const;
 
-export type StartingClass = {
-    name: string;
+export interface StartingClass extends Item {
+    type: ClassType;
     stats: PlayerStats;
+    weapons: Weapon[];
+    armor: Armor[];
     level: number;
-};
+}
 
 export interface WeaponRuneSockets {
     readonly runeSockets: RuneSocketType[];
@@ -357,4 +365,9 @@ export interface CalculatedPlayerDefenses {
 export interface CalculatedRuneStats extends TableData<Rune> {
     weaponEffects: string[];
     armorEffects: string[];
+}
+
+export interface CalculatedClassStats extends TableData<StartingClass> {
+    weapons: string[];
+    armor: string[];
 }

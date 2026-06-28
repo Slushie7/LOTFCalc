@@ -7,6 +7,7 @@ STAT = Literal['S', 'A', 'R', 'I']
 RUNE_SOCKET_TYPE = Literal['S', 'A', 'R', 'I', '*']
 RUNE_TYPE = Literal['Strength', 'Agility', 'Radiance', 'Inferno']
 SCALING_TYPE = Literal['Additive', 'Multiplicative']
+CLASS_TYPE = Literal['Normal', 'Hidden']
 
 WEAP_CLASS_MAP: dict[str, str] = {
     # maps the game's internal weapon classes to user-displayed classes
@@ -235,16 +236,17 @@ class PlayerStats:
 
 
 @dataclass(frozen=True)
-class StartingClass:
+class Item:
+    key: str
     name: str
-    stats: PlayerStats
+    icon: str
 
     def to_dict(self) -> dict[str, Any]:
-        return {'name': self.name, 'stats': self.stats.to_dict()}
+        return {'key': self.key, 'name': self.name, 'icon': self.icon}
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> Self:
-        return cls(d['name'], PlayerStats.from_dict(d['stats']))
+    def from_dict(cls, d: dict[str, Any], *args, **kwargs) -> Self:
+        return cls(d['key'], d['name'], d['icon'])
 
 
 @dataclass(frozen=True)
@@ -281,20 +283,6 @@ class Buff:
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Self:
         return cls(d['key'], tuple(Effect.from_dict(ed) for ed in d['effects']))
-
-
-@dataclass(frozen=True)
-class Item:
-    key: str
-    name: str
-    icon: str
-
-    def to_dict(self) -> dict[str, Any]:
-        return {'key': self.key, 'name': self.name, 'icon': self.icon}
-
-    @classmethod
-    def from_dict(cls, d: dict[str, Any], *args, **kwargs) -> Self:
-        return cls(d['key'], d['name'], d['icon'])
 
 
 @dataclass(frozen=True)
@@ -622,4 +610,36 @@ class Weapon(Item):
             WeaponOffense.from_dict(d['offense'], curves_d, base_damages_d),
             WeaponDefense.from_dict(d['defense'], curves_d),
             grade_ranges,
+        )
+
+
+@dataclass(frozen=True)
+class StartingClass(Item):
+    type: CLASS_TYPE
+    stats: PlayerStats
+    weapons: list[Weapon]
+    armor: list[Armor]
+
+    def to_dict(self) -> dict[str, Any]:
+        return super().to_dict() | {
+            'type': self.type,
+            'stats': self.stats.to_dict(),
+            'weapons': [w.key for w in self.weapons],
+            'armor': [a.key for a in self.armor],
+        }
+
+    @classmethod
+    def from_dict(
+        cls, d: dict[str, Any], weapons_d: dict[str, Weapon], armors_d: dict[str, Armor]
+    ) -> Self:
+        weapons = [weapons_d[key] for key in d['weapons']]
+        armor = [armors_d[key] for key in d['armor']]
+        return cls(
+            d['key'],
+            d['name'],
+            d['icon'],
+            d['type'],
+            PlayerStats.from_dict(d['stats']),
+            weapons,
+            armor,
         )

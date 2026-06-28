@@ -1,5 +1,5 @@
-import type { ArmorSlot, ArmorWeightClass, PaperDoll, PlayerStats, RuneType, WeaponClass } from './model.js';
-import { isArmorSlot, isArmorWeightClass, isRuneType, isWeaponClass } from './model.js';
+import type { ArmorSlot, ArmorWeightClass, ClassType, PaperDoll, PlayerStats, RuneType, WeaponClass } from './model.js';
+import { isArmorSlot, isArmorWeightClass, isClassType, isRuneType, isWeaponClass } from './model.js';
 import { clampStat } from './calc/sharedCalc.js';
 import type { WeaponsHeaderKey, WeaponsSuperheaderKey } from './render/weaponsRender.js';
 import { isWeaponsHeaderKey, isWeaponsSuperheaderKey } from './render/weaponsRender.js';
@@ -15,6 +15,12 @@ import {
     type RunesHeaderKey,
     type RunesSuperheaderKey,
 } from './render/runesRender.js';
+import {
+    isClassesHeaderKey,
+    isClassesSuperheaderKey,
+    type ClassesHeaderKey,
+    type ClassesSuperheaderKey,
+} from './render/classesRender.js';
 
 export type BooleanKeys<T> = {
     [K in keyof T]-?: T[K] extends boolean ? K : never;
@@ -25,7 +31,7 @@ export type BooleanKeys<T> = {
 // MODES
 // =========================================
 
-const MODES = ['weapons', 'armors', 'runes'] as const;
+const MODES = ['weapons', 'armors', 'runes', 'classes'] as const;
 export type Mode = (typeof MODES)[number];
 export function isMode(v: unknown): v is Mode {
     return MODES.includes(v as Mode);
@@ -67,11 +73,16 @@ export interface RunesState extends TableState<RunesHeaderKey, RunesSuperheaderK
     selectedTypes: Set<RuneType>;
 }
 
+export interface ClassesState extends TableState<ClassesHeaderKey, ClassesSuperheaderKey> {
+    selectedTypes: Set<ClassType>;
+}
+
 export interface AppState {
     shared: SharedState;
     weapons: WeaponsState;
     armors: ArmorsState;
     runes: RunesState;
+    classes: ClassesState;
 }
 
 function getDefaultState(): AppState {
@@ -112,7 +123,15 @@ function getDefaultState(): AppState {
         pinnedItems: new Set(),
     };
 
-    return { shared, weapons, armors, runes };
+    const classes: ClassesState = {
+        selectedTypes: new Set(['Normal', 'Hidden']),
+        sortKey: 'CLASS',
+        ascending: true,
+        showColGroups: new Set(['INFO', 'STATS', 'GEAR']),
+        pinnedItems: new Set(),
+    };
+
+    return { shared, weapons, armors, runes, classes };
 }
 
 // =========================================
@@ -121,7 +140,7 @@ function getDefaultState(): AppState {
 
 // for localStorage
 const STORAGE_KEY = 'lotfcalc.settings';
-const STORAGE_VER = 4;
+const STORAGE_VER = 5;
 
 interface ExportedSharedState {
     readonly playerStats: PlayerStats;
@@ -155,12 +174,17 @@ interface ExportedRunesState extends ExportedTableState<RunesHeaderKey, RunesSup
     readonly selectedTypes: readonly RuneType[];
 }
 
+interface ExportedClassesState extends ExportedTableState<ClassesHeaderKey, ClassesSuperheaderKey> {
+    readonly selectedTypes: readonly ClassType[];
+}
+
 interface ExportedAppState {
     readonly v: number;
     readonly shared: ExportedSharedState;
     readonly weapons: ExportedWeaponsState;
     readonly armors: ExportedArmorsState;
     readonly runes: ExportedRunesState;
+    readonly classes: ExportedClassesState;
 }
 
 /**
@@ -257,6 +281,14 @@ export function loadAppState(): AppState {
         if (!p.selectedTypes.every((v) => isRuneType(v))) return false;
         return true;
     }
+    function validateClasses(d: object): d is ExportedClassesState {
+        if (!validateTable<ClassesHeaderKey, ClassesSuperheaderKey>(d, isClassesHeaderKey, isClassesSuperheaderKey))
+            return false;
+        const p = d as ExportedClassesState;
+        if (!Array.isArray(p.selectedTypes)) return false;
+        if (!p.selectedTypes.every((v) => isClassType(v))) return false;
+        return true;
+    }
     function validateAppState(d: unknown): d is ExportedAppState {
         if (typeof d !== 'object' || !d) return false;
         const p = d as ExportedAppState;
@@ -265,8 +297,13 @@ export function loadAppState(): AppState {
         if (typeof p.weapons !== 'object' || !p.weapons) return false;
         if (typeof p.armors !== 'object' || !p.armors) return false;
         if (typeof p.runes !== 'object' || !p.runes) return false;
+        if (typeof p.classes !== 'object' || !p.classes) return false;
         return (
-            validateShared(p.shared) && validateWeapons(p.weapons) && validateArmors(p.armors) && validateRunes(p.runes)
+            validateShared(p.shared) &&
+            validateWeapons(p.weapons) &&
+            validateArmors(p.armors) &&
+            validateRunes(p.runes) &&
+            validateClasses(p.classes)
         );
     }
 
@@ -358,7 +395,20 @@ export function loadAppState(): AppState {
         pinnedItems: pinnedRunes,
     };
 
-    return { shared, weapons, armors, runes };
+    const selectedClassTypes = new Set(state.classes.selectedTypes);
+    const showColGroupsClasses = new Set(state.classes.showColGroups);
+    showColGroupsClasses.add('INFO');
+    const pinnedClasses = new Set(state.classes.pinnedItems);
+
+    const classes: ClassesState = {
+        selectedTypes: selectedClassTypes,
+        sortKey: state.classes.sortKey,
+        ascending: state.classes.ascending,
+        showColGroups: showColGroupsClasses,
+        pinnedItems: pinnedClasses,
+    };
+
+    return { shared, weapons, armors, runes, classes };
 }
 
 /**
@@ -400,12 +450,20 @@ export function saveAppState(state: AppState): void {
             showColGroups: [...state.runes.showColGroups],
             pinnedItems: [...state.runes.pinnedItems],
         };
+        const classes: ExportedClassesState = {
+            selectedTypes: [...state.classes.selectedTypes],
+            sortKey: state.classes.sortKey,
+            ascending: state.classes.ascending,
+            showColGroups: [...state.classes.showColGroups],
+            pinnedItems: [...state.classes.pinnedItems],
+        };
         data = {
             v: STORAGE_VER,
             shared,
             weapons,
             armors,
             runes,
+            classes,
         };
     } else {
         // user doesn't want to store their settings

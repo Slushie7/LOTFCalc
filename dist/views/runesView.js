@@ -1,7 +1,6 @@
 import { calculateRuneStats } from '../calc/runesCalc.js';
 import { isRuneType, RUNE_TYPES } from '../model.js';
 import { getRuneRow, isRunesHeaderKey, RUNES_HEADER_GROUPS, } from '../render/runesRender.js';
-import { getElem } from '../sharedDOM.js';
 import { TableView } from './tableView.js';
 const GroupToggles = {
     htmlClass: 'runes-group-toggle',

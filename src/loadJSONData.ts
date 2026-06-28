@@ -30,6 +30,7 @@ import {
     type ArmorStats,
     type RuneType,
     type StartingClass,
+    type ClassType,
 } from './model.js';
 
 // interfaces matching JSON structures
@@ -70,9 +71,16 @@ interface RawPlayerStats {
     radiance: number;
     inferno: number;
 }
-interface RawStartingClass {
+interface RawItem {
+    key: string;
     name: string;
+    icon: string;
+}
+interface RawStartingClass extends RawItem {
+    type: ClassType;
     stats: RawPlayerStats;
+    weapons: string[];
+    armor: string[];
 }
 interface RawWeaponRuneSockets {
     rune_sockets: readonly RuneSocketType[];
@@ -112,11 +120,6 @@ interface RawWeaponDefense {
     def_fire: RawLeveledValue;
     def_wither: RawLeveledValue;
     stability: RawLeveledValue;
-}
-interface RawItem {
-    key: string;
-    name: string;
-    icon: string;
 }
 interface RawWeapon extends RawItem {
     class_name: string;
@@ -247,14 +250,31 @@ function toPlayerStats(r: RawPlayerStats): PlayerStats {
     };
 }
 
-function toStartingClass(r: RawStartingClass): StartingClass {
+function toStartingClass(r: RawStartingClass, weapons: Map<string, Weapon>, armors: Map<string, Armor>): StartingClass {
     const stats = toPlayerStats(r.stats);
     const level =
         stats.strength + stats.agility + stats.endurance + stats.vitality + stats.radiance + stats.inferno - 53;
 
+    const clsWeapons: Weapon[] = r.weapons.map((w) => {
+        const weap = weapons.get(w);
+        if (weap === undefined) throw new Error();
+        return weap;
+    });
+
+    const clsArmor: Armor[] = r.armor.map((w) => {
+        const armor = armors.get(w);
+        if (armor === undefined) throw new Error();
+        return armor;
+    });
+
     return {
+        key: r.key,
         name: r.name,
+        icon: r.icon,
+        type: r.type,
         stats,
+        weapons: clsWeapons,
+        armor: clsArmor,
         level,
     };
 }
@@ -445,7 +465,9 @@ export async function loadAppData(): Promise<{
     const weapons = data.weapons.map((w) => toWeapon(w, curves, baseDamages));
     const runes = data.runes.map((r) => toRune(r, buffs));
     const armors = data.armor.map((arm) => toArmor(arm));
-    const startingClasses = data.starting_classes.map((sc) => toStartingClass(sc));
+    const weaponsMap: Map<string, Weapon> = new Map(weapons.map((w) => [w.key, w]));
+    const armorsMap: Map<string, Armor> = new Map(armors.map((a) => [a.key, a]));
+    const startingClasses = data.starting_classes.map((sc) => toStartingClass(sc, weaponsMap, armorsMap));
 
     return { weapons, gradeRanges, curves, runes, armors, startingClasses };
 }
