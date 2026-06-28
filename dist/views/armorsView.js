@@ -159,7 +159,10 @@ class ArmorsView extends TableView {
         const arms = pd.Arms ? this.armors.get(pd.Arms) || null : null;
         const legs = pd.Legs ? this.armors.get(pd.Legs) || null : null;
         const derivedArmor = calculatePlayerDefenses(this.ctx.shared.playerStats, head, torso, arms, legs, this.ctx.data.curves);
+        const pdEl = getElem('paper-doll');
+        pdEl.remove();
         getElem('derived-armor').innerHTML = getDerivedArmorHtml(derivedArmor);
+        getElem('paper-doll-cell').appendChild(pdEl);
     }
     collectItems() {
         const showArmors = this.ctx.data.armors.filter((arm) => (this.state.selectedSlots.has(arm.slot) && this.state.selectedWeights.has(arm.weightClass)) ||

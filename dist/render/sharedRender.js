@@ -14,14 +14,22 @@ export const HEADER_STATUS_IMAGES = {
 };
 /** Replaces all special characters '&', '<', '>', '"', and "'" with HTML-safe sequences */
 const NEEDS_ESCAPE = /[&<>"']/;
+const RE_ESCAPE = /[&<>"']/g;
 export function escapeHtml(s) {
     if (NEEDS_ESCAPE.test(s))
-        return s
-            .replaceAll('&', '&amp;')
-            .replaceAll('<', '&lt;')
-            .replaceAll('>', '&gt;')
-            .replaceAll('"', '&quot;')
-            .replaceAll("'", '&#x27;');
+        return s.replaceAll(RE_ESCAPE, (r) => {
+            if (r === '&')
+                return '&amp;';
+            if (r === '<')
+                return '&lt;';
+            if (r === '>')
+                return '&gt;';
+            if (r === '"')
+                return '&quot;';
+            if (r === "'")
+                return '&#x27;';
+            return r;
+        });
     return s;
 }
 // ===============================
@@ -53,7 +61,7 @@ export function getSidebarHtml(sections) {
         }
         sectionsHtml.push(parts.join(''));
     }
-    return sectionsHtml.join('<br>');
+    return sectionsHtml.join('');
 }
 /**
  * Given the currently visible HeaderGroups, generates the HTML to display the grouping header and

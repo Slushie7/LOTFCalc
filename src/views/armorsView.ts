@@ -197,7 +197,10 @@ class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperhead
             legs,
             this.ctx.data.curves
         );
+        const pdEl = getElem('paper-doll');
+        pdEl.remove();
         getElem('derived-armor').innerHTML = getDerivedArmorHtml(derivedArmor);
+        getElem('paper-doll-cell').appendChild(pdEl);
     }
 
     protected collectItems(): readonly CalculatedArmorStats[] {

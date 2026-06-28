@@ -93,19 +93,36 @@ function getSlotInnerHtml(slot, equipped) {
     return (`<img class="slot-icon" src="${src}" alt="${name}" title="${name}">` +
         `<button class="slot-unequip" type="button" data-slot="${slot}" title="Unequip ${name}">&times;</button>`);
 }
+export function getPaperDollHtml(equipped, armors) {
+    const parts = [];
+    for (const slot of ARMOR_SLOTS) {
+        let armor = null;
+        if (equipped[slot] !== null) {
+            const _armor = armors.get(equipped[slot]);
+            if (_armor) {
+                armor = _armor;
+            }
+            else
+                console.log(`Failed to retrieve armor with key "${equipped[slot]}"`);
+        }
+        parts.push(`<div class="armor-slot${armor ? ' equipped' : ''}" data-slot="${slot}">${getSlotInnerHtml(slot, armor)}</div>`);
+    }
+    return parts.join('');
+}
 export function getDerivedArmorHtml(stats) {
     function pushRow(h1, d1, h2, d2) {
-        rows.push(`<tr><th class="col-starter">${h1}</th><td>${d1}</td><th>${h2}</th><td>${d2}</td></tr>`);
+        rows.push(`<tr><th class="col-starter">${h1}</th><td class="col-divider">${d1}</td><th class="col-starter">${h2}</th><td class="col-divider">${d2}</td></tr>`);
     }
     function mitigation(defVal) {
         const dr = 1 - getDefenseScalar(defVal);
         return `${Math.round(defVal)} (${(dr * 100).toFixed(1)}% DR)`;
     }
     const rows = [];
-    rows.push('<table class="defense-table"><thead>' +
-        '<tr><th colspan="2">Defensive Stats</th><th colspan="2">Resistances</th></tr>' +
+    rows.push('<table id="defense-table"><colgroup><col><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>' +
+        '<thead><tr><th class="col-starter col-divider">Selected Armors</th><th class="col-starter col-divider" colspan="2">Player Defenses</th><th class="col-starter col-divider" colspan="2">Player Resistances</th></tr>' +
         '</thead>');
-    pushRow('Physical', mitigation(stats.physical), 'Smite', stats.smite.toFixed());
+    rows.push(`<tr><th id="paper-doll-cell" rowspan="6" class="col-starter col-divider"></th>` +
+        `<th class="col-starter">Physical</th><td class="col-divider">${mitigation(stats.physical)}</td><th class="col-starter">Smite</th><td class="col-divider">${stats.smite.toFixed()}</td></tr>`);
     pushRow('Fire', mitigation(stats.fire), 'Bleed', stats.bleed.toFixed());
     pushRow('Holy', mitigation(stats.holy), 'Burn', stats.burn.toFixed());
     pushRow('Wither', mitigation(stats.wither), 'Ignite', stats.ignite.toFixed());
@@ -123,22 +140,6 @@ export function getDerivedArmorHtml(stats) {
     const weight = `${stats.weight.toFixed(1)} / ${stats.playerStats.weight.toFixed(1)} (${weightClass})`;
     pushRow('Weight Load', weight, 'Poison', stats.poison.toFixed());
     return `<tbody>${rows.join('')}</tbody></table>`;
-}
-export function getPaperDollHtml(equipped, armors) {
-    const parts = [];
-    for (const slot of ARMOR_SLOTS) {
-        let armor = null;
-        if (equipped[slot] !== null) {
-            const _armor = armors.get(equipped[slot]);
-            if (_armor) {
-                armor = _armor;
-            }
-            else
-                console.log(`Failed to retrieve armor with key "${equipped[slot]}"`);
-        }
-        parts.push(`<div class="armor-slot${armor ? ' equipped' : ''}" data-slot="${slot}">${getSlotInnerHtml(slot, armor)}</div>`);
-    }
-    return parts.join('');
 }
 export function getArmorRow(cas, showColGroups) {
     const cells = [];

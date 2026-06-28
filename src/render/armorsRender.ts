@@ -110,41 +110,6 @@ function getSlotInnerHtml(slot: ArmorSlot, equipped: Armor | null): string {
     );
 }
 
-export function getDerivedArmorHtml(stats: CalculatedPlayerDefenses): string {
-    function pushRow(h1: string, d1: string, h2: string, d2: string): void {
-        rows.push(`<tr><th class="col-starter">${h1}</th><td>${d1}</td><th>${h2}</th><td>${d2}</td></tr>`);
-    }
-    function mitigation(defVal: number): string {
-        const dr = 1 - getDefenseScalar(defVal);
-        return `${Math.round(defVal)} (${(dr * 100).toFixed(1)}% DR)`;
-    }
-
-    const rows: string[] = [];
-
-    rows.push(
-        '<table class="defense-table"><thead>' +
-            '<tr><th colspan="2">Defensive Stats</th><th colspan="2">Resistances</th></tr>' +
-            '</thead>'
-    );
-
-    pushRow('Physical', mitigation(stats.physical), 'Smite', stats.smite.toFixed());
-    pushRow('Fire', mitigation(stats.fire), 'Bleed', stats.bleed.toFixed());
-    pushRow('Holy', mitigation(stats.holy), 'Burn', stats.burn.toFixed());
-    pushRow('Wither', mitigation(stats.wither), 'Ignite', stats.ignite.toFixed());
-    pushRow('Poise', stats.poise.toFixed(1), 'Frostbite', stats.frost.toFixed());
-
-    const weightPer = stats.weight / stats.playerStats.weight + 1e-9;
-    let weightClass: string;
-    if (weightPer <= 0.4) weightClass = 'Light';
-    else if (weightPer <= 0.75) weightClass = 'Medium';
-    else if (weightPer <= 1.0) weightClass = 'Heavy';
-    else weightClass = 'Overburdened';
-    const weight = `${stats.weight.toFixed(1)} / ${stats.playerStats.weight.toFixed(1)} (${weightClass})`;
-    pushRow('Weight Load', weight, 'Poison', stats.poison.toFixed());
-
-    return `<tbody>${rows.join('')}</tbody></table>`;
-}
-
 export function getPaperDollHtml(equipped: PaperDoll, armors: Map<string, Armor>): string {
     const parts: string[] = [];
     for (const slot of ARMOR_SLOTS) {
@@ -160,6 +125,46 @@ export function getPaperDollHtml(equipped: PaperDoll, armors: Map<string, Armor>
         );
     }
     return parts.join('');
+}
+
+export function getDerivedArmorHtml(stats: CalculatedPlayerDefenses): string {
+    function pushRow(h1: string, d1: string, h2: string, d2: string): void {
+        rows.push(
+            `<tr><th class="col-starter">${h1}</th><td class="col-divider">${d1}</td><th class="col-starter">${h2}</th><td class="col-divider">${d2}</td></tr>`
+        );
+    }
+    function mitigation(defVal: number): string {
+        const dr = 1 - getDefenseScalar(defVal);
+        return `${Math.round(defVal)} (${(dr * 100).toFixed(1)}% DR)`;
+    }
+
+    const rows: string[] = [];
+
+    rows.push(
+        '<table id="defense-table"><colgroup><col><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>' +
+            '<thead><tr><th class="col-starter col-divider">Selected Armors</th><th class="col-starter col-divider" colspan="2">Player Defenses</th><th class="col-starter col-divider" colspan="2">Player Resistances</th></tr>' +
+            '</thead>'
+    );
+
+    rows.push(
+        `<tr><th id="paper-doll-cell" rowspan="6" class="col-starter col-divider"></th>` +
+            `<th class="col-starter">Physical</th><td class="col-divider">${mitigation(stats.physical)}</td><th class="col-starter">Smite</th><td class="col-divider">${stats.smite.toFixed()}</td></tr>`
+    );
+    pushRow('Fire', mitigation(stats.fire), 'Bleed', stats.bleed.toFixed());
+    pushRow('Holy', mitigation(stats.holy), 'Burn', stats.burn.toFixed());
+    pushRow('Wither', mitigation(stats.wither), 'Ignite', stats.ignite.toFixed());
+    pushRow('Poise', stats.poise.toFixed(1), 'Frostbite', stats.frost.toFixed());
+
+    const weightPer = stats.weight / stats.playerStats.weight + 1e-9;
+    let weightClass: string;
+    if (weightPer <= 0.4) weightClass = 'Light';
+    else if (weightPer <= 0.75) weightClass = 'Medium';
+    else if (weightPer <= 1.0) weightClass = 'Heavy';
+    else weightClass = 'Overburdened';
+    const weight = `${stats.weight.toFixed(1)} / ${stats.playerStats.weight.toFixed(1)} (${weightClass})`;
+    pushRow('Weight Load', weight, 'Poison', stats.poison.toFixed());
+
+    return `<tbody>${rows.join('')}</tbody></table>`;
 }
 
 export function getArmorRow(cas: CalculatedArmorStats, showColGroups: Set<ArmorsSuperheaderKey>): Row {
