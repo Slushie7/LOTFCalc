@@ -30,4 +30,5 @@ export abstract class View {
     abstract show(): void;
     abstract hide(): void;
     abstract refresh(): void;
+    onPlayerStatsChanged(): void {}
 }

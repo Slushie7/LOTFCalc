@@ -1,29 +1,16 @@
 import { type CalculatedPlayerStats, type Curve, type LeveledValue, type PlayerStats } from '../model.js';
 
-/**
- * Truncates a float, accounting for floating-point representation issues (e.g. 2.999999999997 -> 3; 4.72 -> 4)
- * @param x
- * @returns
- */
+/** Truncates a float, accounting for floating-point representation issues (e.g. 2.999999999997 -> 3; 4.72 -> 4) */
 export function epsilonFloor(x: number): number {
     return Math.floor(x + 1e-9);
 }
 
-/**
- * Floor and clamp the given number to the range [0, 99]
- * @param val
- * @returns
- */
+/** Floor and clamp the given number to the range [0, 99] */
 export function clampStat(val: number): number {
     return Math.max(0, Math.min(Math.floor(val), 99));
 }
 
-/**
- * Interpolates the y-value for the given x-coord in the Curve
- * @param curve
- * @param x
- * @returns
- */
+/** Interpolates the y-value for the given x-coord in the Curve */
 export function interpolate(curve: Curve, x: number): number {
     const pts = curve.points;
 
@@ -67,12 +54,7 @@ export function interpolate(curve: Curve, x: number): number {
     return y1 + t * (y2 - y1);
 }
 
-/**
- * Calculates the value of a LeveledValue for a given input by applying its Curve value to its base value
- * @param lv
- * @param level
- * @returns
- */
+/** Calculates the value of a LeveledValue for a given input by applying its Curve value to its base value */
 export function getValue(lv: LeveledValue, level: number): number {
     if (lv.curve === null) return lv.base;
 
@@ -100,7 +82,7 @@ export function calculatePlayerStats(playerStats: PlayerStats, curves: Map<strin
     const rad = playerStats.radiance;
     const inf = playerStats.inferno;
 
-    const level = str + agi + end + vit + rad + inf - 53;
+    const level = getPlayerLevel(playerStats);
 
     const hpCurve = getCurve('MaxHealth_Vitality');
     const hp = interpolate(hpCurve, vit);

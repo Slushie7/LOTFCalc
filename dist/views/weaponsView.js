@@ -1,7 +1,7 @@
 import { WEAPONS_HEADER_GROUPS, isWeaponsHeaderKey, getWeaponRow } from '../render/weaponsRender.js';
 import { isWeaponClass, WEAPON_CLASSES } from '../model.js';
 import { calculateWeaponStats } from '../calc/weaponsCalc.js';
-import { addElemListener, getTypedElem, getElem, convertHtmlDataAttrib, addClassListeners } from '../sharedDOM.js';
+import { addElemListener, getTypedElem, getElem, convertHtmlDataAttrib } from '../sharedDOM.js';
 import { getTogglesHtml, isToggleKey } from '../render/sharedRender.js';
 import { TableView } from './tableView.js';
 const SettingToggles = {
@@ -116,6 +116,7 @@ class WeaponsView extends TableView {
     sortFns = weaponsSortFns;
     ascendingByDefault = new Set(['WEAP', 'CLS']);
     isHeaderKey = isWeaponsHeaderKey;
+    visibleElements = ['player-stats', 'view-toggles', 'weapon-level-div'];
     processSidebarSelection = this.applySmartToggles;
     sidebarSections = [
         {
@@ -130,23 +131,14 @@ class WeaponsView extends TableView {
         super(state, ctx);
     }
     onShow() {
-        getElem('player-stats').hidden = false;
-        getElem('view-toggles').hidden = false;
-        getElem('weapon-level-div').hidden = false;
         // initialize weapon upgrade <select> element value
         getTypedElem('weapon-level', HTMLSelectElement).value = `+${this.state.upgLevel}`;
         getElem('view-toggles').insertAdjacentHTML('afterbegin', getTogglesHtml(SettingToggles));
         this.syncSettingsToggles();
     }
-    onHide() {
-        getElem('player-stats').hidden = true;
-        getElem('view-toggles').hidden = true;
-        getElem('weapon-level-div').hidden = true;
-    }
     bindExtra(signal) {
         // weapon upgrade level dropdown
         addElemListener('weapon-level', 'change', (e) => this.onSetUpgLevel(e), { signal });
-        addClassListeners('stat-input', HTMLInputElement, 'input', () => this.fetchAndRender(), { signal });
     }
     /**
      * Automatically selects and deselects displayed column groups based on the selected weapon classes
@@ -191,6 +183,9 @@ class WeaponsView extends TableView {
     // =========================================
     // EVENT HANDLERS
     // =========================================
+    onPlayerStatsChanged() {
+        this.fetchAndRender();
+    }
     onSetUpgLevel(e) {
         if (!(e.target instanceof HTMLSelectElement))
             return;
@@ -235,7 +230,7 @@ class WeaponsView extends TableView {
         let calcStats = showWeaps.map((weap) => calculateWeaponStats(weap, this.state.upgLevel, this.ctx.shared.playerStats, this.state.showTwoHanding, this.ctx.data.gradeRanges, this.state.pinnedItems));
         if (!this.state.showUnwieldable)
             // remove any unwieldable weapons
-            calcStats = calcStats.filter((ws) => ws.wieldability.wieldable);
+            calcStats = calcStats.filter((ws) => ws.wieldability.wieldable || ws.pinned);
         return calcStats;
     }
     buildRow(cws) {

@@ -1,17 +1,9 @@
 import type { Armor, CalculatedArmorStats, CalculatedPlayerDefenses, Curve, PlayerStats } from '../model.js';
 import { calculatePlayerStats } from './sharedCalc.js';
 
-/**
- * Returns the scalar applied to incoming damage to determine damage inflicted
- * @param defense_value
- * @returns
- */
+/** Returns the scalar applied to incoming damage to determine damage inflicted */
 export function getDefenseScalar(defense_value: number): number {
     return 600 / (600 + defense_value);
-}
-
-export function getMitigation(defense_value: number): number {
-    return 1 - getDefenseScalar(defense_value);
 }
 
 export function calculateArmorStats(
@@ -59,7 +51,7 @@ export function calculatePlayerDefenses(
     const ignite = pieces.reduce((acc, cur) => acc + cur.stats.resIgnite, ps.resIgnite);
     const frost = pieces.reduce((acc, cur) => acc + cur.stats.resFrost, ps.resFrost);
 
-    const kickMult = pieces.reduce((acc, cur) => acc + cur.stats.kickMult, 0);
+    const kickMult = pieces.reduce((acc, cur) => acc * cur.stats.kickMult, 1.0);
 
     return {
         playerStats: ps,

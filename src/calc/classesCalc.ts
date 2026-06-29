@@ -15,10 +15,7 @@ export function calculateClassStats(
             // StartingClass's stat must be raised up to the desired stat level
             finalStats[sk] = playerStats[sk];
     }
-    const playerLevel = getPlayerLevel(playerStats);
-    const finalLevel = getPlayerLevel(finalStats);
-    const compatScore = playerLevel / finalLevel;
-    const levelsNeeded = finalLevel - getPlayerLevel(cls.stats);
+    const levelsNeeded = getPlayerLevel(finalStats) - getPlayerLevel(cls.stats);
 
     return {
         item: cls,
@@ -26,7 +23,6 @@ export function calculateClassStats(
         weaponNames,
         armorNames,
         finalStats,
-        compatScore,
         levelsNeeded,
     };
 }

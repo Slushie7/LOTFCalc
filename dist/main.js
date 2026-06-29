@@ -73,6 +73,7 @@ function onSetPlayerStat(e) {
     const field = el.dataset.stat;
     ctx.shared.playerStats = { ...ctx.shared.playerStats, [field]: value };
     updateDerivedStats();
+    views[state.shared.activeMode].onPlayerStatsChanged();
     ctx.save();
 }
 // ===================================

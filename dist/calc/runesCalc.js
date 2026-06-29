@@ -5,9 +5,13 @@ export function calculateRuneStats(rune, pinnedRunes) {
         let op = effect.scalingType === 'Additive' ? '+' : '*';
         let value = effect.value;
         if (op === '+') {
-            if (value < 0)
+            if (value < 0) {
                 // hide '+' for negative numbers (no '+-')
                 op = '';
+                if (value > -1.0)
+                    // convert these numbers to percentage decreases
+                    value = `${(value * 100).toFixed(1)}%`;
+            }
             else if (value < 1.0)
                 // convert these numbers to percentage increases
                 value = `${(value * 100).toFixed(1)}%`;

@@ -12,15 +12,6 @@ export function compareStringArrays(a, b) {
     }
     return a.length - b.length;
 }
-export function compareNumArrays(a, b) {
-    const len = Math.min(a.length, b.length);
-    for (let i = 0; i < len; i++) {
-        const c = a[i] - b[i];
-        if (c !== 0)
-            return c;
-    }
-    return a.length - b.length;
-}
 export class TableView extends View {
     state;
     ac = null;
@@ -29,6 +20,7 @@ export class TableView extends View {
         super(ctx);
         this.state = state;
     }
+    visibleElements = [];
     // optional things
     onHide() { }
     sidebarSections = [];
@@ -65,12 +57,14 @@ export class TableView extends View {
         addElemListener(`${this.mode}-body`, 'click', (e) => this.onBodyClick(e), { signal });
         addElemListener('view-toggles', 'change', (e) => this.onToggleChange(e), { signal });
         addElemListener('search-input', 'input', () => this.renderItems(), { signal });
-        addElemListener('download-btn', 'click', () => this.downloadAsCSV());
+        addElemListener('download-btn', 'click', () => this.downloadAsCSV(), { signal });
         this.bindExtra(signal);
         // render the initial table
         this.renderSidebar();
         this.renderGroupToggles();
         this.syncGroupToggles();
+        for (const id of this.visibleElements)
+            getElem(id).hidden = false;
         this.onShow();
         this.fetchAndRender();
         this.renderHeader();
@@ -81,6 +75,8 @@ export class TableView extends View {
         getElem(`view-${this.mode}`).hidden = true;
         getElem('search-input').hidden = true;
         getElem('download-btn').hidden = true;
+        for (const id of this.visibleElements)
+            getElem(id).hidden = true;
         this.onHide();
     }
     refresh() {
@@ -244,7 +240,7 @@ export class TableView extends View {
         }
         const visibleGroups = this.headerGroups.filter((group) => this.state.showColGroups.has(group.superKey));
         const csvHeaders = [];
-        visibleGroups.forEach((g) => g.columns.forEach((c) => csvHeaders.push(c.text)));
+        visibleGroups.forEach((g) => g.columns.forEach((c) => csvHeaders.push(c.rawText)));
         const tableRows = this.calculatedItems.map((cst) => this.buildRow(cst));
         const csvRows = [csvHeaders];
         for (const r of tableRows) {

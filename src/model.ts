@@ -371,6 +371,5 @@ export interface CalculatedClassStats extends TableData<StartingClass> {
     weaponNames: string[];
     armorNames: string[];
     finalStats: PlayerStats;
-    compatScore: number;
     levelsNeeded: number;
 }

@@ -33,13 +33,14 @@ export interface CellButton {
 
 export interface HeaderColumn<HK extends string> {
     readonly key: HK;
-    readonly text: string;
+    readonly rawText: string;
     readonly hover: string;
+    readonly htmlText?: string;
 }
 
 export interface HeaderGroup<HK extends string, SHK extends string> {
     readonly superKey: SHK;
-    readonly superText: string;
+    readonly superHtmlText: string;
     readonly columns: readonly HeaderColumn<HK>[];
 }
 
@@ -73,20 +74,6 @@ export function escapeHtml(s: string): string {
             if (r === '>') return '&gt;';
             if (r === '"') return '&quot;';
             if (r === "'") return '&#x27;';
-            return r;
-        });
-    return s;
-}
-
-const RE_UNESCAPE = /&(?:amp|lt|gt|quot|#x27);/g;
-export function unescapeHtml(s: string): string {
-    if (s.includes('&'))
-        return s.replaceAll(RE_UNESCAPE, (r) => {
-            if (r === '&amp;') return '&';
-            if (r === '&lt;') return '<';
-            if (r === '&gt;') return '>';
-            if (r === '&quot;') return '"';
-            if (r === '&#x27;') return "'";
             return r;
         });
     return s;
@@ -163,16 +150,16 @@ export function getHeaderHtml<HK extends string, SHK extends string>(
     groups.forEach((group, superIdx) => {
         const superCls = superIdx === 0 ? `col-first-super col-divider` : `col-starter col-divider`;
         superParts.push(
-            `<th class="${superCls}" colspan="${group.columns.length}">${escapeHtml(group.superText)}</th>`
+            `<th class="${superCls}" colspan="${group.columns.length}">${escapeHtml(group.superHtmlText)}</th>`
         );
         group.columns.forEach((col, idx) => {
-            let text = col.text;
+            let htmlText = col.htmlText || escapeHtml(col.rawText);
             if (col.key === sortKey)
                 // add up/down arrow to identify sorting column
-                text += ascending ? ' \u25b2' : ' \u25bc';
+                htmlText += ascending ? ' \u25b2' : ' \u25bc';
             // calculate HTML classes for the header cell
             const classes = ['sortable'];
-            if (idx === 0) classes.push(superIdx === 0 ? 'col-first-header' : 'col-starter'); // col-first-header instead of col-starter so first header cell gets some extra padding
+            if (idx === 0) classes.push(superIdx === 0 ? 'col-first-header' : 'col-starter');
             if (idx === group.columns.length - 1) classes.push('col-divider');
             const cls = classes.join(' ');
             // determine content - image or text
@@ -180,8 +167,8 @@ export function getHeaderHtml<HK extends string, SHK extends string>(
             const imagePath = headerImagePaths[col.key];
             if (imagePath)
                 // image exists for this HeaderKey
-                content = `<img class="header-image" src="${escapeHtml(imagePath)}" alt="${escapeHtml(text)}" width="24" height="24">`;
-            else content = `${escapeHtml(text)}`;
+                content = `<img class="header-image" src="${escapeHtml(imagePath)}" alt="${htmlText}" width="24" height="24">`;
+            else content = htmlText;
             headerParts.push(
                 `<th class="${cls}" data-col-key="${col.key}" title="${escapeHtml(col.hover)}">${content}</th>`
             );

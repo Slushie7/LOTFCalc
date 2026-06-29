@@ -24,12 +24,7 @@ import type {
 } from '../model.js';
 import { epsilonFloor, interpolate, getValue } from './sharedCalc.js';
 
-/**
- * Returns an Array of the rune sockets available for the weapon's given upgrade level
- * @param weaponRuneSockets
- * @param upg_level
- * @returns
- */
+/** Returns an Array of the rune sockets available for the weapon's given upgrade level */
 function getRunes(weaponRuneSockets: WeaponRuneSockets, upg_level: number): RuneSocketType[] {
     if (weaponRuneSockets.numByLevel === null) return [];
     const numRunes = epsilonFloor(interpolate(weaponRuneSockets.numByLevel, upg_level));
@@ -38,12 +33,7 @@ function getRunes(weaponRuneSockets: WeaponRuneSockets, upg_level: number): Rune
     return weaponRuneSockets.runeSockets.slice(0, numRunes);
 }
 
-/**
- * Translates a scaling value into a letter grade (like 'C+', 'A-', etc)
- * @param gradeRanges
- * @param scalingVal
- * @returns
- */
+/** Translates a scaling value into a letter grade (like 'C+', 'A-', etc) */
 function getGrade(gradeRanges: readonly StatScalarGradeRange[], scalingVal: number): string {
     if (!gradeRanges.length) throw new Error('Failed to get stat scaling grade: gradeRanges is empty');
     if (scalingVal < 0) throw new Error('Failed to get stat scaling grade: scalingValue must be >= 0');
@@ -62,15 +52,12 @@ function getGrade(gradeRanges: readonly StatScalarGradeRange[], scalingVal: numb
         }
     }
 
-    // unmatched non-negative value is above the top range → clamp
+    // unmatched non-negative value is below the min range or above the top range → clamp
+    if (scalingVal < gradeRanges[0]!.minIncl) return gradeRanges[0]!.grade;
     return gradeRanges[gradeRanges.length - 1]!.grade;
 }
 
-/**
- * Calculate the base damage of the weapon (P,H,F,W,SP), given its upgrade level
- * @param baseDamage
- * @param upgLevel
- */
+/** Calculate the base damage of the weapon (P,H,F,W,SP), given its upgrade level */
 function calculateBaseDamage(baseDamage: BaseDamage, upgLevel: number): AttackRating {
     const physical = getValue(baseDamage.dmgPhysical, upgLevel);
     const holy = getValue(baseDamage.dmgHoly, upgLevel);
@@ -81,13 +68,7 @@ function calculateBaseDamage(baseDamage: BaseDamage, upgLevel: number): AttackRa
     return { physical, holy, fire, wither, spellPower };
 }
 
-/**
- * Calculate contributions to the main damage types from stats
- * @param statScaledDmg
- * @param upgLevel
- * @param statLevel
- * @returns
- */
+/** Calculate contributions to the main damage types from stats */
 function calculateContribution(
     statScaledDmg: StatScaledDamage,
     upgLevel: number,

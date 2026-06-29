@@ -48,45 +48,45 @@ export function isArmorsSuperheaderKey(v: unknown): v is ArmorsSuperheaderKey {
 export const ARMORS_HEADER_GROUPS: readonly HeaderGroup<ArmorsHeaderKey, ArmorsSuperheaderKey>[] = [
     {
         superKey: 'INFO',
-        superText: '',
+        superHtmlText: '',
         columns: [
-            { key: 'ARMR', text: 'Armor', hover: 'Armor Name' },
-            { key: 'EQUIP', text: 'Equip', hover: 'Equip Armor In Paper Doll' },
-            { key: 'SLOT', text: 'Slot', hover: 'Equipment Slot' },
-            { key: 'WGT', text: 'Weight', hover: 'Weight' },
-            { key: 'POIS', text: 'Poise', hover: 'Poise' },
+            { key: 'ARMR', rawText: 'Armor', hover: 'Armor Name' },
+            { key: 'EQUIP', rawText: 'Equip', hover: 'Equip Armor In Paper Doll' },
+            { key: 'SLOT', rawText: 'Slot', hover: 'Equipment Slot' },
+            { key: 'WGT', rawText: 'Weight', hover: 'Weight' },
+            { key: 'POIS', rawText: 'Poise', hover: 'Poise' },
         ],
     },
     {
         superKey: 'DEF',
-        superText: 'Defenses',
+        superHtmlText: 'Defenses',
         columns: [
-            { key: 'DP', text: 'Phys', hover: 'Physical Defense' },
-            { key: 'DF', text: 'Fire', hover: 'Fire Defense' },
-            { key: 'DH', text: 'Holy', hover: 'Holy Defense' },
-            { key: 'DW', text: 'Wither', hover: 'Wither Defense' },
-            { key: 'DT', text: 'Total', hover: 'Total Defense' },
+            { key: 'DP', rawText: 'Phys', hover: 'Physical Defense' },
+            { key: 'DF', rawText: 'Fire', hover: 'Fire Defense' },
+            { key: 'DH', rawText: 'Holy', hover: 'Holy Defense' },
+            { key: 'DW', rawText: 'Wither', hover: 'Wither Defense' },
+            { key: 'DT', rawText: 'Total', hover: 'Total Defense' },
         ],
     },
     {
         superKey: 'STATUS',
-        superText: 'Resistances',
+        superHtmlText: 'Resistances',
         columns: [
-            { key: 'SMI', text: 'Smi', hover: 'Smite Resistance' },
-            { key: 'BLE', text: 'Ble', hover: 'Bleed Resistance' },
-            { key: 'BRN', text: 'Brn', hover: 'Burn Resistance' },
-            { key: 'IGN', text: 'Ign', hover: 'Ignite Resistance' },
-            { key: 'FRO', text: 'Fro', hover: 'Frostbite Resistance' },
-            { key: 'PSN', text: 'Psn', hover: 'Poison Resistance' },
-            { key: 'RT', text: 'Total', hover: 'Total Resistances' },
+            { key: 'SMI', rawText: 'Smi', hover: 'Smite Resistance' },
+            { key: 'BLE', rawText: 'Ble', hover: 'Bleed Resistance' },
+            { key: 'BRN', rawText: 'Brn', hover: 'Burn Resistance' },
+            { key: 'IGN', rawText: 'Ign', hover: 'Ignite Resistance' },
+            { key: 'FRO', rawText: 'Fro', hover: 'Frostbite Resistance' },
+            { key: 'PSN', rawText: 'Psn', hover: 'Poison Resistance' },
+            { key: 'RT', rawText: 'Total', hover: 'Total Resistances' },
         ],
     },
     {
         superKey: 'MISC',
-        superText: 'Misc Stats',
+        superHtmlText: 'Misc Stats',
         columns: [
-            { key: 'WGTC', text: 'Class', hover: '' },
-            { key: 'KDMG', text: 'Kick Dmg', hover: '' },
+            { key: 'WGTC', rawText: 'Class', hover: '' },
+            { key: 'KDMG', rawText: 'Kick Dmg', hover: '' },
         ],
     },
 ] as const;
@@ -102,7 +102,7 @@ function getSlotInnerHtml(slot: ArmorSlot, equipped: Armor | null): string {
     if (equipped === null) {
         return `<img class="slot-icon" src="${SLOT_PLACEHOLDER_PATHS[slot]}" alt="${slot} slot (empty)" title="Equip an armor in the table below">`;
     }
-    const src = `./img/Armors/${escapeHtml(equipped.icon)}.webp`;
+    const src = `./img/Armors/${equipped.icon}.webp`;
     const name = escapeHtml(equipped.name);
     return (
         `<img class="slot-icon" src="${src}" alt="${name}" title="${name}">` +

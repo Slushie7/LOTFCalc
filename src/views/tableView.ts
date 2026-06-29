@@ -28,15 +28,6 @@ export function compareStringArrays(a: readonly string[], b: readonly string[]):
     return a.length - b.length;
 }
 
-export function compareNumArrays(a: readonly number[], b: readonly number[]): number {
-    const len = Math.min(a.length, b.length);
-    for (let i = 0; i < len; i++) {
-        const c = a[i]! - b[i]!;
-        if (c !== 0) return c;
-    }
-    return a.length - b.length;
-}
-
 export abstract class TableView<
     S extends TableState<HK, SHK>, // state type (e.g. WeaponsState)
     HK extends string, // header key type (e.g. WeaponsHeaderKey)
@@ -59,6 +50,7 @@ export abstract class TableView<
     protected abstract readonly sortFns: Record<HK, SortFunction<CST>>;
     protected abstract readonly ascendingByDefault: ReadonlySet<HK>;
     protected abstract isHeaderKey(v: unknown): v is HK;
+    protected readonly visibleElements: string[] = [];
     protected abstract collectItems(): readonly CST[];
     protected abstract buildRow(item: CST): Row;
 
@@ -102,7 +94,7 @@ export abstract class TableView<
         addElemListener(`${this.mode}-body`, 'click', (e) => this.onBodyClick(e), { signal });
         addElemListener('view-toggles', 'change', (e) => this.onToggleChange(e), { signal });
         addElemListener('search-input', 'input', () => this.renderItems(), { signal });
-        addElemListener('download-btn', 'click', () => this.downloadAsCSV());
+        addElemListener('download-btn', 'click', () => this.downloadAsCSV(), { signal });
 
         this.bindExtra(signal);
 
@@ -110,6 +102,7 @@ export abstract class TableView<
         this.renderSidebar();
         this.renderGroupToggles();
         this.syncGroupToggles();
+        for (const id of this.visibleElements) getElem(id).hidden = false;
         this.onShow();
         this.fetchAndRender();
         this.renderHeader();
@@ -123,6 +116,7 @@ export abstract class TableView<
         getElem('search-input').hidden = true;
         getElem('download-btn').hidden = true;
 
+        for (const id of this.visibleElements) getElem(id).hidden = true;
         this.onHide();
     }
 
@@ -293,7 +287,7 @@ export abstract class TableView<
 
         const visibleGroups = this.headerGroups.filter((group) => this.state.showColGroups.has(group.superKey));
         const csvHeaders: string[] = [];
-        visibleGroups.forEach((g) => g.columns.forEach((c) => csvHeaders.push(c.text)));
+        visibleGroups.forEach((g) => g.columns.forEach((c) => csvHeaders.push(c.rawText)));
 
         const tableRows = this.calculatedItems.map((cst) => this.buildRow(cst));
         const csvRows: string[][] = [csvHeaders];

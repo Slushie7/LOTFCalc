@@ -18,12 +18,8 @@ export function addClassListeners(classNames, elemT, type, listener, options) {
             el.addEventListener(type, listener, options);
     }
 }
-/**
- * Converts an HTML tag's data attribute name to JS's camelCase representation. The 'data-' prefix is optional.
- * e.g. convertHtmlDataAttrib('data-some-attr-key') -> 'someAttrKey'
- * @param dataAttrib
- * @returns
- */
+/** Converts an HTML tag's data attribute name to JS's camelCase representation. The 'data-' prefix is optional.
+ * e.g. convertHtmlDataAttrib('data-some-attr-key') -> 'someAttrKey' */
 export function convertHtmlDataAttrib(dataAttrib) {
     if (dataAttrib.startsWith('data-'))
         dataAttrib = dataAttrib.slice(5);

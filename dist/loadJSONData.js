@@ -64,13 +64,13 @@ function toStartingClass(r, weapons, armors) {
     const clsWeapons = r.weapons.map((w) => {
         const weap = weapons.get(w);
         if (weap === undefined)
-            throw new Error();
+            throw new Error(`Failed to retrieve weapon "${w}" for StartingClass ${r.key}`);
         return weap;
     });
-    const clsArmor = r.armor.map((w) => {
-        const armor = armors.get(w);
+    const clsArmor = r.armor.map((a) => {
+        const armor = armors.get(a);
         if (armor === undefined)
-            throw new Error();
+            throw new Error(`Failed to retrieve armor "${a}" for StartingClass ${r.key}`);
         return armor;
     });
     return {
@@ -87,7 +87,7 @@ function toStartingClass(r, weapons, armors) {
 function toWeaponRunes(r, curves) {
     const runeSockets = r.rune_sockets;
     if (!r.rune_sockets.every((rs) => isRuneSocketType(rs)))
-        throw new Error(`Invalid rune socket type in ${r}`);
+        throw new Error(`Invalid rune socket type in ${r.rune_sockets}`);
     return {
         runeSockets,
         numByLevel: getCurveOrNull(r.curve_key, curves),

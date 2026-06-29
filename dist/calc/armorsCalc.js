@@ -1,14 +1,7 @@
 import { calculatePlayerStats } from './sharedCalc.js';
-/**
- * Returns the scalar applied to incoming damage to determine damage inflicted
- * @param defense_value
- * @returns
- */
+/** Returns the scalar applied to incoming damage to determine damage inflicted */
 export function getDefenseScalar(defense_value) {
     return 600 / (600 + defense_value);
-}
-export function getMitigation(defense_value) {
-    return 1 - getDefenseScalar(defense_value);
 }
 export function calculateArmorStats(armor, pinnedArmors, equippedArmors) {
     const stats = armor.stats;
@@ -37,7 +30,7 @@ export function calculatePlayerDefenses(playerStats, head, torso, arms, legs, cu
     const smite = pieces.reduce((acc, cur) => acc + cur.stats.resSmite, ps.resSmite);
     const ignite = pieces.reduce((acc, cur) => acc + cur.stats.resIgnite, ps.resIgnite);
     const frost = pieces.reduce((acc, cur) => acc + cur.stats.resFrost, ps.resFrost);
-    const kickMult = pieces.reduce((acc, cur) => acc + cur.stats.kickMult, 0);
+    const kickMult = pieces.reduce((acc, cur) => acc * cur.stats.kickMult, 1.0);
     return {
         playerStats: ps,
         weight,

@@ -54,100 +54,100 @@ export function isWeaponsSuperheaderKey(v) {
 export const WEAPONS_HEADER_GROUPS = [
     {
         superKey: 'INFO',
-        superText: '',
+        superHtmlText: '',
         columns: [
-            { key: 'WEAP', text: 'Weapon', hover: 'Weapon Name' },
-            { key: 'CLS', text: 'Class', hover: 'Class Name' },
+            { key: 'WEAP', rawText: 'Weapon', hover: 'Weapon Name' },
+            { key: 'CLS', rawText: 'Class', hover: 'Class Name' },
         ],
     },
     {
         superKey: 'AR',
-        superText: 'Attack Rating',
+        superHtmlText: 'Attack Rating',
         columns: [
-            { key: 'ARP', text: 'Phys', hover: 'Physical Attack Rating' },
-            { key: 'ARF', text: 'Fire', hover: 'Fire Attack Rating' },
-            { key: 'ARH', text: 'Holy', hover: 'Holy Attack Rating' },
-            { key: 'ARW', text: 'Wither', hover: 'Wither Attack Rating' },
-            { key: 'TOT', text: 'Total', hover: 'Total Attack Rating' },
+            { key: 'ARP', rawText: 'Phys', hover: 'Physical Attack Rating' },
+            { key: 'ARF', rawText: 'Fire', hover: 'Fire Attack Rating' },
+            { key: 'ARH', rawText: 'Holy', hover: 'Holy Attack Rating' },
+            { key: 'ARW', rawText: 'Wither', hover: 'Wither Attack Rating' },
+            { key: 'TOT', rawText: 'Total', hover: 'Total Attack Rating' },
         ],
     },
     {
         superKey: 'MAGIC',
-        superText: 'Magic',
+        superHtmlText: 'Magic',
         columns: [
-            { key: 'SP', text: 'SpellP', hover: 'Spell Power' },
-            { key: 'SLOTS', text: 'Slots', hover: 'Catalyst Spell Slots' },
+            { key: 'SP', rawText: 'SpellP', hover: 'Spell Power' },
+            { key: 'SLOTS', rawText: 'Slots', hover: 'Catalyst Spell Slots' },
         ],
     },
     {
         superKey: 'STATUS',
-        superText: 'Status Effects',
+        superHtmlText: 'Status Effects',
         columns: [
-            { key: 'SMI', text: 'Smi', hover: 'Smite Status Buildup' },
-            { key: 'BLE', text: 'Ble', hover: 'Bleed Status Buildup' },
-            { key: 'BRN', text: 'Brn', hover: 'Burn Status Buildup' },
-            { key: 'IGN', text: 'Ign', hover: 'Ignite Status Buildup' },
-            { key: 'FRO', text: 'Fro', hover: 'Frostbite Status Buildup' },
-            { key: 'PSN', text: 'Psn', hover: 'Poison Status Buildup' },
+            { key: 'SMI', rawText: 'Smi', hover: 'Smite Status Buildup' },
+            { key: 'BLE', rawText: 'Ble', hover: 'Bleed Status Buildup' },
+            { key: 'BRN', rawText: 'Brn', hover: 'Burn Status Buildup' },
+            { key: 'IGN', rawText: 'Ign', hover: 'Ignite Status Buildup' },
+            { key: 'FRO', rawText: 'Fro', hover: 'Frostbite Status Buildup' },
+            { key: 'PSN', rawText: 'Psn', hover: 'Poison Status Buildup' },
         ],
     },
     {
         superKey: 'MISC',
-        superText: 'Misc Stats',
+        superHtmlText: 'Misc Stats',
         columns: [
-            { key: 'WGT', text: 'Wgt', hover: 'Weight' },
+            { key: 'WGT', rawText: 'Wgt', hover: 'Weight' },
             {
                 key: 'PD',
-                text: 'PoiseD',
+                rawText: 'PoiseD',
                 hover: 'Poise Damage (Enemy Attack Interruption)',
             },
             {
                 key: 'STAG',
-                text: 'PstrD',
+                rawText: 'PstrD',
                 hover: 'Posture Damage (For Grevious Strikes/Critical Hits)',
             },
-            { key: 'STAD', text: 'StamD', hover: 'Stamina Damage Multiplier' },
-            { key: 'PVP', text: 'PVP', hover: 'Multiplier For PVP' },
+            { key: 'STAD', rawText: 'StamD', hover: 'Stamina Damage Multiplier' },
+            { key: 'PVP', rawText: 'PVP', hover: 'Multiplier For PVP' },
         ],
     },
     {
         superKey: 'RUNES',
-        superText: 'Rune',
-        columns: [{ key: 'RUN', text: 'Sockets', hover: 'Available Rune Sockets' }],
+        superHtmlText: 'Rune',
+        columns: [{ key: 'RUN', rawText: 'Sockets', hover: 'Available Rune Sockets' }],
     },
     {
         superKey: 'DEF',
-        superText: 'Defenses',
+        superHtmlText: 'Defenses',
         columns: [
-            { key: 'DP', text: 'Phys', hover: 'Physical Defense' },
-            { key: 'DF', text: 'Fire', hover: 'Fire Defense' },
-            { key: 'DH', text: 'Holy', hover: 'Holy Defense' },
-            { key: 'DW', text: 'Wither', hover: 'Wither Defense' },
+            { key: 'DP', rawText: 'Phys', hover: 'Physical Defense' },
+            { key: 'DF', rawText: 'Fire', hover: 'Fire Defense' },
+            { key: 'DH', rawText: 'Holy', hover: 'Holy Defense' },
+            { key: 'DW', rawText: 'Wither', hover: 'Wither Defense' },
             {
                 key: 'DS',
-                text: 'Stab',
+                rawText: 'Stab',
                 hover: 'Stability Rating (Stamina To Block)',
             },
         ],
     },
     {
         superKey: 'SCALING',
-        superText: 'Attribute Scaling',
+        superHtmlText: 'Attribute Scaling',
         columns: [
-            { key: 'SS', text: 'Str', hover: 'Strength Scaling' },
-            { key: 'SA', text: 'Agi', hover: 'Agility Scaling' },
-            { key: 'SR', text: 'Rad', hover: 'Radiance Scaling' },
-            { key: 'SI', text: 'Inf', hover: 'Inferno Scaling' },
+            { key: 'SS', rawText: 'Str', hover: 'Strength Scaling' },
+            { key: 'SA', rawText: 'Agi', hover: 'Agility Scaling' },
+            { key: 'SR', rawText: 'Rad', hover: 'Radiance Scaling' },
+            { key: 'SI', rawText: 'Inf', hover: 'Inferno Scaling' },
         ],
     },
     {
         superKey: 'REQS',
-        superText: 'Wield Reqs',
+        superHtmlText: 'Wield Reqs',
         columns: [
-            { key: 'RS', text: 'Str', hover: 'Required Strength' },
-            { key: 'RA', text: 'Agi', hover: 'Required Agility' },
-            { key: 'RR', text: 'Rad', hover: 'Required Radiance' },
-            { key: 'RI', text: 'Inf', hover: 'Required Inferno' },
+            { key: 'RS', rawText: 'Str', hover: 'Required Strength' },
+            { key: 'RA', rawText: 'Agi', hover: 'Required Agility' },
+            { key: 'RR', rawText: 'Rad', hover: 'Required Radiance' },
+            { key: 'RI', rawText: 'Inf', hover: 'Required Inferno' },
         ],
     },
 ];
@@ -160,8 +160,7 @@ function formatDmg(dmg, showSplit) {
 }
 export function getWeaponRow(cws, showColGroups, showSplit, showRawScaling) {
     const cells = [];
-    const wieldable = cws.wieldability.wieldable;
-    const wieldCls = wieldable ? '' : 'unwieldable';
+    const wieldCls = cws.wieldability.wieldable ? '' : 'unwieldable';
     // INFO fields: 'WEAP', 'CLS'
     if (showColGroups.has('INFO')) {
         pushCell(cells, `${cws.item.name} +${cws.upgLevel}`, `col-first ${wieldCls}`, [
@@ -240,6 +239,6 @@ export function getWeaponRow(cws, showColGroups, showSplit, showRawScaling) {
         pushCell(cells, formatIntOpt(reqs.radiance), wield.radiance ? '' : wieldCls);
         pushCell(cells, formatIntOpt(reqs.inferno), wield.inferno ? 'col-divider' : `${wieldCls} col-divider`);
     }
-    return { itemName: cws.item.name, itemKey: cws.item.key, wieldable, pinned: cws.pinned, cells };
+    return { itemName: cws.item.name, itemKey: cws.item.key, pinned: cws.pinned, cells };
 }
 //# sourceMappingURL=weaponsRender.js.map

@@ -22,7 +22,7 @@ import {
 import { calculateArmorStats, calculatePlayerDefenses } from '../calc/armorsCalc.js';
 import { type Row, type SidebarSection, type ToggleGroup } from '../render/sharedRender.js';
 import { TableView, type SortFunction } from './tableView.js';
-import { addClassListeners, addElemListener, getElem } from '../sharedDOM.js';
+import { addElemListener, getElem } from '../sharedDOM.js';
 
 const GroupToggles: ToggleGroup<ArmorsSuperheaderKey> = {
     htmlClass: 'armors-group-toggle',
@@ -92,6 +92,7 @@ class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperhead
     protected readonly sortFns = armorsSortFns;
     protected readonly ascendingByDefault: ReadonlySet<ArmorsHeaderKey> = new Set(['ARMR', 'SLOT', 'WGT']);
     protected isHeaderKey = isArmorsHeaderKey;
+    protected readonly visibleElements = ['player-stats', 'paper-doll', 'derived-armor'];
 
     protected readonly sidebarSections: [SidebarSection<ArmorSlot>, SidebarSection<ArmorWeightClass>] = [
         {
@@ -116,23 +117,16 @@ class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperhead
     }
 
     protected onShow(): void {
-        getElem('player-stats').hidden = false;
-        getElem('paper-doll').hidden = false;
-        getElem('derived-armor').hidden = false;
         this.updatePaperDoll();
     }
 
-    protected onHide(): void {
-        getElem('player-stats').hidden = true;
-        getElem('paper-doll').hidden = true;
-        getElem('derived-armor').hidden = true;
-    }
-
     protected bindExtra(signal: AbortSignal): void {
-        // changes to player's stats should update derived armor display
-        addClassListeners('stat-input', HTMLInputElement, 'input', () => this.updateDerivedArmor(), { signal });
         // paper doll 'X' buttons for unequipping armors
         addElemListener('paper-doll', 'click', (e) => this.onPaperDollClick(e), { signal });
+    }
+
+    override onPlayerStatsChanged(): void {
+        this.updateDerivedArmor();
     }
 
     protected onPaperDollClick(e: Event): void {
@@ -175,7 +169,7 @@ class ArmorsView extends TableView<ArmorsState, ArmorsHeaderKey, ArmorsSuperhead
     protected updatePaperDoll(): void {
         // update the 'equipped' attribute for all items in the table's CalculatedArmorStats cache
         const equipped = new Set(Object.values(this.state.paperDoll));
-        this.calculatedItems.map((v) => (v.equipped = equipped.has(v.item.key)));
+        for (const cas of this.calculatedItems) cas.equipped = equipped.has(cas.item.key);
 
         // update the DOM
         getElem('paper-doll').innerHTML = getPaperDollHtml(this.state.paperDoll, this.armors);

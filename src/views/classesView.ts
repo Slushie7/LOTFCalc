@@ -9,9 +9,9 @@ import {
     type ClassesSuperheaderKey,
 } from '../render/classesRender.js';
 import type { Row, SidebarSection, ToggleGroup } from '../render/sharedRender.js';
-import { addClassListeners, addElemListener, getElem } from '../sharedDOM.js';
+import { addElemListener } from '../sharedDOM.js';
 import type { ClassesState } from '../state.js';
-import { compareNumArrays, compareStringArrays, TableView, type SortFunction } from './tableView.js';
+import { compareStringArrays, TableView, type SortFunction } from './tableView.js';
 import type { ViewContext } from './view.js';
 
 const GroupToggles: ToggleGroup<ClassesSuperheaderKey> = {
@@ -23,18 +23,6 @@ const GroupToggles: ToggleGroup<ClassesSuperheaderKey> = {
         GEAR: { text: 'Starting Gear', hover: 'Show starting gear' },
     },
 };
-
-function compareCompatScores(a: CalculatedClassStats, b: CalculatedClassStats): number {
-    if (a.compatScore !== b.compatScore) return a.compatScore - b.compatScore;
-
-    // because the 'score' column is a descending column (higher is better),
-    // the remaining comparisons must be reversed (lower is better for them)
-    if (a.levelsNeeded !== b.levelsNeeded) return b.levelsNeeded - a.levelsNeeded;
-    const lvlA = getPlayerLevel(a.finalStats);
-    const lvlB = getPlayerLevel(b.finalStats);
-    if (lvlA !== lvlB) return lvlB - lvlA;
-    return 0;
-}
 
 const classesSortFns: Record<ClassesHeaderKey, SortFunction<CalculatedClassStats>> = {
     // INFO
@@ -49,7 +37,6 @@ const classesSortFns: Record<ClassesHeaderKey, SortFunction<CalculatedClassStats
     INF: (a, b) => a.item.stats.inferno - b.item.stats.inferno,
     LVL: (a, b) => a.item.level - b.item.level,
     // CMPT
-    SCORE: (a, b) => compareCompatScores(a, b),
     NLVL: (a, b) => a.levelsNeeded - b.levelsNeeded,
     FLVL: (a, b) => getPlayerLevel(a.finalStats) - getPlayerLevel(b.finalStats),
     // GEAR
@@ -80,6 +67,7 @@ class ClassesView extends TableView<
     protected readonly sortFns = classesSortFns;
     protected readonly ascendingByDefault: ReadonlySet<ClassesHeaderKey> = new Set(['CLASS', 'NLVL', 'FLVL']);
     protected isHeaderKey = isClassesHeaderKey;
+    protected readonly visibleElements = ['player-stats', 'optimize-btn', 'view-toggles'];
 
     protected readonly sidebarSections: [SidebarSection<ClassType>] = [
         {
@@ -95,21 +83,12 @@ class ClassesView extends TableView<
         super(state, ctx);
     }
 
-    protected onShow(): void {
-        getElem('player-stats').hidden = false;
-        getElem('optimize-btn').hidden = false;
-        getElem('view-toggles').hidden = false;
-    }
-
-    protected onHide(): void {
-        getElem('player-stats').hidden = true;
-        getElem('optimize-btn').hidden = true;
-        getElem('view-toggles').hidden = true;
-    }
-
     protected bindExtra(signal: AbortSignal): void {
-        addClassListeners('stat-input', HTMLInputElement, 'input', () => this.fetchAndRender(), { signal });
         addElemListener('optimize-btn', 'click', () => this.optimizeClass(), { signal });
+    }
+
+    override onPlayerStatsChanged(): void {
+        this.fetchAndRender();
     }
 
     protected additionalSearchFilter(text: string, cst: CalculatedClassStats): boolean {
@@ -136,8 +115,8 @@ class ClassesView extends TableView<
 
     protected optimizeClass(): void {
         this.state.showColGroups.add('CMPT');
-        this.state.sortKey = 'SCORE';
-        this.state.ascending = false;
+        this.state.sortKey = 'NLVL';
+        this.state.ascending = true;
         this.sort();
         this.syncGroupToggles();
         this.refresh();

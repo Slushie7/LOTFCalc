@@ -3,7 +3,7 @@ import { ARMOR_SLOTS, ARMOR_WEIGHT_CLASSES, isArmorSlot, isArmorWeightClass, } f
 import { calculateArmorStats, calculatePlayerDefenses } from '../calc/armorsCalc.js';
 import {} from '../render/sharedRender.js';
 import { TableView } from './tableView.js';
-import { addClassListeners, addElemListener, getElem } from '../sharedDOM.js';
+import { addElemListener, getElem } from '../sharedDOM.js';
 const GroupToggles = {
     htmlClass: 'armors-group-toggle',
     htmlDataKey: 'col-group',
@@ -67,6 +67,7 @@ class ArmorsView extends TableView {
     sortFns = armorsSortFns;
     ascendingByDefault = new Set(['ARMR', 'SLOT', 'WGT']);
     isHeaderKey = isArmorsHeaderKey;
+    visibleElements = ['player-stats', 'paper-doll', 'derived-armor'];
     sidebarSections = [
         {
             text: 'Armors',
@@ -88,21 +89,14 @@ class ArmorsView extends TableView {
         this.armors = new Map(ctx.data.armors.map((armr) => [armr.key, armr]));
     }
     onShow() {
-        getElem('player-stats').hidden = false;
-        getElem('paper-doll').hidden = false;
-        getElem('derived-armor').hidden = false;
         this.updatePaperDoll();
     }
-    onHide() {
-        getElem('player-stats').hidden = true;
-        getElem('paper-doll').hidden = true;
-        getElem('derived-armor').hidden = true;
-    }
     bindExtra(signal) {
-        // changes to player's stats should update derived armor display
-        addClassListeners('stat-input', HTMLInputElement, 'input', () => this.updateDerivedArmor(), { signal });
         // paper doll 'X' buttons for unequipping armors
         addElemListener('paper-doll', 'click', (e) => this.onPaperDollClick(e), { signal });
+    }
+    onPlayerStatsChanged() {
+        this.updateDerivedArmor();
     }
     onPaperDollClick(e) {
         if (!(e.target instanceof Element))
@@ -146,7 +140,8 @@ class ArmorsView extends TableView {
     updatePaperDoll() {
         // update the 'equipped' attribute for all items in the table's CalculatedArmorStats cache
         const equipped = new Set(Object.values(this.state.paperDoll));
-        this.calculatedItems.map((v) => (v.equipped = equipped.has(v.item.key)));
+        for (const cas of this.calculatedItems)
+            cas.equipped = equipped.has(cas.item.key);
         // update the DOM
         getElem('paper-doll').innerHTML = getPaperDollHtml(this.state.paperDoll, this.armors);
         this.updateDerivedArmor();

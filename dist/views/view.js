@@ -6,5 +6,6 @@ export class View {
     isActiveMode() {
         return this.ctx.shared.activeMode === this.mode;
     }
+    onPlayerStatsChanged() { }
 }
 //# sourceMappingURL=view.js.map

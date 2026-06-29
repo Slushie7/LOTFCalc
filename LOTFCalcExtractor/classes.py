@@ -53,6 +53,7 @@ BE_TARGET_MAP: dict[str, str] = {
 BUFF_ATTR_MAP: dict[str, str] = {
     'Faith': 'Radiance',
     'Chaos': 'Inferno',
+    'ScalingStrenth': 'ScalingStrength', # dev typo
     'ScalingOrder': 'ScalingRadiance',
     'ScalingChaos': 'ScalingInferno',
     'DamageDark': 'DamageWither',

@@ -18,21 +18,21 @@ export function isRunesSuperheaderKey(v) {
 export const RUNES_HEADER_GROUPS = [
     {
         superKey: 'INFO',
-        superText: '',
+        superHtmlText: '',
         columns: [
-            { key: 'RUNE', text: 'Rune', hover: 'Rune Name' },
-            { key: 'TYPE', text: 'Shape', hover: 'Rune Shape' },
+            { key: 'RUNE', rawText: 'Rune', hover: 'Rune Name' },
+            { key: 'TYPE', rawText: 'Shape', hover: 'Rune Shape' },
         ],
     },
     {
         superKey: 'WEAP',
-        superText: '',
-        columns: [{ key: 'WEAPFX', text: 'Weapon Effects', hover: 'Effects When Slotted In Weapons' }],
+        superHtmlText: '',
+        columns: [{ key: 'WEAPFX', rawText: 'Weapon Effects', hover: 'Effects When Slotted In Weapons' }],
     },
     {
         superKey: 'ARMR',
-        superText: '',
-        columns: [{ key: 'ARMRFX', text: 'Shield Effects', hover: 'Effects When Slotted In Shields' }],
+        superHtmlText: '',
+        columns: [{ key: 'ARMRFX', rawText: 'Shield Effects', hover: 'Effects When Slotted In Shields' }],
     },
 ];
 export function getRuneRow(crs, showColGroups) {

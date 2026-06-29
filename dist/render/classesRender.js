@@ -13,7 +13,6 @@ const CLASSES_HEADER_KEYS = [
     'INF',
     'LVL',
     // CMPT
-    'SCORE',
     'NLVL',
     'FLVL',
     // GEAR
@@ -30,40 +29,39 @@ export function isClassesSuperheaderKey(v) {
 export const CLASSES_HEADER_GROUPS = [
     {
         superKey: 'INFO',
-        superText: '',
+        superHtmlText: '',
         columns: [
-            { key: 'CLASS', text: 'Class Name', hover: 'Starting Class Name' },
-            { key: 'TYPE', text: 'Type', hover: 'Starting Class Type' },
+            { key: 'CLASS', rawText: 'Class Name', hover: 'Starting Class Name' },
+            { key: 'TYPE', rawText: 'Type', hover: 'Starting Class Type' },
         ],
     },
     {
         superKey: 'STATS',
-        superText: 'Starting Stats',
+        superHtmlText: 'Starting Stats',
         columns: [
-            { key: 'STR', text: 'Str', hover: 'Starting Strength' },
-            { key: 'AGI', text: 'Agi', hover: 'Starting Agility' },
-            { key: 'END', text: 'End', hover: 'Starting Endurance' },
-            { key: 'VIT', text: 'Vit', hover: 'Starting Vitality' },
-            { key: 'RAD', text: 'Rad', hover: 'Starting Radiance' },
-            { key: 'INF', text: 'Inf', hover: 'Starting Inferno' },
-            { key: 'LVL', text: 'Level', hover: 'Starting Level' },
+            { key: 'STR', rawText: 'Str', hover: 'Starting Strength' },
+            { key: 'AGI', rawText: 'Agi', hover: 'Starting Agility' },
+            { key: 'END', rawText: 'End', hover: 'Starting Endurance' },
+            { key: 'VIT', rawText: 'Vit', hover: 'Starting Vitality' },
+            { key: 'RAD', rawText: 'Rad', hover: 'Starting Radiance' },
+            { key: 'INF', rawText: 'Inf', hover: 'Starting Inferno' },
+            { key: 'LVL', rawText: 'Level', hover: 'Starting Level' },
         ],
     },
     {
         superKey: 'CMPT',
-        superText: 'Stat Compatbility',
+        superHtmlText: 'Stat Compatbility',
         columns: [
-            { key: 'SCORE', text: 'Score', hover: 'Compatibility Score' },
-            { key: 'NLVL', text: 'Needed', hover: 'Additional levels needed to meet your entered stats' },
-            { key: 'FLVL', text: 'FLevel', hover: 'The final level needed to meet your entered stats' },
+            { key: 'NLVL', rawText: 'Lvls Needed', hover: 'Additional levels needed to meet your entered stats' },
+            { key: 'FLVL', rawText: 'Fnl Level', hover: 'The final level needed to meet your entered stats' },
         ],
     },
     {
         superKey: 'GEAR',
-        superText: 'Starting Gear',
+        superHtmlText: 'Starting Gear',
         columns: [
-            { key: 'WEAP', text: 'Weapons', hover: 'Starting Weapons' },
-            { key: 'ARMR', text: 'Armor', hover: 'Starting Armor' },
+            { key: 'WEAP', rawText: 'Weapons', hover: 'Starting Weapons' },
+            { key: 'ARMR', rawText: 'Armor', hover: 'Starting Armor' },
         ],
     },
 ];
@@ -86,17 +84,16 @@ export function getClassRow(crs, showColGroups) {
         pushCell(cells, stats.inferno);
         pushCell(cells, cls.level, 'col-divider');
     }
-    // CMPT (SCORE, NLVL, FLVL)
+    // CMPT (NLVL, FLVL)
     if (showColGroups.has('CMPT')) {
-        pushCell(cells, `${(crs.compatScore * 100).toFixed(1)}%`, 'col-starter');
-        pushCell(cells, crs.levelsNeeded);
+        pushCell(cells, crs.levelsNeeded, 'col-starter');
         pushCell(cells, getPlayerLevel(crs.finalStats), 'col-divider');
     }
     // GEAR (WEAP, ARMR)
     if (showColGroups.has('GEAR')) {
         pushCell(cells, undefined, 'col-starter', undefined, undefined, cls.weapons.map((w) => w.name).join('\r\n'), cls.weapons
             .map((w) => `<a class="col-starter" href="${escapeHtml(fextraUrl(w.name))}" target="_blank" rel="noopener noreferrer">` +
-            `<img class="image-first image-last" src="./img/Weapons/${w.icon}.webp" width="20" height="20">${w.name}</a>`)
+            `<img class="image-first image-last" src="./img/Weapons/${escapeHtml(w.icon)}.webp" width="20" height="20">${escapeHtml(w.name)}</a>`)
             .join('<br>'));
         pushCell(cells, undefined, 'col-starter', undefined, undefined, cls.armor.map((a) => a.name).join('\r\n'), cls.armor
             .map((a) => `<a class="col-starter" href="${escapeHtml(fextraUrl(a.name))}" target="_blank" rel="noopener noreferrer">` +

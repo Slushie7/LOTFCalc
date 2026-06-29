@@ -5,7 +5,7 @@ import { type Weapon, type WeaponClass, isWeaponClass, type CalculatedWeaponStat
 import { calculateWeaponStats } from '../calc/weaponsCalc.js';
 
 import type { ViewContext } from './view.js';
-import { addElemListener, getTypedElem, getElem, convertHtmlDataAttrib, addClassListeners } from '../sharedDOM.js';
+import { addElemListener, getTypedElem, getElem, convertHtmlDataAttrib } from '../sharedDOM.js';
 import { getTogglesHtml, isToggleKey, type SidebarSection, type ToggleGroup } from '../render/sharedRender.js';
 import { TableView, type SortFunction } from './tableView.js';
 
@@ -143,6 +143,8 @@ class WeaponsView extends TableView<
     protected readonly sortFns = weaponsSortFns;
     protected readonly ascendingByDefault: ReadonlySet<WeaponsHeaderKey> = new Set(['WEAP', 'CLS']);
     protected isHeaderKey = isWeaponsHeaderKey;
+    protected readonly visibleElements = ['player-stats', 'view-toggles', 'weapon-level-div'];
+
     protected processSidebarSelection = this.applySmartToggles;
     protected readonly sidebarSections: [SidebarSection<WeaponClass>] = [
         {
@@ -159,26 +161,15 @@ class WeaponsView extends TableView<
     }
 
     protected onShow(): void {
-        getElem('player-stats').hidden = false;
-        getElem('view-toggles').hidden = false;
-        getElem('weapon-level-div').hidden = false;
-
         // initialize weapon upgrade <select> element value
         getTypedElem('weapon-level', HTMLSelectElement).value = `+${this.state.upgLevel}`;
         getElem('view-toggles').insertAdjacentHTML('afterbegin', getTogglesHtml(SettingToggles));
         this.syncSettingsToggles();
     }
 
-    protected onHide(): void {
-        getElem('player-stats').hidden = true;
-        getElem('view-toggles').hidden = true;
-        getElem('weapon-level-div').hidden = true;
-    }
-
     protected bindExtra(signal: AbortSignal): void {
         // weapon upgrade level dropdown
         addElemListener('weapon-level', 'change', (e) => this.onSetUpgLevel(e), { signal });
-        addClassListeners('stat-input', HTMLInputElement, 'input', () => this.fetchAndRender(), { signal });
     }
 
     /**
@@ -221,6 +212,10 @@ class WeaponsView extends TableView<
     // =========================================
     // EVENT HANDLERS
     // =========================================
+
+    override onPlayerStatsChanged(): void {
+        this.fetchAndRender();
+    }
 
     protected onSetUpgLevel(e: Event): void {
         if (!(e.target instanceof HTMLSelectElement)) return;
@@ -284,7 +279,7 @@ class WeaponsView extends TableView<
         );
         if (!this.state.showUnwieldable)
             // remove any unwieldable weapons
-            calcStats = calcStats.filter((ws) => ws.wieldability.wieldable);
+            calcStats = calcStats.filter((ws) => ws.wieldability.wieldable || ws.pinned);
         return calcStats;
     }
 
