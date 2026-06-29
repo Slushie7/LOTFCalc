@@ -50,7 +50,7 @@ export const CLASSES_HEADER_GROUPS = [
     },
     {
         superKey: 'CMPT',
-        superHtmlText: 'Stat Compatbility',
+        superHtmlText: 'Optimality',
         columns: [
             { key: 'NLVL', rawText: 'Lvls Needed', hover: 'Additional levels needed to meet your entered stats' },
             { key: 'FLVL', rawText: 'Fnl Level', hover: 'The final level needed to meet your entered stats' },
