@@ -78,6 +78,24 @@ export function escapeHtml(s: string): string {
     return s;
 }
 
+const RE_UNESCAPE = /&(?:amp|lt|gt|quot|#x27);/g;
+export function unescapeHtml(s: string): string {
+    if (s.includes('&'))
+        return s.replaceAll(RE_UNESCAPE, (r) => {
+            if (r === '&amp;') return '&';
+            if (r === '&lt;') return '<';
+            if (r === '&gt;') return '>';
+            if (r === '&quot;') return '"';
+            if (r === '&#x27;') return "'";
+            return r;
+        });
+    return s;
+}
+
+export function fextraUrl(item: string): string {
+    return `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(item)}`;
+}
+
 // ===============================
 // HTML GENERATION
 // ===============================
@@ -195,7 +213,7 @@ function getTableBodyHtml(
                 pinBtn = `<button class="lock${row.pinned ? ' pinned' : ''}" data-item="${escapeHtml(row.itemKey)}" title="${action}"></button>`;
 
                 if (firstColUrl)
-                    text = `<a${cellClass} href="${escapeHtml(firstColUrl(row))}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+                    text = `<a${cellClass} href="${firstColUrl(row)}" target="_blank" rel="noopener noreferrer">${text}</a>`;
             } else pinBtn = '';
             rowParts.push(`<td${cellClass}>${pinBtn}${text}</td>`);
         });
@@ -208,9 +226,7 @@ function getTableBodyHtml(
 }
 
 export function getItemTableBodyHtml(rows: readonly Row[], fadeItemWitKey: string | null): string {
-    const firstColUrl = (row: Row) =>
-        `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(row.itemName)}`;
-    return getTableBodyHtml(rows, firstColUrl, fadeItemWitKey);
+    return getTableBodyHtml(rows, (row) => fextraUrl(row.itemName), fadeItemWitKey);
 }
 
 export function formatIntOpt(val: number): string {
@@ -232,10 +248,12 @@ export function formatPercent(val: number): string {
  */
 export function pushCell(
     cells: Cell[],
-    text: string | number | string[],
+    text?: string | number | string[],
     classes?: string,
     images?: ImageInfo[],
-    button?: CellButton
+    button?: CellButton,
+    rawText?: string,
+    htmlText?: string
 ): void {
     if (classes === undefined) classes = '';
 
@@ -249,20 +267,20 @@ export function pushCell(
     }
 
     // HTML-escape text and convert array to string
-    let rawText: string;
-    let htmlText: string;
-    if (Array.isArray(text))
-        if (text.length) {
-            rawText = text.join('\r\n');
-            htmlText = text.map(escapeHtml).join('<br>');
+    if (rawText === undefined || htmlText === undefined) {
+        if (Array.isArray(text))
+            if (text.length) {
+                rawText = text.join('\r\n');
+                htmlText = text.map(escapeHtml).join('<br>');
+            } else {
+                rawText = htmlText = '-';
+            }
+        else if (text) {
+            rawText = text;
+            htmlText = escapeHtml(text);
         } else {
             rawText = htmlText = '-';
         }
-    else if (text) {
-        rawText = text;
-        htmlText = escapeHtml(text);
-    } else {
-        rawText = htmlText = '-';
     }
 
     // create HTML class string for table cell

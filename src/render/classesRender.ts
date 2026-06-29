@@ -1,5 +1,5 @@
 import type { CalculatedClassStats } from '../model.js';
-import { pushCell, type Cell, type HeaderGroup, type Row } from './sharedRender.js';
+import { escapeHtml, fextraUrl, pushCell, type Cell, type HeaderGroup, type Row } from './sharedRender.js';
 
 const CLASSES_HEADER_KEYS = [
     // INFO
@@ -84,8 +84,36 @@ export function getClassRow(crs: CalculatedClassStats, showColGroups: Set<Classe
 
     // ARMR (ARMRFX)
     if (showColGroups.has('GEAR')) {
-        pushCell(cells, crs.weapons, 'col-starter');
-        pushCell(cells, crs.armor, 'col-divider');
+        pushCell(
+            cells,
+            undefined,
+            'col-starter',
+            undefined,
+            undefined,
+            cls.weapons.map((w) => w.name).join('\r\n'),
+            cls.weapons
+                .map(
+                    (w) =>
+                        `<a class="col-starter" href="${escapeHtml(fextraUrl(w.name))}" target="_blank" rel="noopener noreferrer">` +
+                        `<img class="image-first image-last" src="./img/Weapons/${w.icon}.webp" width="20" height="20">${w.name}</a>`
+                )
+                .join('<br>')
+        );
+        pushCell(
+            cells,
+            undefined,
+            'col-starter',
+            undefined,
+            undefined,
+            cls.armor.map((a) => a.name).join('\r\n'),
+            cls.armor
+                .map(
+                    (a) =>
+                        `<a class="col-starter" href="${escapeHtml(fextraUrl(a.name))}" target="_blank" rel="noopener noreferrer">` +
+                        `<img class="image-first image-last" src="./img/Armors/${a.icon}.webp" width="20" height="20">${a.name}</a>`
+                )
+                .join('<br>')
+        );
     }
 
     return { itemName: cls.name, itemKey: cls.key, cells, pinned: crs.pinned };

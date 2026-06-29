@@ -8,6 +8,7 @@ import {
     type ClassesSuperheaderKey,
 } from '../render/classesRender.js';
 import type { Row, SidebarSection, ToggleGroup } from '../render/sharedRender.js';
+import { getElem } from '../sharedDOM.js';
 import type { ClassesState } from '../state.js';
 import { TableView, type SortFunction } from './tableView.js';
 import type { ViewContext } from './view.js';
@@ -84,6 +85,14 @@ class ClassesView extends TableView<
 
     constructor(state: ClassesState, ctx: ViewContext) {
         super(state, ctx);
+    }
+
+    protected onShow(): void {
+        getElem('player-stats').hidden = false;
+    }
+
+    protected onHide(): void {
+        getElem('player-stats').hidden = true;
     }
 
     protected additionalSearchFilter(text: string, cst: CalculatedClassStats): boolean {

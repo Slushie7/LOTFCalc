@@ -1,6 +1,7 @@
 import { calculateClassStats } from '../calc/classesCalc.js';
 import { CLASS_TYPES, isClassType } from '../model.js';
 import { CLASSES_HEADER_GROUPS, getClassRow, isClassesHeaderKey, } from '../render/classesRender.js';
+import { getElem } from '../sharedDOM.js';
 import { TableView } from './tableView.js';
 const GroupToggles = {
     htmlClass: 'classes-group-toggle',
@@ -62,6 +63,12 @@ class ClassesView extends TableView {
     ];
     constructor(state, ctx) {
         super(state, ctx);
+    }
+    onShow() {
+        getElem('player-stats').hidden = false;
+    }
+    onHide() {
+        getElem('player-stats').hidden = true;
     }
     additionalSearchFilter(text, cst) {
         const textLower = text.toLowerCase();

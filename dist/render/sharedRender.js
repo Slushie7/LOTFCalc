@@ -32,6 +32,27 @@ export function escapeHtml(s) {
         });
     return s;
 }
+const RE_UNESCAPE = /&(?:amp|lt|gt|quot|#x27);/g;
+export function unescapeHtml(s) {
+    if (s.includes('&'))
+        return s.replaceAll(RE_UNESCAPE, (r) => {
+            if (r === '&amp;')
+                return '&';
+            if (r === '&lt;')
+                return '<';
+            if (r === '&gt;')
+                return '>';
+            if (r === '&quot;')
+                return '"';
+            if (r === '&#x27;')
+                return "'";
+            return r;
+        });
+    return s;
+}
+export function fextraUrl(item) {
+    return `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(item)}`;
+}
 // ===============================
 // HTML GENERATION
 // ===============================
@@ -115,7 +136,7 @@ function getTableBodyHtml(rows, firstColUrl, fadeItemWithKey) {
                 const action = row.pinned ? 'Unpin from top of list' : 'Pin to top of list';
                 pinBtn = `<button class="lock${row.pinned ? ' pinned' : ''}" data-item="${escapeHtml(row.itemKey)}" title="${action}"></button>`;
                 if (firstColUrl)
-                    text = `<a${cellClass} href="${escapeHtml(firstColUrl(row))}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+                    text = `<a${cellClass} href="${firstColUrl(row)}" target="_blank" rel="noopener noreferrer">${text}</a>`;
             }
             else
                 pinBtn = '';
@@ -128,8 +149,7 @@ function getTableBodyHtml(rows, firstColUrl, fadeItemWithKey) {
     return tableParts.join('');
 }
 export function getItemTableBodyHtml(rows, fadeItemWitKey) {
-    const firstColUrl = (row) => `https://thelordsofthefallen.wiki.fextralife.com/${encodeURIComponent(row.itemName)}`;
-    return getTableBodyHtml(rows, firstColUrl, fadeItemWitKey);
+    return getTableBodyHtml(rows, (row) => fextraUrl(row.itemName), fadeItemWitKey);
 }
 export function formatIntOpt(val) {
     const floored = epsilonFloor(val);
@@ -145,7 +165,7 @@ export function formatPercent(val) {
 /** Add a Cell to cells containing the given data. If text is a number, it is floored. If that value
  * is 0, the number is replaced with '-'
  */
-export function pushCell(cells, text, classes, images, button) {
+export function pushCell(cells, text, classes, images, button, rawText, htmlText) {
     if (classes === undefined)
         classes = '';
     // convert number to string
@@ -158,22 +178,22 @@ export function pushCell(cells, text, classes, images, button) {
             text = String(floored);
     }
     // HTML-escape text and convert array to string
-    let rawText;
-    let htmlText;
-    if (Array.isArray(text))
-        if (text.length) {
-            rawText = text.join('\r\n');
-            htmlText = text.map(escapeHtml).join('<br>');
+    if (rawText === undefined || htmlText === undefined) {
+        if (Array.isArray(text))
+            if (text.length) {
+                rawText = text.join('\r\n');
+                htmlText = text.map(escapeHtml).join('<br>');
+            }
+            else {
+                rawText = htmlText = '-';
+            }
+        else if (text) {
+            rawText = text;
+            htmlText = escapeHtml(text);
         }
         else {
             rawText = htmlText = '-';
         }
-    else if (text) {
-        rawText = text;
-        htmlText = escapeHtml(text);
-    }
-    else {
-        rawText = htmlText = '-';
     }
     // create HTML class string for table cell
     if (htmlText === '-')
