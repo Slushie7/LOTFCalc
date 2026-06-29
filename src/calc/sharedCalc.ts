@@ -144,3 +144,15 @@ export function calculatePlayerStats(playerStats: PlayerStats, curves: Map<strin
         resFrost,
     };
 }
+
+export function getPlayerLevel(playerStats: PlayerStats): number {
+    return (
+        playerStats.strength +
+        playerStats.agility +
+        playerStats.endurance +
+        playerStats.vitality +
+        playerStats.radiance +
+        playerStats.inferno -
+        53
+    );
+}

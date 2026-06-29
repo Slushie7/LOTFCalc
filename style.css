@@ -12,16 +12,6 @@
     box-sizing: border-box;
 }
 
-/* table cell alignment (both calc tables) */
-th,
-td {
-    text-align: center;
-}
-th:first-child,
-td:first-child {
-    text-align: left;
-}
-
 /* ============================================================
    PAGE LAYOUT
    appbar spans the top row; sidebar is a full-height left column
@@ -45,11 +35,6 @@ body.sidebar-hidden {
 body.sidebar-hidden #sidebar {
     display: none;
 }
-
-/* .view intentionally has no `display` rule: that keeps the native
-   `hidden` attribute working on the inactive view (an author display
-   rule would override it). Each view is a plain block — its toggles
-   row and table stack naturally. */
 
 /* ============================================================
    APP BAR (hamburger, title, mode switch, settings, github)
@@ -90,13 +75,13 @@ body.sidebar-hidden #sidebar {
 .appbar .hamburger {
     font-size: 1.35rem;
     height: 1.6rem;
-    padding-top: 0.1rem; /* small offset so the glyph is truly centered vertically */
+    padding-top: 0.1rem;
 }
 .appbar .appbar-setting {
     display: flex;
     align-items: center;
     gap: 0.35rem;
-    margin: 0 0 0 auto; /* pushes settings + github to the right */
+    margin: 0 0 0 auto;
     font-size: 0.8rem;
     cursor: pointer;
     white-space: nowrap;
@@ -192,9 +177,8 @@ body.sidebar-hidden #sidebar {
     pointer-events: none;
 }
 
-/* weapon upgrade-level dropdown */
 #weapon-level-div {
-    margin-left: 1rem;
+    margin-left: 0.85rem;
 }
 #weapon-level {
     margin: 0;
@@ -206,8 +190,12 @@ body.sidebar-hidden #sidebar {
     );
     background-position-y: calc(50% + 0.375rem);
 }
+#optimize-btn {
+    margin-left: 0.85rem;
+    padding: 0 0.5rem;
+    font-size: 0.85rem;
+}
 
-/* derived stats (Level / HP / Mana / Stamina / Weight) */
 .derived-stats {
     align-self: stretch;
     display: flex;
@@ -330,7 +318,7 @@ body.sidebar-hidden #sidebar {
 }
 .sidebar-section-header h2 {
     margin: 0;
-    margin-right: auto; /* this is what shoves the buttons to the far right */
+    margin-right: auto;
     font-size: 1rem;
 }
 #sidebar .meta-btn {
@@ -338,13 +326,12 @@ body.sidebar-hidden #sidebar {
     height: 24px;
     display: inline-flex;
     align-items: center;
-    justify-content: center; /* you had align- but not justify-, so the icon wasn't centered */
+    justify-content: center;
     padding: 0.25rem 0 0 0;
     background: none;
     border: none;
     box-shadow: none;
     border-radius: 0.25rem;
-    /* between primary and muted — tune the 55% to taste */
     color: color-mix(in srgb, var(--pico-primary) 55%, var(--pico-muted-color));
     cursor: pointer;
     transition: color var(--pico-transition);
@@ -392,7 +379,7 @@ body.sidebar-hidden #sidebar {
 }
 
 /* ============================================================
-   CALC TABLE (weapons / armors data tables)
+   CALC TABLE
    ============================================================ */
 .table-wrap {
     min-width: 0;
@@ -403,7 +390,12 @@ body.sidebar-hidden #sidebar {
 }
 .calc-table th,
 .calc-table td {
+    text-align: center;
     padding: 0.25rem 0.4rem;
+}
+.calc-table th:first-child,
+.calc-table td:first-child {
+    text-align: left;
 }
 .calc-table thead {
     position: sticky;
@@ -476,7 +468,7 @@ body.sidebar-hidden #sidebar {
     text-decoration-color: var(--pico-form-element-invalid-active-border-color);
 }
 
-/* weapons table body: bold values + pin (lock) buttons */
+/* calc-table body: bold values + pin (lock) buttons */
 .calc-table td {
     font-weight: 600;
 }
@@ -503,7 +495,6 @@ body.sidebar-hidden #sidebar {
 }
 .calc-table button.lock.pinned {
     background-color: var(--pico-primary);
-    /* only swap the shape; position/size/repeat carry over from the base shorthand */
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='11' width='14.2' height='10' rx='2'/%3E%3Cpath d='M 8 11 V 6 a 4 4 0 0 1 8 0 v 5'/%3E%3Ccircle cx='12.1' cy='15.2' r='1.2' fill='%23000' stroke='none'/%3E%3Cline x1='12.1' y1='16.1' x2='12.1' y2='17.6' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='11' width='14.2' height='10' rx='2'/%3E%3Cpath d='M 8 11 V 6 a 4 4 0 0 1 8 0 v 5'/%3E%3Ccircle cx='12.1' cy='15.2' r='1.2' fill='%23000' stroke='none'/%3E%3Cline x1='12.1' y1='16.1' x2='12.1' y2='17.6' stroke='%23000' stroke-width='1.5'/%3E%3C/svg%3E");
 }

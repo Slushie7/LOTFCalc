@@ -17,6 +17,26 @@ import { View, type ViewContext } from './view.js';
 
 export type SortFunction<T> = (a: T, b: T) => number;
 
+export function compareStringArrays(a: readonly string[], b: readonly string[]): number {
+    const len = Math.min(a.length, b.length);
+    for (let i = 0; i < len; i++) {
+        const x = a[i]!;
+        const y = b[i]!;
+        const c = x.localeCompare(y);
+        if (c !== 0) return c;
+    }
+    return a.length - b.length;
+}
+
+export function compareNumArrays(a: readonly number[], b: readonly number[]): number {
+    const len = Math.min(a.length, b.length);
+    for (let i = 0; i < len; i++) {
+        const c = a[i]! - b[i]!;
+        if (c !== 0) return c;
+    }
+    return a.length - b.length;
+}
+
 export abstract class TableView<
     S extends TableState<HK, SHK>, // state type (e.g. WeaponsState)
     HK extends string, // header key type (e.g. WeaponsHeaderKey)

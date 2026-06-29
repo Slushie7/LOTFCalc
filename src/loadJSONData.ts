@@ -1,3 +1,4 @@
+import { getPlayerLevel } from './calc/sharedCalc.js';
 import {
     type Curve,
     type LeveledValue,
@@ -252,8 +253,7 @@ function toPlayerStats(r: RawPlayerStats): PlayerStats {
 
 function toStartingClass(r: RawStartingClass, weapons: Map<string, Weapon>, armors: Map<string, Armor>): StartingClass {
     const stats = toPlayerStats(r.stats);
-    const level =
-        stats.strength + stats.agility + stats.endurance + stats.vitality + stats.radiance + stats.inferno - 53;
+    const level = getPlayerLevel(stats);
 
     const clsWeapons: Weapon[] = r.weapons.map((w) => {
         const weap = weapons.get(w);

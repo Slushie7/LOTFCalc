@@ -1,6 +1,26 @@
 import { getHeaderHtml, getItemTableBodyHtml, getSidebarHtml, getTogglesHtml, HEADER_STATUS_IMAGES, isToggleKey, } from '../render/sharedRender.js';
 import { addElemListener, convertHtmlDataAttrib, getElem, getTypedElem, syncSidebarToggles } from '../sharedDOM.js';
 import { View } from './view.js';
+export function compareStringArrays(a, b) {
+    const len = Math.min(a.length, b.length);
+    for (let i = 0; i < len; i++) {
+        const x = a[i];
+        const y = b[i];
+        const c = x.localeCompare(y);
+        if (c !== 0)
+            return c;
+    }
+    return a.length - b.length;
+}
+export function compareNumArrays(a, b) {
+    const len = Math.min(a.length, b.length);
+    for (let i = 0; i < len; i++) {
+        const c = a[i] - b[i];
+        if (c !== 0)
+            return c;
+    }
+    return a.length - b.length;
+}
 export class TableView extends View {
     state;
     ac = null;

@@ -9,7 +9,7 @@ import {
 } from '../render/runesRender.js';
 import type { Row, SidebarSection, ToggleGroup } from '../render/sharedRender.js';
 import type { RunesState } from '../state.js';
-import { TableView, type SortFunction } from './tableView.js';
+import { compareStringArrays, TableView, type SortFunction } from './tableView.js';
 import type { ViewContext } from './view.js';
 
 const GroupToggles: ToggleGroup<RunesSuperheaderKey> = {
@@ -21,22 +21,12 @@ const GroupToggles: ToggleGroup<RunesSuperheaderKey> = {
     },
 };
 
-function compareArrays(a: readonly string[], b: readonly string[]): number {
-    const len = Math.min(a.length, b.length);
-    for (let i = 0; i < len; i++) {
-        const x = a[i]!;
-        const y = b[i]!;
-        const c = x.localeCompare(y);
-        if (c !== 0) return c < 0 ? -1 : 1;
-    }
-    return a.length - b.length;
-}
 const runesSortFns: Record<RunesHeaderKey, SortFunction<CalculatedRuneStats>> = {
     // INFO
     RUNE: (a, b) => a.item.name.localeCompare(b.item.name),
     TYPE: (a, b) => a.item.type.localeCompare(b.item.type),
-    WEAPFX: (a, b) => compareArrays(a.weaponEffects, b.weaponEffects),
-    ARMRFX: (a, b) => compareArrays(a.armorEffects, b.armorEffects),
+    WEAPFX: (a, b) => compareStringArrays(a.weaponEffects, b.weaponEffects),
+    ARMRFX: (a, b) => compareStringArrays(a.armorEffects, b.armorEffects),
 };
 
 // ================================

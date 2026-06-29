@@ -127,4 +127,13 @@ export function calculatePlayerStats(playerStats, curves) {
         resFrost,
     };
 }
+export function getPlayerLevel(playerStats) {
+    return (playerStats.strength +
+        playerStats.agility +
+        playerStats.endurance +
+        playerStats.vitality +
+        playerStats.radiance +
+        playerStats.inferno -
+        53);
+}
 //# sourceMappingURL=sharedCalc.js.map

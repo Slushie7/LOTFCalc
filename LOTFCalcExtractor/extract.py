@@ -741,7 +741,7 @@ class LOTFExtractor:
             )
             unlock_type = cls_d['UnlockInfo']['UnlockType'].split('::')[1]
             hidden = unlock_type != 'None'
-            class_type: CLASS_TYPE = 'Hidden' if hidden else 'Normal'
+            class_type: CLASS_TYPE = 'Unlockable' if hidden else 'Basic'
 
             equip_cfg = cls_d['EquipmentConfig']
 
@@ -814,15 +814,21 @@ class LOTFExtractor:
 
         stat_grade_ranges_export = [grade.to_dict() for grade in stat_grade_ranges]
 
-        weapons_export = [weapon.to_dict() for weapon in weapons]
+        weapons_export = [
+            weapon.to_dict() for weapon in sorted(weapons, key=lambda w: w.name)
+        ]
 
         buffs_export = [buff.to_dict() for buff in buffs.values()]
 
-        runes_export = [rune.to_dict() for rune in runes]
+        runes_export = [rune.to_dict() for rune in sorted(runes, key=lambda r: r.name)]
 
-        armor_export = [armor_piece.to_dict() for armor_piece in armor]
+        armor_export = [
+            armor_piece.to_dict() for armor_piece in sorted(armor, key=lambda a: a.name)
+        ]
 
-        starting_classes_export = [sc.to_dict() for sc in starting_classes]
+        starting_classes_export = [
+            sc.to_dict() for sc in sorted(starting_classes, key=lambda sc: sc.name)
+        ]
 
         output: dict[str, Any] = {
             'curves': curves_export,

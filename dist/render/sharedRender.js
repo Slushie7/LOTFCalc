@@ -87,10 +87,6 @@ export function getSidebarHtml(sections) {
 /**
  * Given the currently visible HeaderGroups, generates the HTML to display the grouping header and
  * main table header. The column with sortKey is decorated with an arrow indicating sort direction.
- * @param groups
- * @param sortKey
- * @param ascending
- * @returns
  */
 export function getHeaderHtml(groups, sortKey, ascending, headerImagePaths) {
     const superParts = [];

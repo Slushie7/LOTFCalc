@@ -124,7 +124,7 @@ function getDefaultState(): AppState {
     };
 
     const classes: ClassesState = {
-        selectedTypes: new Set(['Normal', 'Hidden']),
+        selectedTypes: new Set(['Basic', 'Unlockable']),
         sortKey: 'CLASS',
         ascending: true,
         showColGroups: new Set(['INFO', 'STATS', 'GEAR']),

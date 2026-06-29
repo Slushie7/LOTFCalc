@@ -1,3 +1,4 @@
+import { getPlayerLevel } from '../calc/sharedCalc.js';
 import { escapeHtml, fextraUrl, pushCell } from './sharedRender.js';
 const CLASSES_HEADER_KEYS = [
     // INFO
@@ -11,6 +12,10 @@ const CLASSES_HEADER_KEYS = [
     'RAD',
     'INF',
     'LVL',
+    // CMPT
+    'SCORE',
+    'NLVL',
+    'FLVL',
     // GEAR
     'WEAP',
     'ARMR',
@@ -18,7 +23,7 @@ const CLASSES_HEADER_KEYS = [
 export function isClassesHeaderKey(v) {
     return CLASSES_HEADER_KEYS.includes(v);
 }
-const CLASSES_SUPERHEADER_KEYS = ['INFO', 'STATS', 'GEAR'];
+const CLASSES_SUPERHEADER_KEYS = ['INFO', 'STATS', 'CMPT', 'GEAR'];
 export function isClassesSuperheaderKey(v) {
     return CLASSES_SUPERHEADER_KEYS.includes(v);
 }
@@ -45,6 +50,15 @@ export const CLASSES_HEADER_GROUPS = [
         ],
     },
     {
+        superKey: 'CMPT',
+        superText: 'Stat Compatbility',
+        columns: [
+            { key: 'SCORE', text: 'Score', hover: 'Compatibility Score' },
+            { key: 'NLVL', text: 'Needed', hover: 'Additional levels needed to meet your entered stats' },
+            { key: 'FLVL', text: 'FLevel', hover: 'The final level needed to meet your entered stats' },
+        ],
+    },
+    {
         superKey: 'GEAR',
         superText: 'Starting Gear',
         columns: [
@@ -56,12 +70,12 @@ export const CLASSES_HEADER_GROUPS = [
 export function getClassRow(crs, showColGroups) {
     const cells = [];
     const cls = crs.item;
-    // INFO (RUNE, TYPE)
+    // INFO (CLASS, TYPE)
     if (showColGroups.has('INFO')) {
         pushCell(cells, cls.name, 'col-first', [{ src: `./img/Classes/${cls.icon}.webp`, size: 30 }]);
         pushCell(cells, cls.type, 'col-divider');
     }
-    // WEAP (WEAPFX)
+    // STATS (STR, AGI, END, VIT, RAD, INF, LVL)
     if (showColGroups.has('STATS')) {
         const stats = cls.stats;
         pushCell(cells, stats.strength, 'col-starter');
@@ -72,7 +86,13 @@ export function getClassRow(crs, showColGroups) {
         pushCell(cells, stats.inferno);
         pushCell(cells, cls.level, 'col-divider');
     }
-    // ARMR (ARMRFX)
+    // CMPT (SCORE, NLVL, FLVL)
+    if (showColGroups.has('CMPT')) {
+        pushCell(cells, `${(crs.compatScore * 100).toFixed(1)}%`, 'col-starter');
+        pushCell(cells, crs.levelsNeeded);
+        pushCell(cells, getPlayerLevel(crs.finalStats), 'col-divider');
+    }
+    // GEAR (WEAP, ARMR)
     if (showColGroups.has('GEAR')) {
         pushCell(cells, undefined, 'col-starter', undefined, undefined, cls.weapons.map((w) => w.name).join('\r\n'), cls.weapons
             .map((w) => `<a class="col-starter" href="${escapeHtml(fextraUrl(w.name))}" target="_blank" rel="noopener noreferrer">` +

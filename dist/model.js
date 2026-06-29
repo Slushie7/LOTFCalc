@@ -7,7 +7,7 @@ const RUNE_SOCKET_TYPES = [...STAT_KEYS, '*'];
 export function isRuneSocketType(v) {
     return RUNE_SOCKET_TYPES.includes(v);
 }
-export const CLASS_TYPES = ['Normal', 'Hidden'];
+export const CLASS_TYPES = ['Basic', 'Unlockable'];
 export function isClassType(v) {
     return CLASS_TYPES.includes(v);
 }

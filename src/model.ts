@@ -13,7 +13,7 @@ export function isRuneSocketType(v: unknown): v is RuneSocketType {
     return RUNE_SOCKET_TYPES.includes(v as RuneSocketType);
 }
 
-export const CLASS_TYPES = ['Normal', 'Hidden'] as const;
+export const CLASS_TYPES = ['Basic', 'Unlockable'] as const;
 export type ClassType = (typeof CLASS_TYPES)[number];
 export function isClassType(v: unknown): v is ClassType {
     return CLASS_TYPES.includes(v as ClassType);
@@ -368,6 +368,9 @@ export interface CalculatedRuneStats extends TableData<Rune> {
 }
 
 export interface CalculatedClassStats extends TableData<StartingClass> {
-    weapons: string[];
-    armor: string[];
+    weaponNames: string[];
+    armorNames: string[];
+    finalStats: PlayerStats;
+    compatScore: number;
+    levelsNeeded: number;
 }

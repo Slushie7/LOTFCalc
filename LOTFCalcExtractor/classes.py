@@ -7,7 +7,7 @@ STAT = Literal['S', 'A', 'R', 'I']
 RUNE_SOCKET_TYPE = Literal['S', 'A', 'R', 'I', '*']
 RUNE_TYPE = Literal['Strength', 'Agility', 'Radiance', 'Inferno']
 SCALING_TYPE = Literal['Additive', 'Multiplicative']
-CLASS_TYPE = Literal['Normal', 'Hidden']
+CLASS_TYPE = Literal['Basic', 'Unlockable']
 
 WEAP_CLASS_MAP: dict[str, str] = {
     # maps the game's internal weapon classes to user-displayed classes

@@ -1,7 +1,7 @@
 import { calculateRuneStats } from '../calc/runesCalc.js';
 import { isRuneType, RUNE_TYPES } from '../model.js';
 import { getRuneRow, isRunesHeaderKey, RUNES_HEADER_GROUPS, } from '../render/runesRender.js';
-import { TableView } from './tableView.js';
+import { compareStringArrays, TableView } from './tableView.js';
 const GroupToggles = {
     htmlClass: 'runes-group-toggle',
     htmlDataKey: 'col-group',
@@ -10,23 +10,12 @@ const GroupToggles = {
         ARMR: { text: 'Shield Effects', hover: 'Show rune shield effects' },
     },
 };
-function compareArrays(a, b) {
-    const len = Math.min(a.length, b.length);
-    for (let i = 0; i < len; i++) {
-        const x = a[i];
-        const y = b[i];
-        const c = x.localeCompare(y);
-        if (c !== 0)
-            return c < 0 ? -1 : 1;
-    }
-    return a.length - b.length;
-}
 const runesSortFns = {
     // INFO
     RUNE: (a, b) => a.item.name.localeCompare(b.item.name),
     TYPE: (a, b) => a.item.type.localeCompare(b.item.type),
-    WEAPFX: (a, b) => compareArrays(a.weaponEffects, b.weaponEffects),
-    ARMRFX: (a, b) => compareArrays(a.armorEffects, b.armorEffects),
+    WEAPFX: (a, b) => compareStringArrays(a.weaponEffects, b.weaponEffects),
+    ARMRFX: (a, b) => compareStringArrays(a.armorEffects, b.armorEffects),
 };
 // ================================
 // VIEW

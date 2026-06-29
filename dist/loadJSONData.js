@@ -1,3 +1,4 @@
+import { getPlayerLevel } from './calc/sharedCalc.js';
 import { isRuneSocketType, isWeaponClass, isArmorSlot, isArmorWeightClass, } from './model.js';
 // helpers
 function getCurveOrNull(key, curves) {
@@ -59,7 +60,7 @@ function toPlayerStats(r) {
 }
 function toStartingClass(r, weapons, armors) {
     const stats = toPlayerStats(r.stats);
-    const level = stats.strength + stats.agility + stats.endurance + stats.vitality + stats.radiance + stats.inferno - 53;
+    const level = getPlayerLevel(stats);
     const clsWeapons = r.weapons.map((w) => {
         const weap = weapons.get(w);
         if (weap === undefined)

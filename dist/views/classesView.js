@@ -1,26 +1,30 @@
 import { calculateClassStats } from '../calc/classesCalc.js';
+import { getPlayerLevel } from '../calc/sharedCalc.js';
 import { CLASS_TYPES, isClassType } from '../model.js';
 import { CLASSES_HEADER_GROUPS, getClassRow, isClassesHeaderKey, } from '../render/classesRender.js';
-import { getElem } from '../sharedDOM.js';
-import { TableView } from './tableView.js';
+import { addClassListeners, addElemListener, getElem } from '../sharedDOM.js';
+import { compareNumArrays, compareStringArrays, TableView } from './tableView.js';
 const GroupToggles = {
     htmlClass: 'classes-group-toggle',
     htmlDataKey: 'col-group',
     toggles: {
         STATS: { text: 'Starting Stats', hover: 'Show starting stats' },
+        CMPT: { text: 'Stats Compatibility', hover: "Show classes' compatibility with your entered stats" },
         GEAR: { text: 'Starting Gear', hover: 'Show starting gear' },
     },
 };
-function compareArrays(a, b) {
-    const len = Math.min(a.length, b.length);
-    for (let i = 0; i < len; i++) {
-        const x = a[i];
-        const y = b[i];
-        const c = x.localeCompare(y);
-        if (c !== 0)
-            return c < 0 ? -1 : 1;
-    }
-    return a.length - b.length;
+function compareCompatScores(a, b) {
+    if (a.compatScore !== b.compatScore)
+        return a.compatScore - b.compatScore;
+    // because the 'score' column is a descending column (higher is better),
+    // the remaining comparisons must be reversed (lower is better for them)
+    if (a.levelsNeeded !== b.levelsNeeded)
+        return b.levelsNeeded - a.levelsNeeded;
+    const lvlA = getPlayerLevel(a.finalStats);
+    const lvlB = getPlayerLevel(b.finalStats);
+    if (lvlA !== lvlB)
+        return lvlB - lvlA;
+    return 0;
 }
 const classesSortFns = {
     // INFO
@@ -34,9 +38,13 @@ const classesSortFns = {
     RAD: (a, b) => a.item.stats.radiance - b.item.stats.radiance,
     INF: (a, b) => a.item.stats.inferno - b.item.stats.inferno,
     LVL: (a, b) => a.item.level - b.item.level,
+    // CMPT
+    SCORE: (a, b) => compareCompatScores(a, b),
+    NLVL: (a, b) => a.levelsNeeded - b.levelsNeeded,
+    FLVL: (a, b) => getPlayerLevel(a.finalStats) - getPlayerLevel(b.finalStats),
     // GEAR
-    WEAP: (a, b) => compareArrays(a.weapons, b.weapons),
-    ARMR: (a, b) => compareArrays(a.armor, b.armor),
+    WEAP: (a, b) => compareStringArrays(a.weaponNames, b.weaponNames),
+    ARMR: (a, b) => compareStringArrays(a.armorNames, b.armorNames),
 };
 // ================================
 // VIEW
@@ -50,7 +58,7 @@ class ClassesView extends TableView {
     headerGroups = CLASSES_HEADER_GROUPS;
     colGroupToggles = GroupToggles;
     sortFns = classesSortFns;
-    ascendingByDefault = new Set(['CLASS']);
+    ascendingByDefault = new Set(['CLASS', 'NLVL', 'FLVL']);
     isHeaderKey = isClassesHeaderKey;
     sidebarSections = [
         {
@@ -66,22 +74,39 @@ class ClassesView extends TableView {
     }
     onShow() {
         getElem('player-stats').hidden = false;
+        getElem('optimize-btn').hidden = false;
+        getElem('view-toggles').hidden = false;
     }
     onHide() {
         getElem('player-stats').hidden = true;
+        getElem('optimize-btn').hidden = true;
+        getElem('view-toggles').hidden = true;
+    }
+    bindExtra(signal) {
+        addClassListeners('stat-input', HTMLInputElement, 'input', () => this.fetchAndRender(), { signal });
+        addElemListener('optimize-btn', 'click', () => this.optimizeClass(), { signal });
     }
     additionalSearchFilter(text, cst) {
         const textLower = text.toLowerCase();
-        return (cst.weapons.some((v) => v.toLowerCase().includes(textLower)) ||
-            cst.armor.some((v) => v.toLowerCase().includes(textLower)));
+        return (cst.weaponNames.some((v) => v.toLowerCase().includes(textLower)) ||
+            cst.armorNames.some((v) => v.toLowerCase().includes(textLower)));
     }
     collectItems() {
         const showClasses = this.ctx.data.startingClasses.filter((cls) => this.state.selectedTypes.has(cls.type) || this.state.pinnedItems.has(cls.key));
-        const calcStats = showClasses.map((cls) => calculateClassStats(cls, this.state.pinnedItems));
+        const calcStats = showClasses.map((cls) => calculateClassStats(cls, this.state.pinnedItems, this.ctx.shared.playerStats));
         return calcStats;
     }
     buildRow(item) {
         return getClassRow(item, this.state.showColGroups);
+    }
+    optimizeClass() {
+        this.state.showColGroups.add('CMPT');
+        this.state.sortKey = 'SCORE';
+        this.state.ascending = false;
+        this.sort();
+        this.syncGroupToggles();
+        this.refresh();
+        this.ctx.save();
     }
 }
 //# sourceMappingURL=classesView.js.map

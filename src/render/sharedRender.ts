@@ -150,10 +150,6 @@ export function getSidebarHtml<T extends string>(sections: SidebarSection<T> | S
 /**
  * Given the currently visible HeaderGroups, generates the HTML to display the grouping header and
  * main table header. The column with sortKey is decorated with an arrow indicating sort direction.
- * @param groups
- * @param sortKey
- * @param ascending
- * @returns
  */
 export function getHeaderHtml<HK extends string, SHK extends string>(
     groups: readonly HeaderGroup<HK, SHK>[],

@@ -46,7 +46,7 @@ function getDefaultState() {
         pinnedItems: new Set(),
     };
     const classes = {
-        selectedTypes: new Set(['Normal', 'Hidden']),
+        selectedTypes: new Set(['Basic', 'Unlockable']),
         sortKey: 'CLASS',
         ascending: true,
         showColGroups: new Set(['INFO', 'STATS', 'GEAR']),

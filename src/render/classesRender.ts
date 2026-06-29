@@ -1,3 +1,4 @@
+import { getPlayerLevel } from '../calc/sharedCalc.js';
 import type { CalculatedClassStats } from '../model.js';
 import { escapeHtml, fextraUrl, pushCell, type Cell, type HeaderGroup, type Row } from './sharedRender.js';
 
@@ -13,6 +14,10 @@ const CLASSES_HEADER_KEYS = [
     'RAD',
     'INF',
     'LVL',
+    // CMPT
+    'SCORE',
+    'NLVL',
+    'FLVL',
     // GEAR
     'WEAP',
     'ARMR',
@@ -22,7 +27,7 @@ export function isClassesHeaderKey(v: unknown): v is ClassesHeaderKey {
     return CLASSES_HEADER_KEYS.includes(v as ClassesHeaderKey);
 }
 
-const CLASSES_SUPERHEADER_KEYS = ['INFO', 'STATS', 'GEAR'] as const;
+const CLASSES_SUPERHEADER_KEYS = ['INFO', 'STATS', 'CMPT', 'GEAR'] as const;
 export type ClassesSuperheaderKey = (typeof CLASSES_SUPERHEADER_KEYS)[number];
 export function isClassesSuperheaderKey(v: unknown): v is ClassesSuperheaderKey {
     return CLASSES_SUPERHEADER_KEYS.includes(v as ClassesSuperheaderKey);
@@ -51,6 +56,15 @@ export const CLASSES_HEADER_GROUPS: readonly HeaderGroup<ClassesHeaderKey, Class
         ],
     },
     {
+        superKey: 'CMPT',
+        superText: 'Stat Compatbility',
+        columns: [
+            { key: 'SCORE', text: 'Score', hover: 'Compatibility Score' },
+            { key: 'NLVL', text: 'Needed', hover: 'Additional levels needed to meet your entered stats' },
+            { key: 'FLVL', text: 'FLevel', hover: 'The final level needed to meet your entered stats' },
+        ],
+    },
+    {
         superKey: 'GEAR',
         superText: 'Starting Gear',
         columns: [
@@ -64,13 +78,13 @@ export function getClassRow(crs: CalculatedClassStats, showColGroups: Set<Classe
     const cells: Cell[] = [];
     const cls = crs.item;
 
-    // INFO (RUNE, TYPE)
+    // INFO (CLASS, TYPE)
     if (showColGroups.has('INFO')) {
         pushCell(cells, cls.name, 'col-first', [{ src: `./img/Classes/${cls.icon}.webp`, size: 30 }]);
         pushCell(cells, cls.type, 'col-divider');
     }
 
-    // WEAP (WEAPFX)
+    // STATS (STR, AGI, END, VIT, RAD, INF, LVL)
     if (showColGroups.has('STATS')) {
         const stats = cls.stats;
         pushCell(cells, stats.strength, 'col-starter');
@@ -82,7 +96,14 @@ export function getClassRow(crs: CalculatedClassStats, showColGroups: Set<Classe
         pushCell(cells, cls.level, 'col-divider');
     }
 
-    // ARMR (ARMRFX)
+    // CMPT (SCORE, NLVL, FLVL)
+    if (showColGroups.has('CMPT')) {
+        pushCell(cells, `${(crs.compatScore * 100).toFixed(1)}%`, 'col-starter');
+        pushCell(cells, crs.levelsNeeded);
+        pushCell(cells, getPlayerLevel(crs.finalStats), 'col-divider');
+    }
+
+    // GEAR (WEAP, ARMR)
     if (showColGroups.has('GEAR')) {
         pushCell(
             cells,

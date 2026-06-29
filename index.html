@@ -167,7 +167,12 @@
                             </select>
                         </label>
                     </div>
-                    <div id="paper-doll" hidden></div>
+                    <button
+                        id="optimize-btn"
+                        title="Sort starting classes by how well they align with your entered stats"
+                        hidden>
+                        Optimal<br />Class
+                    </button>
                 </div>
                 <div class="derived-stats">
                     <div class="derived-row">
@@ -203,7 +208,9 @@
 
         <!-- ================= MAIN CONTENT ================= -->
         <main class="content">
-            <div id="derived-armor" hidden></div>
+            <div id="derived-armor" hidden>
+                <div id="paper-doll" hidden></div>
+            </div>
             <div id="view-toggles" hidden></div>
             <input id="search-input" class="table-search" type="text" placeholder="Search" hidden />
 
