@@ -19,7 +19,7 @@ const GroupToggles: ToggleGroup<ClassesSuperheaderKey> = {
     htmlDataKey: 'col-group',
     toggles: {
         STATS: { text: 'Starting Stats', hover: 'Show starting stats' },
-        CMPT: { text: 'Optimality', hover: "Show classes' compatibility with your entered stats" },
+        CMPT: { text: 'Optimization', hover: "Show classes' compatibility with your entered stats" },
         GEAR: { text: 'Starting Gear', hover: 'Show starting gear' },
     },
 };
