@@ -4,8 +4,8 @@ export function epsilonFloor(x) {
     return Math.floor(x + 1e-9);
 }
 /** Floor and clamp the given number to the range [0, 99] */
-export function clampStat(val) {
-    return Math.max(0, Math.min(Math.floor(val), 99));
+export function clampStat(val, min = 8) {
+    return Math.max(min, Math.min(Math.floor(val), 99));
 }
 /** Interpolates the y-value for the given x-coord in the Curve */
 export function interpolate(curve, x) {

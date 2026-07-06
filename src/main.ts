@@ -75,7 +75,26 @@ function onSetSharedSetting(e: Event): void {
     ctx.save();
 }
 
+/** Input handler for player stats - read the value, clamp it, update shared PlayerStats, and update calculations */
 function onSetPlayerStat(e: Event): void {
+    if (!(e.target instanceof HTMLInputElement)) return;
+
+    const el = e.target;
+    const input = el.valueAsNumber;
+    if (Number.isNaN(input)) return;
+    const value = clampStat(input);
+
+    // update the stat
+    const field = el.dataset.stat as keyof PlayerStats;
+    ctx.shared.playerStats = { ...ctx.shared.playerStats, [field]: value };
+
+    updateDerivedStats();
+    views[state.shared.activeMode].onPlayerStatsChanged();
+    ctx.save();
+}
+
+/** Called when player stat input value is committed (element loses focus or user presses 'enter' key) */
+function clampPlayerStatInput(e: Event): void {
     if (!(e.target instanceof HTMLInputElement)) return;
 
     const el = e.target;
@@ -86,14 +105,6 @@ function onSetPlayerStat(e: Event): void {
         // update the user's input to reflect the clamped value
         el.value = String(value);
     }
-
-    // update the stat
-    const field = el.dataset.stat as keyof PlayerStats;
-    ctx.shared.playerStats = { ...ctx.shared.playerStats, [field]: value };
-
-    updateDerivedStats();
-    views[state.shared.activeMode].onPlayerStatsChanged();
-    ctx.save();
 }
 
 // ===================================
@@ -173,6 +184,7 @@ function wireShared(): void {
     addClassListeners('shared-setting-toggle', HTMLInputElement, 'input', onSetSharedSetting);
     // player stats inputs
     addClassListeners('stat-input', HTMLInputElement, 'input', onSetPlayerStat);
+    addClassListeners('stat-input', HTMLInputElement, 'change', clampPlayerStatInput);
 }
 
 function init(): void {
